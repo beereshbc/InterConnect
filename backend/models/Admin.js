@@ -44,9 +44,21 @@ const adminSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    resetPasswordOtp: {
+      type: String,
+    },
+    resetPasswordExpires: {
+      type: Date,
+    },
 
     // --- Metrics & Activity Tracking ---
-
+    // Reference to projects this admin is coordinating
+    managedProjects: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Project",
+      },
+    ],
     // Tracks how many logs/tasks this admin has initialized
     totalTaskCreated: {
       type: Number,
@@ -58,14 +70,6 @@ const adminSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-
-    // Reference to projects this admin is coordinating
-    managedProjects: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Project",
-      },
-    ],
 
     // Role-based access control (optional but recommended)
     role: {

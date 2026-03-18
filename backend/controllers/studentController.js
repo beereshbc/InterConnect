@@ -2,6 +2,8 @@ import Student from "../models/Student.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import Problem from "../models/Problem.js";
+import Project from "../models/Project.js";
 
 export const registerStudent = async (req, res) => {
   try {
@@ -180,10 +182,31 @@ export const resetPassword = async (req, res) => {
   }
 };
 
+// @desc    Get all published problems
+// @route   GET /api/problems/published
+export const getPublishedProblems = async (req, res) => {
+  try {
+    // Only fetch problems where is_published is true
+    // Populate assignedStudents to get the count for the frontend
+    const problems = await Problem.find({ is_published: true })
+      .populate("assignedStudents", "name email") // Optional: populates student details
+      .sort({ createdAt: -1 }); // Newest first
+
+    res.status(200).json({
+      success: true,
+      problems,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Create a new problem statement
+// @route   POST /api/problems/create
 export const createProblem = async (req, res) => {
   try {
     const {
-      title, // <-- ADD THIS
+      title,
       category,
       description,
       theme,
@@ -196,26 +219,87 @@ export const createProblem = async (req, res) => {
     } = req.body;
 
     const newProblem = new Problem({
-      title, // <-- ADD THIS
+      title,
       category,
       description,
       theme,
-      tags: tags.split(",").map((tag) => tag.trim()),
+      // Safely split tags if they are provided as a comma-separated string
+      tags: tags ? tags.split(",").map((tag) => tag.trim()) : [],
       ownerName,
       organization,
       department,
       contactInfo,
       problem_coordinator,
-      is_published: false,
+      is_published: false, // Default to false pending admin review
     });
 
     await newProblem.save();
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "Problem submitted successfully. Pending admin review.",
+
+    res.status(201).json({
+      success: true,
+      message: "Problem submitted successfully. Pending admin review.",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Student joins a problem/project
+// @route   POST /api/problems/:id/join
+export const joinProblem = async (req, res) => {
+  try {
+    const problemId = req.params.id;
+    const studentId = req.studentId; // This comes from the studentAuth middleware
+
+    const problem = await Problem.findById(problemId);
+
+    if (!problem) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Problem not found." });
+    }
+
+    // 1. Check if student has already joined this problem
+    if (problem.assignedStudents.includes(studentId)) {
+      return res.status(400).json({
+        success: false,
+        message: "You have already joined this project pipeline.",
       });
+    }
+
+    // 2. Add student to the Problem's assignedStudents array
+    problem.assignedStudents.push(studentId);
+    await problem.save();
+
+    // 3. Find the corresponding Project or create one if it doesn't exist yet
+    let project = await Project.findOne({ problem: problemId });
+
+    if (!project) {
+      // If it's the first student joining, initialize the Project
+      project = new Project({
+        problem: problemId,
+        contributors: [studentId],
+        projectDescription: problem.description,
+        githubRepoLink: "Pending Setup", // Required field based on your schema
+      });
+    } else {
+      // If project exists, add the student to contributors if not already there
+      if (!project.contributors.includes(studentId)) {
+        project.contributors.push(studentId);
+      }
+    }
+
+    await project.save();
+
+    // 4. Update the Student model to include this project
+    await Student.findByIdAndUpdate(studentId, {
+      $addToSet: { projects: project._id }, // $addToSet prevents duplicates
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Successfully joined the project pipeline!",
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -9,14 +9,19 @@ const app = express();
 
 const port = process.env.PORT || 4000;
 
-// --- CORS Configuration Fix ---
+// Define an array of all allowed frontend URLs
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "http://localhost:5173", // Student Portal
+  "http://localhost:5174", // Admin Portal
+].filter(Boolean); // filter(Boolean) removes undefined values if FRONTEND_URL is not set
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
-
 app.use(express.json());
 
 await connectDB();

@@ -78,7 +78,7 @@ const Problems = () => {
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-        const { data } = await axios.get("/api/problems/published");
+        const { data } = await axios.get("/api/student/published");
         if (data.success) setProblems(data.problems);
       } catch {
         toast.error("Failed to load problems.");
@@ -106,7 +106,7 @@ const Problems = () => {
     if (!formData.description || formData.description === "<p><br></p>")
       return toast.error("Description cannot be empty.");
     try {
-      const { data } = await axios.post("/api/problems/create", formData);
+      const { data } = await axios.post("/api/student/create", formData);
       if (data.success) {
         toast.success(data.message);
         setIsCreateOpen(false);
@@ -135,7 +135,7 @@ const Problems = () => {
       return;
     }
     try {
-      const { data } = await axios.post(`/api/problems/${problemId}/join`);
+      const { data } = await axios.post(`/api/student/${problemId}/join`);
       if (data.success) {
         toast.success("Successfully joined the project!");
         setSelectedProblem(null);

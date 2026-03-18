@@ -1,25 +1,5 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Mail,
-  Lock,
-  User,
-  Phone,
-  Building,
-  Hash,
-  Github,
-  BookOpen,
-  ArrowRight,
-  Loader2,
-  Eye,
-  EyeOff,
-  Terminal,
-  Shield,
-  Cpu,
-  Key,
-  ArrowLeft,
-  Network,
-} from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
@@ -35,23 +15,215 @@ const PROGRAMS = [
   "Other",
 ];
 
+// ─── Tiny atoms ───────────────────────────────────────────────────────────────
+const Label = ({ children, required }) => (
+  <label
+    style={{
+      display: "block",
+      fontSize: 10,
+      fontWeight: 700,
+      color: "#6b7a99",
+      marginBottom: 6,
+      fontFamily: "'DM Mono', monospace",
+      letterSpacing: "0.1em",
+      textTransform: "uppercase",
+    }}
+  >
+    {children} {required && <span style={{ color: "#e85d3a" }}>*</span>}
+  </label>
+);
+
+const inputStyle = (focused) => ({
+  width: "100%",
+  background: "#080c14",
+  border: `1px solid ${focused ? "#e85d3a60" : "#1e2330"}`,
+  borderRadius: 10,
+  padding: "11px 14px 11px 40px",
+  color: "#f0f4ff",
+  fontFamily: "'DM Mono', monospace",
+  fontSize: 13,
+  outline: "none",
+  boxSizing: "border-box",
+  transition: "border-color 0.2s",
+  boxShadow: focused ? "0 0 0 3px #e85d3a10" : "none",
+});
+
+const IconWrap = ({ children }) => (
+  <div
+    style={{
+      position: "absolute",
+      left: 12,
+      top: "50%",
+      transform: "translateY(-50%)",
+      fontSize: 14,
+      color: "#4a5568",
+      pointerEvents: "none",
+    }}
+  >
+    {children}
+  </div>
+);
+
+const FormField = ({ icon, label, required, children }) => (
+  <div>
+    {label && <Label required={required}>{label}</Label>}
+    <div style={{ position: "relative" }}>
+      <IconWrap>{icon}</IconWrap>
+      {children}
+    </div>
+  </div>
+);
+
+const FocusInput = ({
+  icon,
+  label,
+  required,
+  type = "text",
+  name,
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+  maxLength,
+  style: extraStyle,
+}) => {
+  const [focused, setFocused] = useState(false);
+  return (
+    <FormField icon={icon} label={label} required={required}>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        maxLength={maxLength}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{ ...inputStyle(focused), ...extraStyle }}
+      />
+    </FormField>
+  );
+};
+
+const Btn = ({
+  children,
+  loading,
+  type = "button",
+  onClick,
+  variant = "primary",
+}) => {
+  const map = {
+    primary: {
+      bg: "#e85d3a",
+      color: "#fff",
+      border: "none",
+      shadow: "0 4px 20px #e85d3a30",
+    },
+    ghost: {
+      bg: "#0c0f18",
+      color: "#e85d3a",
+      border: "1px solid #e85d3a30",
+      shadow: "none",
+    },
+  };
+  const s = map[variant];
+  return (
+    <motion.button
+      whileTap={{ scale: 0.97 }}
+      type={type}
+      onClick={onClick}
+      disabled={loading}
+      style={{
+        width: "100%",
+        background: s.bg,
+        color: s.color,
+        border: s.border,
+        borderRadius: 12,
+        padding: "13px 20px",
+        fontSize: 13,
+        fontWeight: 700,
+        cursor: loading ? "not-allowed" : "pointer",
+        fontFamily: "'Syne', sans-serif",
+        letterSpacing: "0.04em",
+        opacity: loading ? 0.65 : 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        boxShadow: s.shadow,
+        transition: "all 0.2s",
+      }}
+    >
+      {loading ? (
+        <span
+          style={{
+            display: "inline-block",
+            animation: "spin 0.7s linear infinite",
+          }}
+        >
+          ◌
+        </span>
+      ) : (
+        children
+      )}
+    </motion.button>
+  );
+};
+
+const TabSwitch = ({ isLogin, onChange }) => (
+  <div
+    style={{
+      display: "flex",
+      background: "#080c14",
+      border: "1px solid #1e2330",
+      borderRadius: 12,
+      padding: 4,
+      marginBottom: 32,
+    }}
+  >
+    {[
+      { key: false, label: "Register" },
+      { key: true, label: "Login" },
+    ].map((t) => (
+      <button
+        key={String(t.key)}
+        type="button"
+        onClick={() => onChange(t.key)}
+        style={{
+          flex: 1,
+          padding: "10px",
+          borderRadius: 9,
+          fontSize: 12,
+          fontWeight: 700,
+          cursor: "pointer",
+          fontFamily: "'Syne', sans-serif",
+          letterSpacing: "0.06em",
+          transition: "all 0.2s",
+          background: isLogin === t.key ? "#e85d3a" : "transparent",
+          color: isLogin === t.key ? "#fff" : "#6b7a99",
+          border: "none",
+          boxShadow: isLogin === t.key ? "0 2px 12px #e85d3a30" : "none",
+        }}
+      >
+        {t.label}
+      </button>
+    ))}
+  </div>
+);
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 const AdminRegister = () => {
   const navigate = useNavigate();
-
-  // Pull context variables for Admin
   const { axios, setAdminToken } = useAppContext();
 
-  // Auth Modes
   const [isLogin, setIsLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
-  // Forgot Password States
-  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+  const [isForgot, setIsForgot] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
 
-  // Form Data States mapped to Admin Schema
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
@@ -61,494 +233,751 @@ const AdminRegister = () => {
     githubLink: "",
     password: "",
   });
-
-  const [forgotData, setForgotData] = useState({
+  const [forgotForm, setForgotForm] = useState({
     email: "",
     otp: "",
     newPassword: "",
   });
 
-  // Input Handlers
-  const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  const handleForgotChange = (e) =>
-    setForgotData({ ...forgotData, [e.target.name]: e.target.value });
+  const handle = (e) =>
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const handleForgot = (e) =>
+    setForgotForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  // 1. Handle Standard Login / Register
+  // ── Submit (login / register) ────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
       if (isLogin) {
-        // --- ADMIN LOGIN API CALL ---
         const { data } = await axios.post("/api/admin/login", {
-          email: formData.email,
-          password: formData.password,
+          email: form.email,
+          password: form.password,
         });
         if (data.success) {
           setAdminToken(data.token);
           toast.success("Admin Authorization Granted!");
-          navigate("/admin-dashboard"); // Redirect to admin specific dashboard
+          navigate("/");
         }
       } else {
-        // --- ADMIN REGISTER API CALL ---
-        const { data } = await axios.post("/api/admin/register", formData);
+        const { data } = await axios.post("/api/admin/register", form);
         if (data.success) {
           setAdminToken(data.token);
-          toast.success("Admin Profile initialized! Welcome to the network.");
-          navigate("/admin-dashboard");
+          toast.success("Admin profile initialized!");
+          navigate("/");
         }
       }
-    } catch (error) {
+    } catch (err) {
       toast.error(
-        error.response?.data?.message || "Connection failed. Try again.",
+        err.response?.data?.message || "Connection failed. Try again.",
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 2. Handle Sending OTP for Password Reset
   const handleSendOtp = async (e) => {
     e.preventDefault();
-    if (!forgotData.email) return toast.error("Please enter your admin email.");
-
+    if (!forgotForm.email) return toast.error("Enter your admin email.");
     setIsLoading(true);
     try {
       const { data } = await axios.post("/api/admin/forgot-password/send-otp", {
-        email: forgotData.email,
+        email: forgotForm.email,
       });
       if (data.success) {
         toast.success(data.message);
         setOtpSent(true);
       }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to send OTP.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to send OTP.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 3. Handle Verifying OTP and Changing Password
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (!forgotData.otp || !forgotData.newPassword)
-      return toast.error("Please fill all fields.");
-
+    if (!forgotForm.otp || !forgotForm.newPassword)
+      return toast.error("Fill all fields.");
     setIsLoading(true);
     try {
       const { data } = await axios.post(
         "/api/admin/forgot-password/reset",
-        forgotData,
+        forgotForm,
       );
       if (data.success) {
         toast.success(data.message);
-        setIsForgotPassword(false);
+        setIsForgot(false);
         setOtpSent(false);
         setIsLogin(true);
       }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to reset password.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Reset failed.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const [passF, setPassF] = useState(false);
+
   return (
-    <div className="flex-1 flex items-center justify-center relative w-full px-4 py-10 md:py-20 font-sans">
-      <motion.div
-        layout
-        className="relative z-10 w-full max-w-5xl bg-slate-900/60 backdrop-blur-2xl border border-slate-700/50 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col lg:flex-row"
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #1e2330; border-radius: 2px; }
+        select option { background: #0c0f18; color: #f0f4ff; }
+      `}</style>
+
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#080c14",
+          display: "flex",
+          alignItems: "stretch",
+          fontFamily: "'DM Mono', monospace",
+        }}
       >
-        {/* --- LEFT SIDE: Branding & Info --- */}
-        <div className="hidden lg:flex w-2/5 bg-gradient-to-br from-indigo-900/40 to-slate-900/80 p-10 flex-col justify-between border-r border-slate-700/50 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-indigo-500/10 via-transparent to-transparent pointer-events-none" />
-          <div>
-            <div className="flex items-center gap-3 mb-10">
-              <div className="p-3 bg-indigo-500/20 rounded-xl border border-indigo-500/30">
-                <Network className="text-indigo-400" size={28} />
+        {/* ── Left panel (branding) ── */}
+        <div
+          style={{
+            flex: 1,
+            display: "none",
+            position: "relative",
+            overflow: "hidden",
+            borderRight: "1px solid #1e2330",
+            padding: "60px 52px",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            background: "#0c0f18",
+          }}
+          className="left-panel"
+        >
+          <style>{`@media(min-width:1024px){.left-panel{display:flex !important;}}`}</style>
+
+          {/* BG effects */}
+          <div
+            style={{
+              position: "absolute",
+              top: -100,
+              left: -100,
+              width: 400,
+              height: 400,
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle, #e85d3a06 0%, transparent 70%)",
+              pointerEvents: "none",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: -100,
+              right: -60,
+              width: 300,
+              height: 300,
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle, #3a9de808 0%, transparent 70%)",
+              pointerEvents: "none",
+            }}
+          />
+          {/* Decorative grid lines */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: 0.03,
+              backgroundImage:
+                "linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)",
+              backgroundSize: "40px 40px",
+              pointerEvents: "none",
+            }}
+          />
+
+          <div style={{ position: "relative", zIndex: 1 }}>
+            {/* Logo */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                marginBottom: 52,
+              }}
+            >
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  background: "#e85d3a",
+                  borderRadius: 11,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: "'Syne', sans-serif",
+                  fontWeight: 800,
+                  fontSize: 18,
+                  color: "#fff",
+                  boxShadow: "0 0 20px #e85d3a40",
+                }}
+              >
+                I
               </div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">
-                Admin<span className="text-indigo-500">Portal</span>
-              </h1>
+              <div>
+                <div
+                  style={{
+                    fontFamily: "'Syne', sans-serif",
+                    fontSize: 18,
+                    fontWeight: 800,
+                    color: "#f0f4ff",
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  InteConnect
+                </div>
+                <div
+                  style={{
+                    fontSize: 9,
+                    color: "#6b7a99",
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Admin Portal
+                </div>
+              </div>
             </div>
-            <h2 className="text-4xl font-extrabold text-white leading-tight mb-6">
-              {isLogin ? "Authorize Access." : "Initialize Coordinator."}
+
+            <h2
+              style={{
+                fontFamily: "'Syne', sans-serif",
+                fontSize: 36,
+                fontWeight: 800,
+                color: "#f0f4ff",
+                lineHeight: 1.1,
+                letterSpacing: "-0.02em",
+                marginBottom: 20,
+              }}
+            >
+              {isForgot
+                ? "Reset\nProtocol."
+                : isLogin
+                  ? "Authorize\nAccess."
+                  : "Initialize\nCoordinator."}
             </h2>
-            <p className="text-slate-400 text-lg leading-relaxed mb-8">
+
+            <p
+              style={{
+                fontSize: 13,
+                color: "#6b7a99",
+                lineHeight: 1.85,
+                maxWidth: 320,
+                marginBottom: 44,
+              }}
+            >
               {isLogin
-                ? "Access the control panel, manage problem statements, and oversee student progress."
-                : "Create an admin node to issue challenges and coordinate network activities."}
+                ? "Access the control panel, manage problem statements, and oversee student progress across InteConnect."
+                : "Create an admin node to issue challenges, assign tasks, and coordinate network activities in real-time."}
             </p>
-            <ul className="space-y-5">
+
+            {/* Feature list */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {[
                 {
-                  icon: Shield,
-                  text: "Full administrative control over project pipelines.",
+                  icon: "◈",
+                  label: "Full administrative control over project pipelines",
+                  accent: "#e85d3a",
                 },
                 {
-                  icon: Cpu,
-                  text: "Issue and manage real-world problem statements.",
+                  icon: "⊞",
+                  label: "Issue and manage real-world problem statements",
+                  accent: "#3a9de8",
                 },
                 {
-                  icon: Terminal,
-                  text: "Monitor student metrics and total points distributed.",
+                  icon: "⬡",
+                  label: "Monitor student metrics and distributed points",
+                  accent: "#fbbf24",
                 },
-              ].map((feature, idx) => (
-                <motion.li
-                  key={idx}
-                  initial={{ opacity: 0, x: -20 }}
+              ].map((f, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -16 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.1 + 0.2 }}
-                  className="flex items-center gap-4 text-slate-300"
+                  transition={{ delay: i * 0.1 + 0.3 }}
+                  style={{ display: "flex", alignItems: "center", gap: 12 }}
                 >
-                  <div className="p-2 bg-slate-800/50 rounded-lg text-indigo-400">
-                    <feature.icon size={18} />
+                  <div
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 9,
+                      background: `${f.accent}14`,
+                      border: `1px solid ${f.accent}25`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 14,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {f.icon}
                   </div>
-                  <span className="text-sm font-medium">{feature.text}</span>
-                </motion.li>
+                  <span style={{ fontSize: 12, color: "#8892a4" }}>
+                    {f.label}
+                  </span>
+                </motion.div>
               ))}
-            </ul>
+            </div>
           </div>
-          <div className="text-sm text-slate-500 font-medium">
-            © {new Date().getFullYear()} InterConnect Network. Admin Node.
+
+          <div
+            style={{
+              fontSize: 11,
+              color: "#4a5568",
+              fontFamily: "'DM Mono', monospace",
+            }}
+          >
+            © {new Date().getFullYear()} GMIT · Team-Falcon
           </div>
         </div>
 
-        {/* --- RIGHT SIDE: Form Section --- */}
-        <div className="w-full lg:w-3/5 p-6 sm:p-10 md:p-12 flex flex-col justify-center relative overflow-y-auto max-h-[90vh] lg:max-h-none custom-scrollbar">
-          <AnimatePresence mode="wait">
-            {/* ================= FORGOT PASSWORD FLOW ================= */}
-            {isForgotPassword ? (
-              <motion.div
-                key="forgot-password"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="w-full"
+        {/* ── Right panel (form) ── */}
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "40px 24px",
+            overflowY: "auto",
+          }}
+        >
+          <div style={{ width: "100%", maxWidth: 480 }}>
+            {/* Mobile logo */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                marginBottom: 36,
+                justifyContent: "center",
+              }}
+              className="mobile-logo"
+            >
+              <style>{`@media(min-width:1024px){.mobile-logo{display:none !important;}}`}</style>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  background: "#e85d3a",
+                  borderRadius: 9,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: "'Syne', sans-serif",
+                  fontWeight: 800,
+                  fontSize: 15,
+                  color: "#fff",
+                }}
               >
-                <button
-                  onClick={() => {
-                    setIsForgotPassword(false);
-                    setOtpSent(false);
-                  }}
-                  className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white transition-colors mb-8"
+                I
+              </div>
+              <span
+                style={{
+                  fontFamily: "'Syne', sans-serif",
+                  fontSize: 16,
+                  fontWeight: 800,
+                  color: "#f0f4ff",
+                }}
+              >
+                InteConnect
+              </span>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {/* ── Forgot Password ── */}
+              {isForgot ? (
+                <motion.div
+                  key="forgot"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.28 }}
                 >
-                  <ArrowLeft size={16} /> Back to Auth
-                </button>
-                <div className="mb-8">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                  <button
+                    onClick={() => {
+                      setIsForgot(false);
+                      setOtpSent(false);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: 12,
+                      color: "#6b7a99",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontFamily: "'DM Mono', monospace",
+                      marginBottom: 28,
+                    }}
+                  >
+                    ← Back
+                  </button>
+
+                  <h2
+                    style={{
+                      fontFamily: "'Syne', sans-serif",
+                      fontSize: 26,
+                      fontWeight: 800,
+                      color: "#f0f4ff",
+                      marginBottom: 8,
+                    }}
+                  >
                     Reset Protocol
                   </h2>
-                  <p className="text-slate-400 text-sm">
+                  <p
+                    style={{ fontSize: 12, color: "#6b7a99", marginBottom: 32 }}
+                  >
                     {otpSent
-                      ? "Check your admin email for the OTP and set a new authorization sequence."
-                      : "Enter your registered admin email to receive an override OTP."}
+                      ? "Enter the OTP sent to your admin email and set a new password."
+                      : "Enter your admin email to receive an override OTP."}
                   </p>
-                </div>
 
-                {!otpSent ? (
-                  <form onSubmit={handleSendOtp} className="space-y-5">
-                    <InputField
-                      icon={Mail}
-                      name="email"
-                      placeholder="Admin Email Address"
-                      type="email"
-                      value={forgotData.email}
-                      onChange={handleForgotChange}
-                      required
-                    />
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      disabled={isLoading}
-                      type="submit"
-                      className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-4"
+                  {!otpSent ? (
+                    <form
+                      onSubmit={handleSendOtp}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 18,
+                      }}
                     >
-                      {isLoading ? (
-                        <Loader2 size={20} className="animate-spin" />
-                      ) : (
-                        <>
-                          Send Override OTP <ArrowRight size={18} />
-                        </>
-                      )}
-                    </motion.button>
-                  </form>
-                ) : (
-                  <form onSubmit={handleResetPassword} className="space-y-5">
-                    <InputField
-                      icon={Key}
-                      name="otp"
-                      placeholder="Enter 6-digit Override Code"
-                      type="text"
-                      maxLength="6"
-                      value={forgotData.otp}
-                      onChange={handleForgotChange}
-                      required
-                    />
-                    <InputField
-                      icon={Lock}
-                      name="newPassword"
-                      placeholder="Enter New Password"
-                      type="password"
-                      value={forgotData.newPassword}
-                      onChange={handleForgotChange}
-                      required
-                    />
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      disabled={isLoading}
-                      type="submit"
-                      className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-4"
+                      <FocusInput
+                        icon="✉"
+                        label="Admin Email"
+                        name="email"
+                        type="email"
+                        value={forgotForm.email}
+                        onChange={handleForgot}
+                        placeholder="admin@inteconnect.io"
+                        required
+                      />
+                      <Btn type="submit" loading={isLoading}>
+                        Send Override OTP →
+                      </Btn>
+                    </form>
+                  ) : (
+                    <form
+                      onSubmit={handleResetPassword}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 18,
+                      }}
                     >
-                      {isLoading ? (
-                        <Loader2 size={20} className="animate-spin" />
-                      ) : (
-                        <>Confirm New Authorization</>
-                      )}
-                    </motion.button>
-                  </form>
-                )}
-              </motion.div>
-            ) : (
-              /* ================= LOGIN / REGISTER FLOW ================= */
-              <motion.div
-                key="auth"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                className="w-full"
-              >
-                <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
-                  <Network className="text-indigo-500" size={24} />
-                  <h1 className="text-xl font-bold text-white">AdminPortal</h1>
-                </div>
+                      <FocusInput
+                        icon="⬡"
+                        label="6-digit OTP"
+                        name="otp"
+                        type="text"
+                        maxLength={6}
+                        value={forgotForm.otp}
+                        onChange={handleForgot}
+                        placeholder="000000"
+                        required
+                      />
+                      <FocusInput
+                        icon="◉"
+                        label="New Password"
+                        name="newPassword"
+                        type="password"
+                        value={forgotForm.newPassword}
+                        onChange={handleForgot}
+                        placeholder="New authorization key"
+                        required
+                      />
+                      <Btn type="submit" loading={isLoading}>
+                        Confirm New Authorization →
+                      </Btn>
+                    </form>
+                  )}
+                </motion.div>
+              ) : (
+                /* ── Login / Register ── */
+                <motion.div
+                  key="auth"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.28 }}
+                >
+                  <TabSwitch isLogin={isLogin} onChange={setIsLogin} />
 
-                <div className="flex p-1.5 bg-slate-950/50 border border-slate-800 rounded-2xl mb-8">
-                  <button
-                    type="button"
-                    onClick={() => setIsLogin(false)}
-                    className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${!isLogin ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/25" : "text-slate-400 hover:text-white"}`}
+                  <h2
+                    style={{
+                      fontFamily: "'Syne', sans-serif",
+                      fontSize: 26,
+                      fontWeight: 800,
+                      color: "#f0f4ff",
+                      marginBottom: 6,
+                    }}
                   >
-                    Initialize Node
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsLogin(true)}
-                    className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${isLogin ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/25" : "text-slate-400 hover:text-white"}`}
-                  >
-                    Secure Login
-                  </button>
-                </div>
-
-                <div className="mb-8">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                     {isLogin ? "Admin Authorization" : "Coordinator Setup"}
                   </h2>
-                  <p className="text-slate-400 text-sm">
+                  <p
+                    style={{ fontSize: 12, color: "#6b7a99", marginBottom: 28 }}
+                  >
                     {isLogin
-                      ? "Enter your secure credentials to access the control panel."
-                      : "Fill out the required fields to establish an admin account."}
+                      ? "Enter your credentials to access the control panel."
+                      : "Fill in the details to establish your admin account."}
                   </p>
-                </div>
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                  <AnimatePresence mode="popLayout">
-                    {!isLogin && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="grid grid-cols-1 sm:grid-cols-2 gap-5 overflow-hidden"
-                      >
-                        <InputField
-                          icon={User}
-                          name="name"
-                          placeholder="Full Name"
-                          value={formData.name}
-                          onChange={handleChange}
-                          required
-                        />
-                        <InputField
-                          icon={Phone}
-                          name="phone"
-                          placeholder="Phone Number"
-                          type="tel"
-                          value={formData.phone}
-                          onChange={handleChange}
-                          required
-                        />
-                        <InputField
-                          icon={Building}
-                          name="college"
-                          placeholder="Organization/College"
-                          value={formData.college}
-                          onChange={handleChange}
-                          required
-                        />
-                        <InputField
-                          icon={Hash}
-                          name="branch"
-                          placeholder="Department/Branch (e.g., CSE)"
-                          value={formData.branch}
-                          onChange={handleChange}
-                          required
-                        />
-
-                        <div className="relative group sm:col-span-2">
-                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                            <BookOpen
-                              size={18}
-                              className="text-slate-500 group-focus-within:text-indigo-400 transition-colors"
+                  <form
+                    onSubmit={handleSubmit}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 16,
+                    }}
+                  >
+                    {/* Register-only fields */}
+                    <AnimatePresence>
+                      {!isLogin && (
+                        <motion.div
+                          key="reg-fields"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          style={{
+                            overflow: "hidden",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 16,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: 14,
+                            }}
+                          >
+                            <FocusInput
+                              icon="◉"
+                              label="Full Name"
+                              name="name"
+                              value={form.name}
+                              onChange={handle}
+                              placeholder="Your name"
+                              required
+                            />
+                            <FocusInput
+                              icon="◌"
+                              label="Phone"
+                              name="phone"
+                              type="tel"
+                              value={form.phone}
+                              onChange={handle}
+                              placeholder="+91 XXXXX XXXXX"
+                              required
                             />
                           </div>
-                          <select
-                            name="program"
-                            value={formData.program}
-                            onChange={handleChange}
-                            required
-                            className="w-full bg-slate-950/50 border border-slate-700/60 text-slate-200 text-sm rounded-xl pl-11 p-3.5 appearance-none outline-none focus:ring-2 focus:ring-indigo-500 transition-all hover:border-slate-600"
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: 14,
+                            }}
                           >
-                            <option value="" disabled>
-                              Select Program/Role
-                            </option>
-                            {PROGRAMS.map((prog) => (
-                              <option
-                                key={prog}
-                                value={prog}
-                                className="bg-slate-900"
-                              >
-                                {prog}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <InputField
-                          icon={Github}
-                          name="githubLink"
-                          placeholder="GitHub / Portfolio URL"
-                          type="url"
-                          className="sm:col-span-2"
-                          value={formData.githubLink}
-                          onChange={handleChange}
-                          required
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                            <FocusInput
+                              icon="◈"
+                              label="Organization"
+                              name="college"
+                              value={form.college}
+                              onChange={handle}
+                              placeholder="GMIT / College"
+                              required
+                            />
+                            <FocusInput
+                              icon="⊞"
+                              label="Department"
+                              name="branch"
+                              value={form.branch}
+                              onChange={handle}
+                              placeholder="CSE / ISE / ECE"
+                              required
+                            />
+                          </div>
 
-                  <motion.div layout className="space-y-5">
-                    <InputField
-                      icon={Mail}
+                          {/* Program select */}
+                          <div>
+                            <Label required>Program / Role</Label>
+                            <div style={{ position: "relative" }}>
+                              <IconWrap>◎</IconWrap>
+                              <select
+                                name="program"
+                                value={form.program}
+                                onChange={handle}
+                                required
+                                style={{
+                                  width: "100%",
+                                  background: "#080c14",
+                                  border: "1px solid #1e2330",
+                                  borderRadius: 10,
+                                  padding: "11px 14px 11px 40px",
+                                  color: form.program ? "#f0f4ff" : "#4a5568",
+                                  fontFamily: "'DM Mono', monospace",
+                                  fontSize: 13,
+                                  outline: "none",
+                                  appearance: "none",
+                                  boxSizing: "border-box",
+                                }}
+                              >
+                                <option value="" disabled>
+                                  Select Program / Role
+                                </option>
+                                {PROGRAMS.map((p) => (
+                                  <option key={p} value={p}>
+                                    {p}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          <FocusInput
+                            icon="⌥"
+                            label="GitHub / Portfolio URL"
+                            name="githubLink"
+                            type="url"
+                            value={form.githubLink}
+                            onChange={handle}
+                            placeholder="https://github.com/..."
+                            required
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Always-visible */}
+                    <FocusInput
+                      icon="✉"
+                      label="Admin Email"
                       name="email"
-                      placeholder="Work/Admin Email"
                       type="email"
-                      value={formData.email}
-                      onChange={handleChange}
+                      value={form.email}
+                      onChange={handle}
+                      placeholder="admin@inteconnect.io"
+                      autoComplete="email"
                       required
                     />
 
-                    <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                        <Lock
-                          size={18}
-                          className="text-slate-500 group-focus-within:text-indigo-400 transition-colors"
-                        />
-                      </div>
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        name="password"
-                        placeholder="Security Key (Password)"
-                        value={formData.password}
-                        onChange={handleChange}
-                        required
-                        className="w-full bg-slate-950/50 border border-slate-700/60 text-slate-200 text-sm rounded-xl pl-11 pr-12 p-3.5 placeholder-slate-500 outline-none focus:ring-2 focus:ring-indigo-500 transition-all hover:border-slate-600"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 hover:text-indigo-400 transition-colors"
-                      >
-                        {showPassword ? (
-                          <EyeOff size={18} />
-                        ) : (
-                          <Eye size={18} />
-                        )}
-                      </button>
-                    </div>
-                  </motion.div>
-
-                  {isLogin && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex items-center justify-between text-sm mt-1"
-                    >
-                      <label className="flex items-center gap-2 cursor-pointer group">
+                    {/* Password with toggle */}
+                    <div>
+                      <Label required>Password</Label>
+                      <div style={{ position: "relative" }}>
+                        <IconWrap>◉</IconWrap>
                         <input
-                          type="checkbox"
-                          className="rounded border-slate-600 bg-slate-900 text-indigo-500 focus:ring-indigo-500/50 cursor-pointer"
+                          type={showPass ? "text" : "password"}
+                          name="password"
+                          value={form.password}
+                          onChange={handle}
+                          placeholder="Security key"
+                          onFocus={() => setPassF(true)}
+                          onBlur={() => setPassF(false)}
+                          style={{ ...inputStyle(passF), paddingRight: 44 }}
                         />
-                        <span className="text-slate-400 group-hover:text-slate-300 transition-colors">
-                          Maintain Session
-                        </span>
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setIsForgotPassword(true)}
-                        className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
-                      >
-                        Override Sequence?
-                      </button>
-                    </motion.div>
-                  )}
+                        <button
+                          type="button"
+                          onClick={() => setShowPass((s) => !s)}
+                          style={{
+                            position: "absolute",
+                            right: 12,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            color: "#4a5568",
+                            fontSize: 14,
+                            padding: 4,
+                          }}
+                        >
+                          {showPass ? "⊘" : "◉"}
+                        </button>
+                      </div>
+                    </div>
 
-                  <motion.button
-                    layout
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    disabled={isLoading}
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 mt-2"
-                  >
-                    {isLoading ? (
-                      <Loader2 size={20} className="animate-spin" />
-                    ) : (
-                      <>
-                        {isLogin
-                          ? "Authenticate Node"
-                          : "Initialize Coordinator"}
-                        <ArrowRight size={18} />
-                      </>
+                    {/* Forgot password link */}
+                    {isLogin && (
+                      <div
+                        style={{ display: "flex", justifyContent: "flex-end" }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setIsForgot(true)}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            fontSize: 12,
+                            color: "#e85d3a",
+                            fontFamily: "'DM Mono', monospace",
+                          }}
+                        >
+                          Override Sequence?
+                        </button>
+                      </div>
                     )}
-                  </motion.button>
-                </form>
-              </motion.div>
-            )}
-          </AnimatePresence>
+
+                    <div style={{ marginTop: 4 }}>
+                      <Btn type="submit" loading={isLoading}>
+                        {isLogin
+                          ? "Authenticate Node →"
+                          : "Initialize Coordinator →"}
+                      </Btn>
+                    </div>
+                  </form>
+
+                  {/* Toggle mode link */}
+                  <p
+                    style={{
+                      textAlign: "center",
+                      fontSize: 12,
+                      color: "#6b7a99",
+                      marginTop: 24,
+                      fontFamily: "'DM Mono', monospace",
+                    }}
+                  >
+                    {isLogin ? "Need an account? " : "Already registered? "}
+                    <button
+                      onClick={() => setIsLogin((v) => !v)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#e85d3a",
+                        fontWeight: 700,
+                        fontSize: 12,
+                        fontFamily: "'DM Mono', monospace",
+                      }}
+                    >
+                      {isLogin ? "Initialize Node" : "Login here"}
+                    </button>
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-      </motion.div>
-    </div>
+      </div>
+    </>
   );
 };
-
-// Reusable Input Component
-const InputField = ({ icon: Icon, className = "", ...props }) => (
-  <div className={`relative group ${className}`}>
-    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-      <Icon
-        size={18}
-        className="text-slate-500 group-focus-within:text-indigo-400 transition-colors"
-      />
-    </div>
-    <input
-      {...props}
-      className="w-full bg-slate-950/50 border border-slate-700/60 text-slate-200 text-sm rounded-xl pl-11 p-3.5 placeholder-slate-500 outline-none focus:ring-2 focus:ring-indigo-500 transition-all hover:border-slate-600"
-    />
-  </div>
-);
 
 export default AdminRegister;

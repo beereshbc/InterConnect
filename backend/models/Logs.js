@@ -8,6 +8,11 @@ const logSchema = new mongoose.Schema(
       trim: true,
     },
 
+    description: {
+      type: String,
+      required: true,
+    },
+
     // Reference to a Problem/Task ID
     problemId: {
       type: mongoose.Schema.Types.ObjectId,
