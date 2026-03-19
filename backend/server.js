@@ -14,6 +14,8 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   "http://localhost:5173", // Student Portal
   "http://localhost:5174", // Admin Portal
+  "https://inter-connect-self.vercel.app",
+  "https://inter-connect-admins.vercel.app",
 ].filter(Boolean); // filter(Boolean) removes undefined values if FRONTEND_URL is not set
 
 app.use(

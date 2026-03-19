@@ -70,7 +70,7 @@ const Header = () => {
             <div className="relative flex-shrink-0 flex items-center justify-center">
               {/* === Changed SVG to Image === */}
               <img
-                src="public/ibg.png" // <-- Replace with your image path (PNG, JPG, SVG file, etc.)
+                src="/ibg.png" // <-- Replace with your image path (PNG, JPG, SVG file, etc.)
                 alt="InterConnect Logo"
                 // Dynamically change size based on scrolled state, just like the SVG
                 style={{

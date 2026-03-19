@@ -290,7 +290,7 @@ const Hero = () => {
             className="flex justify-center"
           >
             <img
-              src="/public/ibg.png" // <-- REPLACE WITH YOUR ACTUAL LOGO PATH
+              src="/ibg.png" // <-- REPLACE WITH YOUR ACTUAL LOGO PATH
               alt="InterConnect Logo"
               className="w-16 md:w-40 lg:w-52 h-auto object-contain drop-shadow-[0_0_15px_rgba(59,91,219,0.3)]"
             />
