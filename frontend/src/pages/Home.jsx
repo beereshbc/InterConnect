@@ -3,131 +3,161 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Layer architecture:
  *
- *   position:fixed  z:0    → <NeuralLattice />   (3-D bg, reacts to mouse+scroll)
- *   position:fixed  z:100  → <Header />           (transparent → frosted on scroll)
- *   position:relative z:1  → <main>               (scrollable content stack)
- *     └─ <Hero />          transparent, full-height, title overlay
- *     └─ <AboutSection />  semi-transparent, lattice bleeds through
- *     └─ … add more …
- *
- * To add a new section:
- *   1. Create YourSection.jsx
- *   2. Give its root element:
- *        className="nl-section"
- *        style={{ background: "rgba(0,0,0,0.X)" }}   ← 0 = see-through, 1 = solid
- *   3. Import and drop it below <Hero /> inside <main>
+ * position:fixed  z:0    → <NeuralLattice />   (3-D bg, reacts to mouse+scroll)
+ * position:fixed  z:100  → <Header />           (transparent → frosted on scroll)
+ * position:relative z:1  → <main>               (scrollable content stack)
+ * └─ <Hero />          transparent, full-height, title overlay
+ * └─ <AboutSection />  semi-transparent, lattice bleeds through
+ * └─ <WorkflowSection/> semi-transparent, explains the platform
+ * └─ <CTASection />    call to action with buttons
  */
 
 import React from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  ArrowRight,
+  LayoutDashboard,
+  Lightbulb,
+  Users,
+  GitMerge,
+} from "lucide-react";
 import NeuralLattice from "../components/NeuralLattice";
 import Header from "../components/Header";
 import Hero from "../components/Hero";
 
-/* ── Placeholder sections ──────────────────────────────────────────────────
-   Replace these with your real About.jsx, Schedule.jsx, etc.
-───────────────────────────────────────────────────────────────────────────── */
-
+// ─── ABOUT SECTION ───────────────────────────────────────────────────────────
 const AboutSection = () => (
   <section
     id="about"
-    className="nl-section"
-    style={{
-      minHeight: "100vh",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 24,
-      padding: "clamp(4rem,10vw,8rem) clamp(1.5rem,6vw,6rem)",
-      textAlign: "center",
-    }}
+    className="nl-section relative w-full min-h-screen flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-24 px-6 py-24 lg:px-24 "
   >
-    <p
-      style={{
-        fontSize: "0.68rem",
-        letterSpacing: "0.42em",
-        textTransform: "uppercase",
-        color: "rgba(0,136,255,0.85)",
-        fontWeight: 600,
-      }}
-    >
-      ✦&nbsp;&nbsp;About the Event&nbsp;&nbsp;✦
-    </p>
-    <h2
-      style={{
-        fontSize: "clamp(1.8rem,4vw,3rem)",
-        fontWeight: 800,
-        letterSpacing: "0.04em",
-        color: "#fff",
-      }}
-    >
-      Where Disciplines Converge
-    </h2>
-    <div
-      style={{
-        width: "min(480px,70vw)",
-        height: 1,
-        background:
-          "linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)",
-      }}
-    />
-    <p
-      style={{
-        maxWidth: 640,
-        fontSize: "clamp(0.9rem,1.6vw,1.05rem)",
-        lineHeight: 1.85,
-        color: "rgba(255,255,255,0.60)",
-        fontWeight: 300,
-      }}
-    >
-      InterConnect 26.O brings together engineers, designers, and project
-      managers from GMIT and GMU to collaborate, compete, and build solutions
-      that matter. Replace this placeholder with your real{" "}
-      <code
-        style={{
-          color: "#0088ff",
-          fontFamily: "'Google Sans Code', monospace",
-        }}
+    <div className="flex-1 w-full max-w-2xl">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
       >
-        About.jsx
-      </code>
-      .
-    </p>
-  </section>
-);
+        <p className="font-mono text-[10px] md:text-xs tracking-[0.3em] uppercase text-[#3a9de8] font-bold mb-4">
+          ✦ About The Initiative
+        </p>
+        <h2 className="font-display text-3xl md:text-5xl font-extrabold text-[#f0f4ff] mb-6 leading-tight">
+          Where Disciplines <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#3a9de8] to-[#9c3ae8]">
+            Converge
+          </span>
+        </h2>
+        <div className="w-24 h-1 bg-gradient-to-r from-[#3a9de8] to-transparent rounded-full mb-6" />
 
-const ScheduleSection = () => (
-  <section
-    id="schedule"
-    className="nl-section"
-    style={{
-      minHeight: "60vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "rgba(255,255,255,0.45)",
-      fontSize: "0.82rem",
-      letterSpacing: "0.2em",
-      textTransform: "uppercase",
-      textAlign: "center",
-      padding: "4rem 2rem",
-    }}
-  >
-    Schedule section — replace with your real&nbsp;
-    <code
-      style={{
-        color: "#0088ff",
-        marginLeft: 4,
-        fontFamily: "'Google Sans Code', monospace",
-      }}
+        <p className="font-sans text-sm md:text-base text-[#8892a4] leading-relaxed mb-6">
+          InterConnect 26.O breaks down academic silos. We bring together
+          engineering innovators, business strategists, legal minds, and science
+          researchers from GMIT and GMU to collaborate on high-impact problem
+          statements.
+        </p>
+
+        <ul className="space-y-4 mb-8">
+          {[
+            {
+              icon: Lightbulb,
+              text: "Source real-world problems from various domains.",
+            },
+            {
+              icon: Users,
+              text: "Form cross-functional, highly specialized teams.",
+            },
+            {
+              icon: GitMerge,
+              text: "Develop, deploy, and scale practical solutions.",
+            },
+          ].map((item, idx) => (
+            <li
+              key={idx}
+              className="flex items-center gap-4 text-[#c4cedf] font-sans text-sm"
+            >
+              <div className="w-8 h-8 rounded-lg  flex items-center justify-center flex-shrink-0">
+                <item.icon size={16} className="text-[#3a9de8]" />
+              </div>
+              {item.text}
+            </li>
+          ))}
+        </ul>
+      </motion.div>
+    </div>
+
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6, delay: 0.2 }}
+      className="flex-1 w-full max-w-xl relative"
     >
-      Schedule.jsx
-    </code>
+      <div className="absolute -inset-4 bg-gradient-to-br from-[#3a9de820] to-[#9c3ae820] rounded-2xl blur-2xl -z-10" />
+      <div className="relative rounded-2xl p-4 shadow-2xl overflow-hidden"></div>
+    </motion.div>
   </section>
 );
 
-/* ── Home ──────────────────────────────────────────────────────────────────── */
+// ─── WORKFLOW SECTION ────────────────────────────────────────────────────────
+const WorkflowSection = () => (
+  <section
+    id="workflow"
+    className="nl-section relative w-full py-24 px-6 lg:px-24 "
+  >
+    <div className="max-w-4xl mx-auto text-center mb-16">
+      <p className="font-mono text-[10px] md:text-xs tracking-[0.3em] uppercase text-[#4ade80] font-bold mb-4">
+        ✦ How It Works
+      </p>
+      <h2 className="font-display text-3xl md:text-4xl font-extrabold text-[#f0f4ff] mb-6">
+        The Innovation Pipeline
+      </h2>
+      <p className="font-sans text-sm md:text-base text-[#8892a4] leading-relaxed">
+        Our platform provides a seamless workflow for project coordinators and
+        student contributors to track milestones, assign tasks, and evaluate
+        performance in real-time.
+      </p>
+    </div>
+  </section>
+);
 
+// ─── CALL TO ACTION SECTION ──────────────────────────────────────────────────
+const CTASection = () => (
+  <section className="nl-section relative w-full min-bg-gradient-to-t from-[#080c14] to-[#0c0f18]/60">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className="max-w-3xl mx-auto"
+    >
+      <h2 className="font-display text-4xl md:text-5xl font-extrabold text-[#f0f4ff] mb-6">
+        Ready to make an impact?
+      </h2>
+      <p className="font-sans text-base text-[#8892a4] mb-10 max-w-xl mx-auto">
+        Join the network, find a problem statement that challenges you, and
+        start building the future today.
+      </p>
+
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <Link
+          to="/problems"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-display font-bold text-sm bg-[#e85d3a] hover:bg-[#d14f2f] text-white transition-all shadow-[0_0_20px_rgba(232,93,58,0.2)] hover:shadow-[0_0_30px_rgba(232,93,58,0.4)] hover:-translate-y-0.5 no-underline"
+        >
+          View Problem Statements <Lightbulb size={16} />
+        </Link>
+        <Link
+          to="/dashboard"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-display font-bold text-sm bg-[#1e2330] hover:bg-[#2a3045] border border-slate-700 text-[#f0f4ff] transition-all hover:-translate-y-0.5 no-underline"
+        >
+          Enter Dashboard <LayoutDashboard size={16} />
+        </Link>
+      </div>
+    </motion.div>
+  </section>
+);
+
+// ─── HOME COMPONENT ──────────────────────────────────────────────────────────
 const Home = () => (
   <>
     {/* ① Fixed Three.js bg — mouse + scroll reactive */}
@@ -137,21 +167,14 @@ const Home = () => (
     <Header />
 
     {/* ③ Scrollable content — z-index:1 so it sits above the canvas */}
-    <main style={{ position: "relative", zIndex: 1, width: "100%" }}>
+    <main className="relative z-10 w-full overflow-x-hidden">
       {/* Hero — 100vh, fully transparent, title floats over lattice */}
       <Hero />
 
-      {/* Add your sections below ↓ */}
+      {/* Embedded Sections */}
       <AboutSection />
-      <ScheduleSection />
-
-      {/*
-        <Speakers />
-        <Register />
-        Each needs:
-          className="nl-section"
-          style={{ background: "rgba(0,0,0,0.X)" }}
-      */}
+      <WorkflowSection />
+      <CTASection />
     </main>
   </>
 );

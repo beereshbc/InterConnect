@@ -873,7 +873,7 @@ const Dashboard = () => {
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center gap-5"
-        style={{ background: "#080c14" }}
+        style={{ background: "#" }}
       >
         <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap');
@@ -885,7 +885,7 @@ const Dashboard = () => {
         <div
           className="w-14 h-14 rounded-2xl flex items-center justify-center font-display font-extrabold text-white text-2xl"
           style={{
-            background: "#3a9de8",
+            background: "#",
             animation: "pulse 1.5s ease-in-out infinite",
           }}
         >
@@ -904,7 +904,7 @@ const Dashboard = () => {
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center gap-5"
-        style={{ background: "#080c14" }}
+        style={{ background: "#" }}
       >
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap');.font-display{font-family:'Syne',sans-serif!important}.font-mono{font-family:'DM Mono',monospace!important}`}</style>
         <div className="text-5xl opacity-20">◎</div>
@@ -921,7 +921,7 @@ const Dashboard = () => {
           <button
             onClick={() => navigate("/register")}
             className="px-6 py-2.5 rounded-xl font-display font-bold text-[13px] cursor-pointer mt-2"
-            style={{ background: "#3a9de8", color: "#fff", border: "none" }}
+            style={{ background: "#", color: "#fff", border: "none" }}
           >
             Go to Login →
           </button>
@@ -946,7 +946,7 @@ const Dashboard = () => {
 
       <div
         className="min-h-screen font-mono"
-        style={{ background: "#080c14", color: "#f0f4ff" }}
+        style={{ background: "", color: "#f0f4ff" }}
       >
         {/* ambient BG */}
         <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
@@ -980,33 +980,10 @@ const Dashboard = () => {
         <nav
           className="sticky top-0 z-[100] flex items-center justify-between px-5 h-14"
           style={{
-            background: "#0c0f18cc",
+            background: "#",
             backdropFilter: "blur(12px)",
-            borderBottom: "1px solid #1e2330",
           }}
         >
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center font-display font-extrabold text-xs text-white"
-              style={{ background: "#3a9de8", boxShadow: "0 0 12px #3a9de840" }}
-            >
-              ◎
-            </div>
-            <div>
-              <div
-                className="font-display font-extrabold text-[14px] leading-none"
-                style={{ color: "#f0f4ff" }}
-              >
-                InteConnect
-              </div>
-              <div
-                className="font-mono text-[8px] uppercase tracking-widest"
-                style={{ color: "#3a9de8" }}
-              >
-                Student Portal
-              </div>
-            </div>
-          </div>
           <div className="flex items-center gap-3">
             <div
               className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg"

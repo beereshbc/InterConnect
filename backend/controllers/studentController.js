@@ -2,6 +2,7 @@ import Student from "../models/Student.js";
 import Project from "../models/Project.js";
 import Problem from "../models/Problem.js";
 import Log from "../models/Logs.js";
+import Admin from "../models/Admin.js"; // <-- Imported for Top Coordinator Logic
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
@@ -271,6 +272,7 @@ export const createProblem = async (req, res) => {
       contactInfo,
       problem_coordinator,
     } = req.body;
+
     const newProblem = new Problem({
       title,
       category,
@@ -284,6 +286,7 @@ export const createProblem = async (req, res) => {
       problem_coordinator,
       is_published: false,
     });
+
     await newProblem.save();
     res.status(201).json({
       success: true,
@@ -298,7 +301,7 @@ export const joinProblem = async (req, res) => {
   try {
     const problemId = req.params.id;
     const studentId = req.studentId;
-    const role = req.body?.role || "Contributor";
+    const role = req.body && req.body.role ? req.body.role : "Contributor";
 
     const problem = await Problem.findById(problemId);
     if (!problem)
@@ -412,7 +415,7 @@ export const getMyProjects = async (req, res) => {
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
-// LOGS (Task Claiming Logic)
+// LOGS
 // ═════════════════════════════════════════════════════════════════════════════
 
 export const getMyLogs = async (req, res) => {
@@ -519,48 +522,8 @@ export const selfAssignLog = async (req, res) => {
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
-// LEADERBOARD
+// DASHBOARD
 // ═════════════════════════════════════════════════════════════════════════════
-
-export const getLeaderboard = async (req, res) => {
-  try {
-    const students = await Student.find({ isBlocked: false })
-      .select("name email department college branch projectWiseContribution")
-      .lean();
-
-    const ranked = students
-      .map((s) => ({
-        _id: s._id.toString(),
-        name: s.name,
-        email: s.email,
-        department: s.department,
-        college: s.college,
-        branch: s.branch,
-        totalScore: (s.projectWiseContribution || []).reduce(
-          (a, c) => a + (c.contributionScore || 0),
-          0,
-        ),
-        projectCount: s.projectWiseContribution?.length ?? 0,
-      }))
-      .sort((a, b) => b.totalScore - a.totalScore);
-
-    const myRank = ranked.findIndex((s) => s._id === req.studentId) + 1;
-
-    res.status(200).json({
-      success: true,
-      leaderboard: ranked.slice(0, 50),
-      myRank,
-      totalStudents: ranked.length,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// ═════════════════════════════════════════════════════════════════════════════
-// DASHBOARD — all-in-one endpoint
-// ═════════════════════════════════════════════════════════════════════════════
-// Inside controllers/studentController.js
 
 export const getStudentDashboard = async (req, res) => {
   try {
@@ -634,7 +597,6 @@ export const getStudentDashboard = async (req, res) => {
 
     const projectIds = (student.projects || []).map((p) => p._id);
 
-    // FIX IS HERE: Added "task_status isPublished" to the .select()
     const openLogs = await Log.find({
       projectId: { $in: projectIds },
       isPublished: true,
@@ -689,6 +651,111 @@ export const getStudentDashboard = async (req, res) => {
       recentLogs: logs.slice(0, 10),
       openLogs,
       ranking: { myRank, totalStudents: ranked.length, top10 },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// LEADERBOARD
+// ═════════════════════════════════════════════════════════════════════════════
+
+export const getLeaderboard = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const skip = (page - 1) * limit;
+
+    const students = await Student.find({ isBlocked: false })
+      .select(
+        "name email department college branch totalScore totalTasksCompleted githubLink",
+      )
+      .sort({ totalScore: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const totalStudents = await Student.countDocuments({ isBlocked: false });
+    const totalPages = Math.ceil(totalStudents / limit);
+
+    const now = new Date();
+    const day = now.getDay();
+    const diffToMonday = now.getDate() - day + (day === 0 ? -6 : 1);
+    const startOfWeek = new Date(now.setDate(diffToMonday));
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const topProjectAgg = await Log.aggregate([
+      { $match: { task_status: "completed", closedAt: { $gte: startOfWeek } } },
+      {
+        $group: {
+          _id: "$projectId",
+          weekPoints: { $sum: "$assignedTaskPoints" },
+          tasks: { $sum: 1 },
+        },
+      },
+      { $sort: { weekPoints: -1 } },
+      { $limit: 1 },
+    ]);
+
+    let topProject = null;
+    if (topProjectAgg.length > 0) {
+      const proj = await Project.findById(topProjectAgg[0]._id).populate(
+        "problem",
+        "title theme category",
+      );
+      if (proj) {
+        topProject = {
+          _id: proj._id,
+          projectID: proj.projectID,
+          problemTitle: proj.problem?.title,
+          theme: proj.problem?.theme,
+          weekPoints: topProjectAgg[0].weekPoints,
+          weekTasks: topProjectAgg[0].tasks,
+        };
+      }
+    }
+
+    const topCoordAgg = await Log.aggregate([
+      { $match: { task_status: "completed", closedAt: { $gte: startOfWeek } } },
+      {
+        $group: {
+          _id: "$task_coordinator_id",
+          weekPoints: { $sum: "$assignedTaskPoints" },
+          tasks: { $sum: 1 },
+        },
+      },
+      { $sort: { weekPoints: -1 } },
+      { $limit: 1 },
+    ]);
+
+    let topCoordinator = null;
+    if (topCoordAgg.length > 0 && topCoordAgg[0]._id) {
+      const admin = await Admin.findById(topCoordAgg[0]._id).select(
+        "name email college department",
+      );
+      if (admin) {
+        topCoordinator = {
+          _id: admin._id,
+          name: admin.name,
+          college: admin.college,
+          weekPoints: topCoordAgg[0].weekPoints,
+          weekTasks: topCoordAgg[0].tasks,
+        };
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      leaderboard: students,
+      pagination: {
+        page,
+        limit,
+        totalPages,
+        totalStudents,
+      },
+      topProject,
+      topCoordinator,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

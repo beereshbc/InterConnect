@@ -106,7 +106,7 @@ const Register = () => {
           // UPDATE BOTH GLOBAL STATE & LOCAL STORAGE VIA CONTEXT
           setStudentToken(data.token);
           toast.success("Welcome back to the network!");
-          navigate("/dashboard");
+          navigate("/");
         }
       } else {
         // --- REGISTER API CALL ---
@@ -115,7 +115,7 @@ const Register = () => {
           // UPDATE BOTH GLOBAL STATE & LOCAL STORAGE VIA CONTEXT (Auto-login after register)
           setStudentToken(data.token);
           toast.success("Profile initialized! Welcome to the network.");
-          navigate("/dashboard");
+          navigate("/");
         }
       }
     } catch (error) {

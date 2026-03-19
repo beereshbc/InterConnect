@@ -26,14 +26,17 @@ const Header = () => {
   // Dynamically generate Nav Links based on login status
   const NAV_LINKS = [
     { name: "Home", path: "/", icon: Home },
+    ...(studentToken
+      ? [{ name: "Dashboard", path: "/dashboard", icon: LayoutDashboard }]
+      : []),
     { name: "Problem Statement", path: "/problems", icon: AlertCircle },
     { name: "LeaderBoard", path: "/leaderboard", icon: Trophy },
     { name: "Resource", path: "/resources", icon: BookOpen },
     { name: "About", path: "/about", icon: Info },
     // Conditional Links
-    ...(studentToken
-      ? [{ name: "Dashboard", path: "/dashboard", icon: LayoutDashboard }]
-      : [{ name: "Register", path: "/register", icon: UserPlus }]),
+    ...(!studentToken
+      ? [{ name: "Register", path: "/register", icon: UserPlus }]
+      : []),
   ];
 
   useEffect(() => {
@@ -64,40 +67,22 @@ const Header = () => {
         {/* Brand / Logo */}
         <motion.div layout>
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="relative flex-shrink-0">
-              <svg
-                width={scrolled ? "22" : "30"}
-                height={scrolled ? "22" : "30"}
-                viewBox="0 0 28 28"
-                fill="none"
-                className="group-hover:rotate-12 transition-all duration-300"
-              >
-                <polygon
-                  points="14,2 26,9 26,19 14,26 2,19 2,9"
-                  stroke="#3b82f6"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <circle
-                  cx="14"
-                  cy="14"
-                  r="4"
-                  className="fill-blue-500 animate-pulse"
-                />
-              </svg>
+            <div className="relative flex-shrink-0 flex items-center justify-center">
+              {/* === Changed SVG to Image === */}
+              <img
+                src="public/ibg.png" // <-- Replace with your image path (PNG, JPG, SVG file, etc.)
+                alt="InterConnect Logo"
+                // Dynamically change size based on scrolled state, just like the SVG
+                style={{
+                  width: scrolled ? "30px" : "80px",
+                  height: scrolled ? "30px" : "80px",
+                }}
+                // Keep the hover rotation effect from original code
+                className="group-hover:rotate-12 transition-all duration-300 object-contain"
+              />
             </div>
-            {!scrolled && (
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-xl font-bold tracking-tight text-slate-800 dark:text-white"
-              >
-                Inter<span className="text-blue-500">Connect</span>
-              </motion.span>
-            )}
           </Link>
         </motion.div>
-
         {/* Desktop Navigation */}
         <nav className="hidden lg:block">
           <ul className={`flex items-center ${scrolled ? "gap-4" : "gap-8"}`}>
