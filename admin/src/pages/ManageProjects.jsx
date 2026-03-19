@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 const fmtDate = (d) =>
@@ -10,10 +11,26 @@ const fmtDate = (d) =>
     year: "numeric",
   });
 
+const fmtDatetime = (d) =>
+  new Date(d).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const daysLeft = (deadlineAt) => {
+  if (!deadlineAt) return null;
+  const diff = new Date(deadlineAt) - new Date();
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return days;
+};
+
 const totalPoints = (logs) =>
-  logs
+  (logs || [])
     .filter((l) => l.task_status === "completed")
-    .reduce((a, l) => a + l.assignedTaskPoints, 0);
+    .reduce((a, l) => a + (l.assignedTaskPoints || 0), 0);
 
 const avatarColor = (name = "") => {
   const colors = [
@@ -28,6 +45,7 @@ const avatarColor = (name = "") => {
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
   return colors[Math.abs(h) % colors.length];
 };
+
 const initials = (name = "") =>
   name
     .split(" ")
@@ -36,107 +54,126 @@ const initials = (name = "") =>
     .toUpperCase()
     .slice(0, 2);
 
-// ─── Atoms ────────────────────────────────────────────────────────────────────
+// ─── Status helpers ───────────────────────────────────────────────────────────
+const STATUS_MAP = {
+  open: {
+    label: "Open",
+    cls: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
+    dot: "bg-blue-400",
+  },
+  assigned: {
+    label: "Assigned",
+    cls: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
+    dot: "bg-amber-400",
+  },
+  completed: {
+    label: "Completed",
+    cls: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
+    dot: "bg-emerald-400",
+  },
+  terminated: {
+    label: "Terminated",
+    cls: "bg-red-500/15 text-red-400 border border-red-500/30",
+    dot: "bg-red-400",
+  },
+  blocked: {
+    label: "Blocked",
+    cls: "bg-red-500/15 text-red-400 border border-red-500/30",
+    dot: "bg-red-400",
+  },
+  pending: {
+    label: "Pending",
+    cls: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
+    dot: "bg-amber-400",
+  },
+  active: {
+    label: "Active",
+    cls: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
+    dot: "bg-emerald-400",
+  },
+};
+
+const StatusPill = ({ status }) => {
+  const s = STATUS_MAP[status] || STATUS_MAP.open;
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase font-mono ${s.cls}`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+      {s.label}
+    </span>
+  );
+};
+
+// ─── Avatar ───────────────────────────────────────────────────────────────────
 const Avatar = ({ name = "", size = 36 }) => (
   <div
+    className="rounded-full flex items-center justify-center font-bold text-white font-mono flex-shrink-0"
     style={{
       width: size,
       height: size,
-      borderRadius: "50%",
       background: avatarColor(name),
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
       fontSize: size * 0.35,
-      fontWeight: 700,
-      color: "#fff",
-      fontFamily: "'DM Mono', monospace",
-      flexShrink: 0,
     }}
   >
     {initials(name)}
   </div>
 );
 
+// ─── Badge ────────────────────────────────────────────────────────────────────
 const Badge = ({ children, color = "#3a9de8" }) => (
   <span
-    style={{
-      padding: "2px 10px",
-      borderRadius: 4,
-      fontSize: 11,
-      fontWeight: 700,
-      letterSpacing: "0.06em",
-      textTransform: "uppercase",
-      color,
-      background: `${color}18`,
-      border: `1px solid ${color}40`,
-      fontFamily: "'DM Mono', monospace",
-    }}
+    className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase font-mono"
+    style={{ color, background: `${color}18`, border: `1px solid ${color}40` }}
   >
     {children}
   </span>
 );
 
+// ─── Progress Bar ─────────────────────────────────────────────────────────────
 const ProgressBar = ({ value, color = "#e85d3a" }) => (
   <div>
-    <div
-      style={{
-        height: 6,
-        background: "#1e2330",
-        borderRadius: 3,
-        overflow: "hidden",
-      }}
-    >
+    <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
       <div
+        className="h-full rounded-full transition-all duration-700"
         style={{
-          height: "100%",
           width: `${value}%`,
           background: color,
-          borderRadius: 3,
-          transition: "width 0.6s cubic-bezier(.4,0,.2,1)",
           boxShadow: `0 0 8px ${color}80`,
         }}
       />
     </div>
-    <span
-      style={{
-        fontSize: 11,
-        color: "#8892a4",
-        fontFamily: "'DM Mono', monospace",
-        marginTop: 4,
-        display: "block",
-      }}
-    >
+    <span className="text-[10px] text-slate-500 font-mono mt-1 block">
       {value}% complete
     </span>
   </div>
 );
 
-const Pill = ({ children, type = "default" }) => {
-  const map = {
-    completed: { bg: "#1a3a2a", color: "#4ade80", border: "#4ade8040" },
-    pending: { bg: "#3a2e1a", color: "#fbbf24", border: "#fbbf2440" },
-    blocked: { bg: "#3a1a1a", color: "#f87171", border: "#f8717140" },
-    default: { bg: "#1e2330", color: "#8892a4", border: "#ffffff20" },
-  };
-  const s = map[type] || map.default;
-  return (
-    <span
-      style={{
-        padding: "3px 10px",
-        borderRadius: 20,
-        fontSize: 11,
-        fontWeight: 600,
-        color: s.color,
-        background: s.bg,
-        border: `1px solid ${s.border}`,
-        fontFamily: "'DM Mono', monospace",
-        letterSpacing: "0.04em",
-      }}
-    >
-      {children}
-    </span>
-  );
+// ─── Spinner ──────────────────────────────────────────────────────────────────
+const Spinner = ({ size = 20, color = "#e85d3a" }) => (
+  <div
+    className="rounded-full flex-shrink-0 animate-spin"
+    style={{
+      width: size,
+      height: size,
+      border: `2px solid ${color}30`,
+      borderTopColor: color,
+    }}
+  />
+);
+
+// ─── Button ───────────────────────────────────────────────────────────────────
+const BTN_VARIANTS = {
+  primary: "bg-[#e85d3a] text-white hover:bg-[#d14f2f]",
+  secondary:
+    "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700",
+  ghost:
+    "bg-transparent text-[#e85d3a] border border-[#e85d3a40] hover:border-[#e85d3a80]",
+  danger: "bg-red-950 text-red-400 border border-red-500/30 hover:bg-red-900",
+  success:
+    "bg-emerald-950 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-900",
+  warn: "bg-amber-950 text-amber-400 border border-amber-500/30 hover:bg-amber-900",
+  blue: "bg-blue-950 text-blue-400 border border-blue-500/30 hover:bg-blue-900",
 };
 
 const Btn = ({
@@ -146,69 +183,22 @@ const Btn = ({
   small,
   disabled,
   loading,
-}) => {
-  const map = {
-    primary: { bg: "#e85d3a", color: "#fff", border: "none" },
-    secondary: { bg: "#1e2330", color: "#c4cedf", border: "1px solid #2a3045" },
-    ghost: {
-      bg: "transparent",
-      color: "#e85d3a",
-      border: "1px solid #e85d3a40",
-    },
-    danger: { bg: "#3a1a1a", color: "#f87171", border: "1px solid #f8717140" },
-    success: { bg: "#1a3a2a", color: "#4ade80", border: "1px solid #4ade8040" },
-  };
-  const s = map[variant] || map.primary;
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled || loading}
-      style={{
-        background: s.bg,
-        color: s.color,
-        border: s.border,
-        borderRadius: 8,
-        padding: small ? "6px 14px" : "9px 20px",
-        fontSize: small ? 12 : 13,
-        fontWeight: 700,
-        cursor: disabled || loading ? "not-allowed" : "pointer",
-        fontFamily: "'Syne', sans-serif",
-        letterSpacing: "0.04em",
-        opacity: disabled || loading ? 0.55 : 1,
-        transition: "all 0.2s",
-        whiteSpace: "nowrap",
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-      }}
-    >
-      {loading && (
-        <span
-          style={{
-            animation: "spin 0.6s linear infinite",
-            display: "inline-block",
-          }}
-        >
-          ◌
-        </span>
-      )}
-      {children}
-    </button>
-  );
-};
-
-const Spinner = ({ size = 20, color = "#e85d3a" }) => (
-  <div
-    style={{
-      width: size,
-      height: size,
-      borderRadius: "50%",
-      border: `2px solid ${color}30`,
-      borderTopColor: color,
-      animation: "spin 0.7s linear infinite",
-      flexShrink: 0,
-    }}
-  />
+  className = "",
+}) => (
+  <button
+    onClick={onClick}
+    disabled={disabled || loading}
+    className={`
+      inline-flex items-center gap-1.5 rounded-lg font-bold font-display tracking-wide
+      transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
+      ${small ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-[13px]"}
+      ${BTN_VARIANTS[variant] || BTN_VARIANTS.primary}
+      ${className}
+    `}
+  >
+    {loading && <Spinner size={12} color="currentColor" />}
+    {children}
+  </button>
 );
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
@@ -217,109 +207,60 @@ const ToastBar = ({ message, type = "success", onDone }) => {
     const t = setTimeout(onDone, 3200);
     return () => clearTimeout(t);
   }, []);
-  const color =
-    type === "error" ? "#f87171" : type === "warn" ? "#fbbf24" : "#4ade80";
+  const cfg = {
+    success: { color: "#4ade80", icon: "✓" },
+    error: { color: "#f87171", icon: "✕" },
+    warn: { color: "#fbbf24", icon: "⚠" },
+  }[type] || { color: "#4ade80", icon: "✓" };
+
   return (
     <div
+      className="fixed bottom-7 right-7 z-[9999] flex items-center gap-3 px-5 py-3 rounded-xl font-mono text-sm text-slate-100 shadow-2xl"
       style={{
-        position: "fixed",
-        bottom: 28,
-        right: 28,
-        zIndex: 9999,
         background: "#0c0f18",
-        border: `1px solid ${color}40`,
-        borderLeft: `3px solid ${color}`,
-        borderRadius: 10,
-        padding: "12px 20px",
-        fontFamily: "'DM Mono', monospace",
-        fontSize: 13,
-        color: "#f0f4ff",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+        border: `1px solid ${cfg.color}40`,
+        borderLeft: `3px solid ${cfg.color}`,
         animation: "slideIn 0.25s ease",
       }}
     >
-      <span style={{ color, marginRight: 8 }}>
-        {type === "error" ? "✕" : type === "warn" ? "⚠" : "✓"}
-      </span>
+      <span style={{ color: cfg.color }}>{cfg.icon}</span>
       {message}
     </div>
   );
 };
 
 // ─── Modal Shell ──────────────────────────────────────────────────────────────
-const Modal = ({ title, onClose, children }) => (
+const Modal = ({ title, onClose, children, wide = false }) => (
   <div
     onClick={onClose}
-    style={{
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.78)",
-      backdropFilter: "blur(6px)",
-      zIndex: 1000,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: 20,
-    }}
+    className="fixed inset-0 z-[1000] flex items-center justify-center p-5"
+    style={{ background: "rgba(0,0,0,0.82)", backdropFilter: "blur(8px)" }}
   >
     <div
       onClick={(e) => e.stopPropagation()}
+      className={`relative bg-[#0f1219] border border-slate-700/60 rounded-2xl w-full overflow-y-auto shadow-2xl ${wide ? "max-w-3xl" : "max-w-2xl"}`}
       style={{
-        background: "#0f1219",
-        border: "1px solid #2a3045",
-        borderRadius: 16,
-        padding: "32px 36px",
-        width: "100%",
-        maxWidth: 640,
-        maxHeight: "85vh",
-        overflowY: "auto",
-        boxShadow: "0 30px 80px rgba(0,0,0,0.8), 0 0 0 1px #ffffff08",
+        maxHeight: "88vh",
+        boxShadow: "0 40px 100px rgba(0,0,0,0.85), 0 0 0 1px #ffffff08",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 28,
-        }}
-      >
-        <h2
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: 20,
-            fontWeight: 800,
-            color: "#f0f4ff",
-            margin: 0,
-          }}
-        >
+      <div className="flex items-center justify-between px-8 pt-7 pb-5 border-b border-slate-800">
+        <h2 className="text-lg font-extrabold text-slate-100 font-display tracking-tight">
           {title}
         </h2>
         <button
           onClick={onClose}
-          style={{
-            background: "#1e2330",
-            border: "1px solid #2a3045",
-            color: "#8892a4",
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            cursor: "pointer",
-            fontSize: 16,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 flex items-center justify-center text-sm transition-colors"
         >
           ✕
         </button>
       </div>
-      {children}
+      <div className="px-8 py-6">{children}</div>
     </div>
   </div>
 );
 
-// ─── Form Helpers ─────────────────────────────────────────────────────────────
+// ─── Form Field ───────────────────────────────────────────────────────────────
 const Field = ({
   label,
   value,
@@ -327,21 +268,11 @@ const Field = ({
   type = "text",
   required,
   placeholder,
+  hint,
 }) => (
-  <div style={{ marginBottom: 18 }}>
-    <label
-      style={{
-        display: "block",
-        fontSize: 12,
-        fontWeight: 600,
-        color: "#8892a4",
-        marginBottom: 6,
-        fontFamily: "'DM Mono', monospace",
-        letterSpacing: "0.06em",
-        textTransform: "uppercase",
-      }}
-    >
-      {label} {required && <span style={{ color: "#e85d3a" }}>*</span>}
+  <div className="mb-4">
+    <label className="block text-[10px] font-bold text-slate-500 mb-1.5 font-mono tracking-widest uppercase">
+      {label} {required && <span className="text-[#e85d3a]">*</span>}
     </label>
     {type === "textarea" ? (
       <textarea
@@ -349,19 +280,7 @@ const Field = ({
         onChange={onChange}
         placeholder={placeholder}
         rows={3}
-        style={{
-          width: "100%",
-          background: "#131825",
-          border: "1px solid #2a3045",
-          borderRadius: 8,
-          padding: "10px 14px",
-          color: "#f0f4ff",
-          fontFamily: "'DM Mono', monospace",
-          fontSize: 13,
-          resize: "vertical",
-          outline: "none",
-          boxSizing: "border-box",
-        }}
+        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-slate-200 font-mono text-[13px] outline-none focus:border-[#e85d3a60] resize-vertical transition-colors placeholder:text-slate-600"
       />
     ) : (
       <input
@@ -369,20 +288,27 @@ const Field = ({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        style={{
-          width: "100%",
-          background: "#131825",
-          border: "1px solid #2a3045",
-          borderRadius: 8,
-          padding: "10px 14px",
-          color: "#f0f4ff",
-          fontFamily: "'DM Mono', monospace",
-          fontSize: 13,
-          outline: "none",
-          boxSizing: "border-box",
-        }}
+        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-slate-200 font-mono text-[13px] outline-none focus:border-[#e85d3a60] transition-colors placeholder:text-slate-600"
       />
     )}
+    {hint && (
+      <p className="text-[10px] text-slate-600 font-mono mt-1">{hint}</p>
+    )}
+  </div>
+);
+
+const SelectField = ({ label, value, onChange, children, required }) => (
+  <div className="mb-4">
+    <label className="block text-[10px] font-bold text-slate-500 mb-1.5 font-mono tracking-widest uppercase">
+      {label} {required && <span className="text-[#e85d3a]">*</span>}
+    </label>
+    <select
+      value={value}
+      onChange={onChange}
+      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-slate-200 font-mono text-[13px] outline-none focus:border-[#e85d3a60] transition-colors"
+    >
+      {children}
+    </select>
   </div>
 );
 
@@ -396,19 +322,8 @@ const RangeField = ({
   accent = "#e85d3a",
   unit = "%",
 }) => (
-  <div style={{ marginBottom: 18 }}>
-    <label
-      style={{
-        display: "block",
-        fontSize: 12,
-        fontWeight: 600,
-        color: "#8892a4",
-        marginBottom: 6,
-        fontFamily: "'DM Mono', monospace",
-        letterSpacing: "0.06em",
-        textTransform: "uppercase",
-      }}
-    >
+  <div className="mb-4">
+    <label className="block text-[10px] font-bold text-slate-500 mb-1.5 font-mono tracking-widest uppercase">
       {label}{" "}
       <span style={{ color: accent }}>
         ({value}
@@ -422,22 +337,15 @@ const RangeField = ({
       step={step}
       value={value}
       onChange={onChange}
-      style={{ width: "100%", accentColor: accent }}
+      className="w-full h-1 rounded-full outline-none cursor-pointer"
+      style={{ accentColor: accent }}
     />
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        fontSize: 11,
-        color: "#8892a4",
-        fontFamily: "'DM Mono', monospace",
-      }}
-    >
+    <div className="flex justify-between text-[10px] text-slate-600 font-mono mt-1">
       <span>
         {min}
         {unit}
       </span>
-      <span style={{ color: accent, fontWeight: 700 }}>
+      <span style={{ color: accent }} className="font-bold">
         {value}
         {unit}
       </span>
@@ -449,22 +357,36 @@ const RangeField = ({
   </div>
 );
 
-// ─── Edit Project Modal ───────────────────────────────────────────────────────
+const SectionLabel = ({ children, color = "#e85d3a" }) => (
+  <div className="flex items-center gap-2 mb-4">
+    <span className="w-1 h-4 rounded-sm block" style={{ background: color }} />
+    <span
+      className="text-[10px] font-bold tracking-widest uppercase font-mono"
+      style={{ color }}
+    >
+      {children}
+    </span>
+  </div>
+);
+
+// ─── MODAL: Edit Project ──────────────────────────────────────────────────────
 const EditProjectModal = ({ project, onClose, onSave }) => {
   const [form, setForm] = useState({
-    projectDescription: project.projectDescription,
-    githubRepoLink: project.githubRepoLink,
+    projectDescription: project.projectDescription || "",
+    githubRepoLink: project.githubRepoLink || "",
     liveHostedLink: project.liveHostedLink || "",
-    projectProgressRate: project.projectProgressRate,
-    is_blocked: project.is_blocked,
-    title: project.problem.title,
-    category: project.problem.category,
-    theme: project.problem.theme,
-    description: project.problem.description,
-    ownerName: project.problem.ownerName,
-    organization: project.problem.organization,
-    contactInfo: project.problem.contactInfo || "",
-    problem_coordinator: project.problem.problem_coordinator,
+    resourcesLink: project.resourcesLink || "",
+    communityLink: project.communityLink || "",
+    projectProgressRate: project.projectProgressRate || 0,
+    is_blocked: project.is_blocked || false,
+    title: project.problem?.title || "",
+    category: project.problem?.category || "",
+    theme: project.problem?.theme || "",
+    description: project.problem?.description || "",
+    ownerName: project.problem?.ownerName || "",
+    organization: project.problem?.organization || "",
+    contactInfo: project.problem?.contactInfo || "",
+    problem_coordinator: project.problem?.problem_coordinator || "",
   });
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -477,18 +399,9 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
   };
 
   return (
-    <Modal title={`Edit · ${project.projectID}`} onClose={onClose}>
-      <div
-        style={{
-          fontSize: 12,
-          color: "#e85d3a",
-          fontFamily: "'DM Mono', monospace",
-          marginBottom: 20,
-          letterSpacing: "0.06em",
-        }}
-      >
-        ◆ PROJECT DATA
-      </div>
+    <Modal title={`Edit · ${project.projectID}`} onClose={onClose} wide>
+      <SectionLabel color="#e85d3a">Project Data</SectionLabel>
+
       <Field
         label="Project Description"
         value={form.projectDescription}
@@ -497,18 +410,36 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
         required
       />
       <Field
-        label="GitHub Repo"
+        label="GitHub Repository"
         value={form.githubRepoLink}
         onChange={set("githubRepoLink")}
         required
         placeholder="https://github.com/..."
       />
       <Field
-        label="Live URL"
+        label="Live Hosted URL"
         value={form.liveHostedLink}
         onChange={set("liveHostedLink")}
         placeholder="https://..."
       />
+
+      <div className="grid grid-cols-2 gap-4">
+        <Field
+          label="Resources Link"
+          value={form.resourcesLink}
+          onChange={set("resourcesLink")}
+          placeholder="Drive / Notion / Figma..."
+          hint="External docs, design files, data resources"
+        />
+        <Field
+          label="Community Link"
+          value={form.communityLink}
+          onChange={set("communityLink")}
+          placeholder="WhatsApp / Discord / Slack..."
+          hint="Team communication platform link"
+        />
+      </div>
+
       <RangeField
         label="Progress Rate"
         value={form.projectProgressRate}
@@ -519,18 +450,8 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           }))
         }
       />
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 24,
-          padding: "12px 16px",
-          background: "#131825",
-          borderRadius: 8,
-          border: "1px solid #2a3045",
-        }}
-      >
+
+      <div className="flex items-center gap-3 mb-5 p-3.5 bg-red-950/40 rounded-xl border border-red-500/20">
         <input
           type="checkbox"
           id="blocked"
@@ -538,38 +459,25 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           onChange={(e) =>
             setForm((f) => ({ ...f, is_blocked: e.target.checked }))
           }
-          style={{ accentColor: "#f87171" }}
+          className="accent-red-500 w-4 h-4 cursor-pointer"
         />
         <label
           htmlFor="blocked"
-          style={{
-            fontSize: 13,
-            color: "#c4cedf",
-            fontFamily: "'DM Mono', monospace",
-            cursor: "pointer",
-          }}
+          className="text-[13px] text-slate-300 font-mono cursor-pointer"
         >
-          Block this project (disable student access)
+          Block this project — disables contributor access
         </label>
       </div>
-      <div
-        style={{
-          fontSize: 12,
-          color: "#3a9de8",
-          fontFamily: "'DM Mono', monospace",
-          marginBottom: 20,
-          letterSpacing: "0.06em",
-        }}
-      >
-        ◆ PROBLEM DATA
-      </div>
+
+      <SectionLabel color="#3a9de8">Problem Data</SectionLabel>
+
       <Field
         label="Problem Title"
         value={form.title}
         onChange={set("title")}
         required
       />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div className="grid grid-cols-2 gap-4">
         <Field
           label="Category"
           value={form.category}
@@ -590,7 +498,7 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
         type="textarea"
         required
       />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div className="grid grid-cols-2 gap-4">
         <Field
           label="Owner Name"
           value={form.ownerName}
@@ -604,7 +512,7 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           required
         />
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div className="grid grid-cols-2 gap-4">
         <Field
           label="Contact Info"
           value={form.contactInfo}
@@ -618,14 +526,8 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           required
         />
       </div>
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          justifyContent: "flex-end",
-          marginTop: 8,
-        }}
-      >
+
+      <div className="flex gap-3 justify-end mt-2 pt-4 border-t border-slate-800">
         <Btn variant="secondary" onClick={onClose}>
           Cancel
         </Btn>
@@ -637,274 +539,19 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
   );
 };
 
-// ─── Student Modal ────────────────────────────────────────────────────────────
-const StudentModal = ({ student, projectLogs, onClose }) => {
-  const studentLogs = projectLogs.filter(
-    (l) => l.task_contributor === student.name,
-  );
-  const contrib = student.projectWiseContribution?.[0];
-  return (
-    <Modal title={`Student · ${student.name}`} onClose={onClose}>
-      <div
-        style={{
-          display: "flex",
-          gap: 16,
-          alignItems: "flex-start",
-          marginBottom: 28,
-        }}
-      >
-        <Avatar name={student.name} size={56} />
-        <div style={{ flex: 1 }}>
-          <div
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontSize: 18,
-              fontWeight: 800,
-              color: "#f0f4ff",
-            }}
-          >
-            {student.name}
-          </div>
-          <div
-            style={{
-              fontSize: 13,
-              color: "#8892a4",
-              fontFamily: "'DM Mono', monospace",
-              marginTop: 2,
-            }}
-          >
-            {student.email}
-          </div>
-          <div
-            style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}
-          >
-            {student.isBlocked ? (
-              <Pill type="blocked">Blocked</Pill>
-            ) : (
-              <Pill type="completed">Active</Pill>
-            )}
-            {contrib && <Badge color="#9c3ae8">{contrib.role}</Badge>}
-            <Badge color="#3a9de8">{student.branch}</Badge>
-          </div>
-        </div>
-      </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
-          gap: 12,
-          marginBottom: 24,
-        }}
-      >
-        {[
-          {
-            label: "Score",
-            value: contrib?.contributionScore ?? 0,
-            color: "#e85d3a",
-          },
-          { label: "Tasks", value: studentLogs.length, color: "#3a9de8" },
-          {
-            label: "Done",
-            value: studentLogs.filter((l) => l.task_status === "completed")
-              .length,
-            color: "#4ade80",
-          },
-        ].map((s) => (
-          <div
-            key={s.label}
-            style={{
-              background: "#131825",
-              border: "1px solid #2a3045",
-              borderRadius: 10,
-              padding: "14px 16px",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 22,
-                fontWeight: 800,
-                fontFamily: "'Syne', sans-serif",
-                color: s.color,
-              }}
-            >
-              {s.value}
-            </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: "#8892a4",
-                fontFamily: "'DM Mono', monospace",
-                marginTop: 2,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}
-            >
-              {s.label}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 12,
-          marginBottom: 24,
-        }}
-      >
-        {[
-          ["Department", student.department],
-          ["Program", student.program],
-          ["College", student.college],
-          ["Phone", student.phone],
-        ].map(([k, v]) => (
-          <div
-            key={k}
-            style={{
-              background: "#131825",
-              border: "1px solid #2a3045",
-              borderRadius: 8,
-              padding: "10px 14px",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 11,
-                color: "#8892a4",
-                fontFamily: "'DM Mono', monospace",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}
-            >
-              {k}
-            </div>
-            <div
-              style={{
-                fontSize: 13,
-                color: "#c4cedf",
-                fontFamily: "'DM Mono', monospace",
-                marginTop: 4,
-              }}
-            >
-              {v || "—"}
-            </div>
-          </div>
-        ))}
-      </div>
-      {student.githubLink && (
-        <a
-          href={student.githubLink}
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            color: "#3a9de8",
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 13,
-            textDecoration: "none",
-            marginBottom: 20,
-          }}
-        >
-          ⌥ GitHub Profile ↗
-        </a>
-      )}
-      {studentLogs.length > 0 && (
-        <>
-          <div
-            style={{
-              fontSize: 12,
-              color: "#e85d3a",
-              fontFamily: "'DM Mono', monospace",
-              marginBottom: 14,
-              letterSpacing: "0.06em",
-            }}
-          >
-            ◆ ASSIGNED LOGS
-          </div>
-          {studentLogs.map((log) => (
-            <div
-              key={log._id}
-              style={{
-                background: "#131825",
-                border: "1px solid #2a3045",
-                borderRadius: 8,
-                padding: "12px 16px",
-                marginBottom: 10,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  gap: 8,
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "#f0f4ff",
-                    fontFamily: "'Syne', sans-serif",
-                  }}
-                >
-                  {log.taskTitle}
-                </span>
-                <Pill type={log.task_status}>{log.task_status}</Pill>
-              </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#8892a4",
-                  fontFamily: "'DM Mono', monospace",
-                  marginTop: 6,
-                }}
-              >
-                {log.description}
-              </div>
-              <div style={{ display: "flex", gap: 16, marginTop: 8 }}>
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: "#fbbf24",
-                    fontFamily: "'DM Mono', monospace",
-                  }}
-                >
-                  ⬡ {log.assignedTaskPoints} pts
-                </span>
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: "#8892a4",
-                    fontFamily: "'DM Mono', monospace",
-                  }}
-                >
-                  {fmtDate(log.createdAt)}
-                </span>
-              </div>
-            </div>
-          ))}
-        </>
-      )}
-    </Modal>
-  );
-};
-
-// ─── Create Log Modal ─────────────────────────────────────────────────────────
+// ─── MODAL: Create Log ────────────────────────────────────────────────────────
 const CreateLogModal = ({ project, onClose, onCreate }) => {
   const [form, setForm] = useState({
     taskTitle: "",
     description: "",
+    requirements: "",
     githubIssueLink: "",
     assignedTaskPoints: 10,
-    contributorID: "",
-    task_contributor: "",
+    deadlineDays: 7,
   });
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const isValid = form.taskTitle && form.githubIssueLink && form.contributorID;
+  const isValid = form.taskTitle && form.description && form.githubIssueLink;
 
   const handleCreate = async () => {
     setSaving(true);
@@ -914,24 +561,15 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
   };
 
   return (
-    <Modal title={`Open Log · ${project.projectID}`} onClose={onClose}>
-      <div
-        style={{
-          fontSize: 12,
-          color: "#4ade80",
-          fontFamily: "'DM Mono', monospace",
-          marginBottom: 20,
-          letterSpacing: "0.06em",
-        }}
-      >
-        ◆ CREATE TASK LOG
-      </div>
+    <Modal title={`Create Log · ${project.projectID}`} onClose={onClose} wide>
+      <SectionLabel color="#4ade80">Task Details</SectionLabel>
+
       <Field
         label="Task Title"
         value={form.taskTitle}
         onChange={set("taskTitle")}
         required
-        placeholder="e.g. Implement login with JWT"
+        placeholder="e.g. Implement JWT auth"
       />
       <Field
         label="Description"
@@ -939,7 +577,15 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
         onChange={set("description")}
         type="textarea"
         required
-        placeholder="Detailed task requirements..."
+        placeholder="What needs to be done..."
+      />
+      <Field
+        label="Requirements / Acceptance Criteria"
+        value={form.requirements}
+        onChange={set("requirements")}
+        type="textarea"
+        placeholder="- Must handle edge case X&#10;- Tests required&#10;- PR must link to issue"
+        hint="Detailed checklist contributors need to follow"
       />
       <Field
         label="GitHub Issue Link"
@@ -948,66 +594,46 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
         required
         placeholder="https://github.com/.../issues/X"
       />
-      <div style={{ marginBottom: 18 }}>
-        <label
-          style={{
-            display: "block",
-            fontSize: 12,
-            fontWeight: 600,
-            color: "#8892a4",
-            marginBottom: 6,
-            fontFamily: "'DM Mono', monospace",
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          Assign To <span style={{ color: "#e85d3a" }}>*</span>
-        </label>
-        <select
-          value={form.contributorID}
-          onChange={(e) => {
-            const c = project.contributors.find(
-              (x) => x._id === e.target.value,
-            );
+
+      <div className="grid grid-cols-2 gap-4">
+        <RangeField
+          label="Task Points"
+          value={form.assignedTaskPoints}
+          min={5}
+          max={100}
+          step={5}
+          onChange={(e) =>
             setForm((f) => ({
               ...f,
-              contributorID: e.target.value,
-              task_contributor: c?.name || "",
-            }));
-          }}
-          style={{
-            width: "100%",
-            background: "#131825",
-            border: "1px solid #2a3045",
-            borderRadius: 8,
-            padding: "10px 14px",
-            color: form.contributorID ? "#f0f4ff" : "#8892a4",
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 13,
-            outline: "none",
-          }}
-        >
-          <option value="">— Select Contributor —</option>
-          {project.contributors.map((c) => (
-            <option key={c._id} value={c._id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+              assignedTaskPoints: Number(e.target.value),
+            }))
+          }
+          accent="#4ade80"
+          unit=" pts"
+        />
+        <RangeField
+          label="Deadline Window"
+          value={form.deadlineDays}
+          min={1}
+          max={30}
+          step={1}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, deadlineDays: Number(e.target.value) }))
+          }
+          accent="#3a9de8"
+          unit=" days"
+        />
       </div>
-      <RangeField
-        label="Task Points"
-        value={form.assignedTaskPoints}
-        min={5}
-        max={100}
-        step={5}
-        onChange={(e) =>
-          setForm((f) => ({ ...f, assignedTaskPoints: Number(e.target.value) }))
-        }
-        accent="#4ade80"
-        unit=" pts"
-      />
-      <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+
+      <div className="p-3.5 bg-blue-950/30 border border-blue-500/20 rounded-xl mb-4">
+        <p className="text-[11px] text-blue-400 font-mono">
+          ℹ The log will be created as a <strong>draft</strong>. You must
+          publish it for contributors to see and self-assign. The deadline clock
+          starts only after a contributor claims the task.
+        </p>
+      </div>
+
+      <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
         <Btn variant="secondary" onClick={onClose}>
           Cancel
         </Btn>
@@ -1017,74 +643,150 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
           disabled={!isValid}
           loading={saving}
         >
-          Open Log
+          Create Log
         </Btn>
       </div>
     </Modal>
   );
 };
 
-// ─── Close Log Modal ──────────────────────────────────────────────────────────
-const CloseLogModal = ({ log, onClose, onCloseLog }) => {
+// ─── MODAL: Edit Log ──────────────────────────────────────────────────────────
+const EditLogModal = ({ log, onClose, onUpdate }) => {
   const [form, setForm] = useState({
-    githubPrLink: "",
-    contributionScore: log.assignedTaskPoints,
-    note: "",
+    taskTitle: log.taskTitle || "",
+    description: log.description || "",
+    requirements: log.requirements || "",
+    githubIssueLink: log.githubIssueLink || "",
+    assignedTaskPoints: log.assignedTaskPoints || 10,
+    deadlineDays: log.deadlineDays || 7,
   });
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  const handleUpdate = async () => {
+    setSaving(true);
+    await onUpdate(form);
+    setSaving(false);
+    onClose();
+  };
+
+  return (
+    <Modal
+      title={`Edit Log · ${log.taskTitle?.slice(0, 28)}…`}
+      onClose={onClose}
+      wide
+    >
+      <SectionLabel color="#fbbf24">Update Task</SectionLabel>
+
+      <Field
+        label="Task Title"
+        value={form.taskTitle}
+        onChange={set("taskTitle")}
+        required
+      />
+      <Field
+        label="Description"
+        value={form.description}
+        onChange={set("description")}
+        type="textarea"
+        required
+      />
+      <Field
+        label="Requirements / Acceptance Criteria"
+        value={form.requirements}
+        onChange={set("requirements")}
+        type="textarea"
+        placeholder="Checklist / criteria..."
+      />
+      <Field
+        label="GitHub Issue Link"
+        value={form.githubIssueLink}
+        onChange={set("githubIssueLink")}
+        required
+      />
+
+      <div className="grid grid-cols-2 gap-4">
+        <RangeField
+          label="Task Points"
+          value={form.assignedTaskPoints}
+          min={5}
+          max={100}
+          step={5}
+          onChange={(e) =>
+            setForm((f) => ({
+              ...f,
+              assignedTaskPoints: Number(e.target.value),
+            }))
+          }
+          accent="#fbbf24"
+          unit=" pts"
+        />
+        <RangeField
+          label="Deadline Window"
+          value={form.deadlineDays}
+          min={1}
+          max={30}
+          step={1}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, deadlineDays: Number(e.target.value) }))
+          }
+          accent="#3a9de8"
+          unit=" days"
+        />
+      </div>
+
+      <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
+        <Btn variant="secondary" onClick={onClose}>
+          Cancel
+        </Btn>
+        <Btn variant="warn" onClick={handleUpdate} loading={saving}>
+          Update Log
+        </Btn>
+      </div>
+    </Modal>
+  );
+};
+
+// ─── MODAL: Close Log ─────────────────────────────────────────────────────────
+const CloseLogModal = ({ log, onClose, onCloseLog }) => {
+  const [form, setForm] = useState({
+    githubPrLink: log.githubPrLink || "",
+    contributionScore: log.assignedTaskPoints || 10,
+    closureNote: "",
+  });
+  const [saving, setSaving] = useState(false);
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const isValid = !!form.githubPrLink;
+
   const handleClose = async () => {
     setSaving(true);
-    await onCloseLog(form);
+    await onCloseLog({ ...form, closureNote: form.closureNote });
     setSaving(false);
     onClose();
   };
 
   return (
     <Modal title="Close Task Log" onClose={onClose}>
-      <div
-        style={{
-          background: "#131825",
-          border: "1px solid #2a3045",
-          borderRadius: 10,
-          padding: "14px 16px",
-          marginBottom: 24,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 700,
-            color: "#f0f4ff",
-            fontFamily: "'Syne', sans-serif",
-          }}
-        >
+      <div className="p-4 bg-slate-900 border border-slate-700 rounded-xl mb-5">
+        <div className="text-[13px] font-bold text-slate-100 font-display mb-1">
           {log.taskTitle}
         </div>
-        <div
-          style={{
-            fontSize: 12,
-            color: "#8892a4",
-            fontFamily: "'DM Mono', monospace",
-            marginTop: 4,
-          }}
-        >
+        <div className="text-[11px] text-slate-500 font-mono">
           Contributor:{" "}
-          <span style={{ color: "#c4cedf" }}>{log.task_contributor}</span>
+          <span className="text-slate-300">{log.task_contributor || "—"}</span>
         </div>
+        {log.deadlineAt && (
+          <div className="text-[11px] text-slate-500 font-mono mt-1">
+            Deadline:{" "}
+            <span className="text-amber-400">
+              {fmtDatetime(log.deadlineAt)}
+            </span>
+          </div>
+        )}
       </div>
-      <div
-        style={{
-          fontSize: 12,
-          color: "#4ade80",
-          fontFamily: "'DM Mono', monospace",
-          marginBottom: 20,
-          letterSpacing: "0.06em",
-        }}
-      >
-        ◆ COMPLETION CREDENTIALS
-      </div>
+
+      <SectionLabel color="#4ade80">Completion Credentials</SectionLabel>
+
       <Field
         label="GitHub PR / Commit Link"
         value={form.githubPrLink}
@@ -1106,16 +808,22 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
       />
       <Field
         label="Closure Note"
-        value={form.note}
-        onChange={set("note")}
+        value={form.closureNote}
+        onChange={set("closureNote")}
         type="textarea"
         placeholder="What was achieved? Any remarks for the contributor..."
       />
-      <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+
+      <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
         <Btn variant="secondary" onClick={onClose}>
           Cancel
         </Btn>
-        <Btn variant="success" onClick={handleClose} loading={saving}>
+        <Btn
+          variant="success"
+          onClick={handleClose}
+          disabled={!isValid}
+          loading={saving}
+        >
           ✓ Mark Complete
         </Btn>
       </div>
@@ -1123,10 +831,430 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
   );
 };
 
-// ─── Workflow Insight ─────────────────────────────────────────────────────────
+// ─── MODAL: Terminate Log ─────────────────────────────────────────────────────
+const TerminateLogModal = ({ log, onClose, onTerminate }) => {
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handle = async () => {
+    setSaving(true);
+    await onTerminate({ closureNote: note });
+    setSaving(false);
+    onClose();
+  };
+
+  return (
+    <Modal title="Terminate Log" onClose={onClose}>
+      <div className="p-4 bg-red-950/40 border border-red-500/20 rounded-xl mb-5">
+        <div className="text-[13px] font-bold text-red-300 font-display mb-1">
+          {log.taskTitle}
+        </div>
+        <p className="text-[11px] text-red-400/70 font-mono">
+          Terminating removes the current contributor assignment and hides the
+          log. You can reopen it later.
+        </p>
+      </div>
+      <Field
+        label="Reason / Note"
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        type="textarea"
+        placeholder="Deadline exceeded, scope changed..."
+      />
+      <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
+        <Btn variant="secondary" onClick={onClose}>
+          Cancel
+        </Btn>
+        <Btn variant="danger" onClick={handle} loading={saving}>
+          Terminate
+        </Btn>
+      </div>
+    </Modal>
+  );
+};
+
+// ─── MODAL: Reopen Log ────────────────────────────────────────────────────────
+const ReopenLogModal = ({ log, onClose, onReopen }) => {
+  const [deadlineDays, setDeadlineDays] = useState(log.deadlineDays || 7);
+  const [saving, setSaving] = useState(false);
+
+  const handle = async () => {
+    setSaving(true);
+    await onReopen({ deadlineDays });
+    setSaving(false);
+    onClose();
+  };
+
+  return (
+    <Modal title="Reopen Log" onClose={onClose}>
+      <div className="p-4 bg-emerald-950/30 border border-emerald-500/20 rounded-xl mb-5">
+        <div className="text-[13px] font-bold text-emerald-300 font-display mb-1">
+          {log.taskTitle}
+        </div>
+        <p className="text-[11px] text-emerald-400/70 font-mono">
+          Log will be published and open for contributors to self-assign again.
+          Reopened {log.reopenCount || 0} time{log.reopenCount !== 1 ? "s" : ""}{" "}
+          before.
+        </p>
+      </div>
+      <RangeField
+        label="New Deadline Window (days after assignment)"
+        value={deadlineDays}
+        min={1}
+        max={30}
+        step={1}
+        onChange={(e) => setDeadlineDays(Number(e.target.value))}
+        accent="#4ade80"
+        unit=" days"
+      />
+      <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
+        <Btn variant="secondary" onClick={onClose}>
+          Cancel
+        </Btn>
+        <Btn variant="success" onClick={handle} loading={saving}>
+          ↺ Reopen & Publish
+        </Btn>
+      </div>
+    </Modal>
+  );
+};
+
+// ─── MODAL: Student Detail ────────────────────────────────────────────────────
+const StudentModal = ({ student, projectLogs, onClose }) => {
+  const studentLogs = (projectLogs || []).filter(
+    (l) => l.task_contributor === student.name,
+  );
+  const contrib = student.projectWiseContribution?.[0];
+
+  return (
+    <Modal title={`Student · ${student.name}`} onClose={onClose} wide>
+      <div className="flex gap-4 items-start mb-6">
+        <Avatar name={student.name} size={52} />
+        <div className="flex-1">
+          <div className="text-lg font-extrabold text-slate-100 font-display">
+            {student.name}
+          </div>
+          <div className="text-[12px] text-slate-500 font-mono mt-0.5">
+            {student.email}
+          </div>
+          <div className="flex gap-2 mt-2.5 flex-wrap">
+            <StatusPill status={student.isBlocked ? "blocked" : "active"} />
+            {contrib && <Badge color="#9c3ae8">{contrib.role}</Badge>}
+            <Badge color="#3a9de8">{student.branch}</Badge>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 mb-5">
+        {[
+          {
+            label: "Score",
+            value: contrib?.contributionScore ?? 0,
+            color: "#e85d3a",
+          },
+          { label: "Tasks", value: studentLogs.length, color: "#3a9de8" },
+          {
+            label: "Done",
+            value: studentLogs.filter((l) => l.task_status === "completed")
+              .length,
+            color: "#4ade80",
+          },
+        ].map((s) => (
+          <div
+            key={s.label}
+            className="bg-slate-900 border border-slate-800 rounded-xl p-3.5"
+          >
+            <div
+              className="text-xl font-extrabold font-display"
+              style={{ color: s.color }}
+            >
+              {s.value}
+            </div>
+            <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-0.5">
+              {s.label}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        {[
+          ["Department", student.department],
+          ["Program", student.program],
+          ["College", student.college],
+          ["Phone", student.phone],
+        ].map(([k, v]) => (
+          <div
+            key={k}
+            className="bg-slate-900 border border-slate-800 rounded-lg p-3"
+          >
+            <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+              {k}
+            </div>
+            <div className="text-[12px] text-slate-300 font-mono mt-1">
+              {v || "—"}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {student.githubLink && (
+        <a
+          href={student.githubLink}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 text-blue-400 font-mono text-[12px] no-underline hover:text-blue-300 mb-5 transition-colors"
+        >
+          ⌥ GitHub Profile ↗
+        </a>
+      )}
+
+      {studentLogs.length > 0 && (
+        <>
+          <SectionLabel color="#e85d3a">Task Logs</SectionLabel>
+          <div className="flex flex-col gap-2.5">
+            {studentLogs.map((log) => (
+              <div
+                key={log._id}
+                className="bg-slate-900 border border-slate-800 rounded-xl p-4"
+              >
+                <div className="flex justify-between items-start gap-2 mb-2">
+                  <span className="text-[13px] font-bold text-slate-100 font-display">
+                    {log.taskTitle}
+                  </span>
+                  <StatusPill status={log.task_status} />
+                </div>
+                <p className="text-[11px] text-slate-500 font-mono line-clamp-2 mb-2">
+                  {log.description}
+                </p>
+                <div className="flex gap-4 items-center">
+                  <span className="text-[10px] text-amber-400 font-mono">
+                    ⬡ {log.assignedTaskPoints} pts
+                  </span>
+                  <span className="text-[10px] text-slate-600 font-mono">
+                    {fmtDate(log.createdAt)}
+                  </span>
+                  {log.deadlineAt && (
+                    <span
+                      className={`text-[10px] font-mono ${daysLeft(log.deadlineAt) <= 2 ? "text-red-400" : "text-slate-500"}`}
+                    >
+                      ⏱{" "}
+                      {daysLeft(log.deadlineAt) > 0
+                        ? `${daysLeft(log.deadlineAt)}d left`
+                        : "Overdue"}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </Modal>
+  );
+};
+
+// ─── LOG CARD ─────────────────────────────────────────────────────────────────
+const LogCard = ({
+  log,
+  projectId,
+  onPublish,
+  onEdit,
+  onClose,
+  onTerminate,
+  onReopen,
+}) => {
+  const days = daysLeft(log.deadlineAt);
+  const isOverdue =
+    log.task_status === "assigned" && days !== null && days <= 0;
+
+  const statusBorder =
+    {
+      open: "border-l-blue-500",
+      assigned: isOverdue ? "border-l-red-500" : "border-l-amber-500",
+      completed: "border-l-emerald-500",
+      terminated: "border-l-red-800",
+    }[log.task_status] || "border-l-slate-700";
+
+  return (
+    <div
+      className={`bg-[#0c0f18] border border-slate-800 border-l-2 ${statusBorder} rounded-xl p-5 transition-all duration-200`}
+    >
+      {/* Header row */}
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="min-w-0 flex-1">
+          <div
+            className="font-display font-bold text-[13px] leading-tight truncate mb-1"
+            style={{ color: "#f0f4ff" }}
+          >
+            {log.taskTitle}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {log.task_contributor ? (
+              <div className="flex items-center gap-1.5 bg-[#131825] border border-slate-700/60 px-1.5 py-0.5 rounded-md">
+                <Avatar name={log.task_contributor} size={14} />
+                <span className="text-[10px] text-slate-300 font-mono truncate max-w-[120px]">
+                  {log.task_contributor}
+                </span>
+              </div>
+            ) : (
+              <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+                Unassigned
+              </span>
+            )}
+            <span className="text-[10px] text-slate-600 font-mono">
+              · {fmtDate(log.createdAt)}
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-1.5">
+          <StatusPill status={isOverdue ? "terminated" : log.task_status} />
+          {!log.isPublished &&
+            log.task_status !== "completed" &&
+            log.task_status !== "terminated" && (
+              <span className="text-[9px] font-bold tracking-widest uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                Draft
+              </span>
+            )}
+        </div>
+      </div>
+
+      {/* Description */}
+      <p className="text-[11px] text-slate-500 font-mono leading-relaxed mb-3 line-clamp-2 mt-2">
+        {log.description}
+      </p>
+
+      {/* Requirements */}
+      {log.requirements && (
+        <details className="mb-3 group">
+          <summary className="text-[10px] text-slate-600 font-mono cursor-pointer hover:text-slate-400 transition-colors list-none flex items-center gap-1">
+            <span className="group-open:rotate-90 transition-transform inline-block">
+              ▶
+            </span>{" "}
+            Requirements
+          </summary>
+          <p className="text-[11px] text-slate-500 font-mono leading-relaxed mt-1.5 pl-3 border-l border-slate-700">
+            {log.requirements}
+          </p>
+        </details>
+      )}
+
+      {/* Meta row */}
+      <div className="flex flex-wrap gap-3 items-center mb-3">
+        <span className="text-[11px] text-amber-400 font-mono">
+          ⬡ {log.assignedTaskPoints} pts
+        </span>
+        <span className="text-[11px] text-blue-400 font-mono">
+          ⏱ {log.deadlineDays}d window
+        </span>
+        {log.assignedAt && (
+          <span className="text-[10px] text-slate-600 font-mono">
+            Claimed {fmtDate(log.assignedAt)}
+          </span>
+        )}
+        {log.task_status === "assigned" && log.deadlineAt && (
+          <span
+            className={`text-[11px] font-bold font-mono ${daysLeft(log.deadlineAt) <= 0 ? "text-red-400" : daysLeft(log.deadlineAt) <= 2 ? "text-orange-400" : "text-slate-400"}`}
+          >
+            {daysLeft(log.deadlineAt) <= 0
+              ? "⚠ Overdue"
+              : `⏳ ${daysLeft(log.deadlineAt)}d remaining`}
+          </span>
+        )}
+        {log.task_status === "completed" && log.closedAt && (
+          <span className="text-[10px] text-emerald-500 font-mono">
+            ✓ Closed {fmtDate(log.closedAt)}
+          </span>
+        )}
+        {log.task_status === "terminated" && log.closedAt && (
+          <span className="text-[10px] text-red-400 font-mono">
+            ✕ Terminated {fmtDate(log.closedAt)}
+          </span>
+        )}
+      </div>
+
+      {/* Links */}
+      <div className="flex gap-4 items-center mb-4">
+        <a
+          href={log.githubIssueLink}
+          target="_blank"
+          rel="noreferrer"
+          className="text-[11px] text-blue-400 font-mono hover:text-blue-300 transition-colors no-underline"
+        >
+          ⌥ Issue ↗
+        </a>
+        {log.githubPrLink && (
+          <a
+            href={log.githubPrLink}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[11px] text-emerald-400 font-mono hover:text-emerald-300 transition-colors no-underline"
+          >
+            ⌥ PR ↗
+          </a>
+        )}
+        {log.closureNote && (
+          <span
+            className="text-[10px] text-slate-600 font-mono truncate max-w-[200px]"
+            title={log.closureNote}
+          >
+            Note: {log.closureNote}
+          </span>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2 flex-wrap pt-3 border-t border-slate-800/60">
+        {/* Publish / Unpublish — only for open logs */}
+        {log.task_status === "open" && (
+          <Btn
+            variant={log.isPublished ? "warn" : "blue"}
+            small
+            onClick={() => onPublish(log._id, log.isPublished)}
+          >
+            {log.isPublished ? "Unpublish" : "↑ Publish"}
+          </Btn>
+        )}
+
+        {/* Edit — only open/unpublished */}
+        {log.task_status === "open" && (
+          <Btn variant="secondary" small onClick={() => onEdit(log)}>
+            Edit
+          </Btn>
+        )}
+
+        {/* Close — assigned logs */}
+        {log.task_status === "assigned" && (
+          <Btn variant="success" small onClick={() => onClose(log)}>
+            ✓ Close
+          </Btn>
+        )}
+
+        {/* Terminate — open or assigned */}
+        {(log.task_status === "open" || log.task_status === "assigned") && (
+          <Btn variant="danger" small onClick={() => onTerminate(log)}>
+            Terminate
+          </Btn>
+        )}
+
+        {/* Reopen — terminated only */}
+        {log.task_status === "terminated" && (
+          <Btn variant="success" small onClick={() => onReopen(log)}>
+            ↺ Reopen
+          </Btn>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ─── WORKFLOW INSIGHT ─────────────────────────────────────────────────────────
 const WorkflowInsight = ({ project }) => {
   const allLogs = project.logs ?? [];
   const completed = allLogs.filter((l) => l.task_status === "completed");
+  const assigned = allLogs.filter((l) => l.task_status === "assigned");
+  const terminated = allLogs.filter((l) => l.task_status === "terminated");
+
   const lanes = {};
   project.contributors?.forEach((c) => {
     lanes[c.name] = { ...c, logs: [] };
@@ -1138,420 +1266,234 @@ const WorkflowInsight = ({ project }) => {
     (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
   );
 
+  const statusColor = {
+    open: "#3a9de8",
+    assigned: "#fbbf24",
+    completed: "#4ade80",
+    terminated: "#f87171",
+  };
+
   return (
-    <div style={{ marginTop: 32 }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 24,
-        }}
-      >
-        <div
-          style={{
-            width: 4,
-            height: 28,
-            background: "#e85d3a",
-            borderRadius: 2,
-          }}
-        />
-        <h2
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: 18,
-            fontWeight: 800,
-            color: "#f0f4ff",
-            margin: 0,
-          }}
-        >
-          Workflow Insight
-        </h2>
-        <div style={{ flex: 1, height: 1, background: "#2a3045" }} />
-        <Badge color="#e85d3a">
-          {completed.length}/{allLogs.length} done
-        </Badge>
+    <div className="space-y-6 mt-2">
+      {/* Summary stats */}
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          { label: "Total", value: allLogs.length, color: "#8892a4" },
+          { label: "Assigned", value: assigned.length, color: "#fbbf24" },
+          { label: "Completed", value: completed.length, color: "#4ade80" },
+          { label: "Terminated", value: terminated.length, color: "#f87171" },
+        ].map((s) => (
+          <div
+            key={s.label}
+            className="bg-[#0c0f18] border border-slate-800 rounded-xl p-4 text-center"
+          >
+            <div
+              className="text-2xl font-extrabold font-display"
+              style={{ color: s.color }}
+            >
+              {s.value}
+            </div>
+            <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest mt-1">
+              {s.label}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Contributor Lanes */}
-      <div
-        style={{
-          background: "#0c0f18",
-          border: "1px solid #2a3045",
-          borderRadius: 14,
-          padding: 24,
-          marginBottom: 20,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 12,
-            color: "#e85d3a",
-            fontFamily: "'DM Mono', monospace",
-            marginBottom: 18,
-            letterSpacing: "0.06em",
-          }}
-        >
-          ◆ CONTRIBUTOR LANES
-        </div>
-        {Object.values(lanes).map((stu) => {
-          const contrib = stu.projectWiseContribution?.[0];
-          const pts = stu.logs
-            .filter((l) => l.task_status === "completed")
-            .reduce((a, l) => a + l.assignedTaskPoints, 0);
-          return (
-            <div key={stu._id} style={{ marginBottom: 20 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  marginBottom: 10,
-                }}
-              >
-                <Avatar name={stu.name} size={28} />
-                <span
-                  style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: "#f0f4ff",
-                  }}
-                >
-                  {stu.name}
-                </span>
-                {contrib && <Badge color="#9c3ae8">{contrib.role}</Badge>}
-                <span
-                  style={{
-                    marginLeft: "auto",
-                    fontSize: 12,
-                    color: "#fbbf24",
-                    fontFamily: "'DM Mono', monospace",
-                  }}
-                >
-                  ⬡ {pts} pts
-                </span>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  gap: 8,
-                  flexWrap: "wrap",
-                  paddingLeft: 38,
-                }}
-              >
-                {stu.logs.length === 0 ? (
-                  <span
-                    style={{
-                      fontSize: 11,
-                      color: "#4a5568",
-                      fontFamily: "'DM Mono', monospace",
-                    }}
-                  >
-                    No tasks assigned
+      {/* Contributor lanes */}
+      <div className="bg-[#0c0f18] border border-slate-800 rounded-2xl p-6">
+        <SectionLabel color="#e85d3a">Contributor Lanes</SectionLabel>
+        <div className="space-y-5">
+          {Object.values(lanes).map((stu) => {
+            const contrib = stu.projectWiseContribution?.[0];
+            const pts = stu.logs
+              .filter((l) => l.task_status === "completed")
+              .reduce((a, l) => a + l.assignedTaskPoints, 0);
+            return (
+              <div key={stu._id}>
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <Avatar name={stu.name} size={26} />
+                  <span className="text-[12px] font-bold text-slate-200 font-display">
+                    {stu.name}
                   </span>
-                ) : (
-                  stu.logs.map((log, i) => (
-                    <div
-                      key={log._id}
-                      style={{ display: "flex", alignItems: "center" }}
-                    >
-                      <div
-                        style={{
-                          background:
-                            log.task_status === "completed"
-                              ? "#1a3a2a"
-                              : "#2a2a1a",
-                          border: `1px solid ${log.task_status === "completed" ? "#4ade8050" : "#fbbf2450"}`,
-                          borderRadius: 8,
-                          padding: "8px 14px",
-                          fontSize: 12,
-                          color:
-                            log.task_status === "completed"
-                              ? "#4ade80"
-                              : "#fbbf24",
-                          fontFamily: "'DM Mono', monospace",
-                          maxWidth: 200,
-                        }}
-                      >
+                  {contrib && <Badge color="#9c3ae8">{contrib.role}</Badge>}
+                  <span className="ml-auto text-[11px] text-amber-400 font-mono">
+                    ⬡ {pts} pts
+                  </span>
+                </div>
+                <div className="flex gap-2 flex-wrap pl-9">
+                  {stu.logs.length === 0 ? (
+                    <span className="text-[10px] text-slate-700 font-mono">
+                      No tasks assigned
+                    </span>
+                  ) : (
+                    stu.logs.map((log, i) => (
+                      <div key={log._id} className="flex items-center">
                         <div
+                          className="rounded-lg px-3 py-2 text-[11px] font-mono max-w-[180px]"
                           style={{
-                            fontWeight: 700,
-                            marginBottom: 2,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
+                            background: `${statusColor[log.task_status]}18`,
+                            border: `1px solid ${statusColor[log.task_status]}30`,
+                            color: statusColor[log.task_status],
                           }}
                         >
-                          {log.task_status === "completed" ? "✓ " : "◌ "}
-                          {log.taskTitle.slice(0, 24)}
-                          {log.taskTitle.length > 24 ? "…" : ""}
+                          <div className="font-bold truncate">
+                            {log.task_status === "completed"
+                              ? "✓ "
+                              : log.task_status === "terminated"
+                                ? "✕ "
+                                : "◌ "}
+                            {log.taskTitle.slice(0, 22)}
+                            {log.taskTitle.length > 22 ? "…" : ""}
+                          </div>
+                          <div className="text-[9px] opacity-60 mt-0.5">
+                            {log.assignedTaskPoints}pts ·{" "}
+                            {fmtDate(log.createdAt)}
+                          </div>
                         </div>
-                        <div style={{ fontSize: 10, opacity: 0.7 }}>
-                          {log.assignedTaskPoints} pts ·{" "}
-                          {fmtDate(log.createdAt)}
-                        </div>
+                        {i < stu.logs.length - 1 && (
+                          <div className="w-4 h-px bg-slate-700 mx-1" />
+                        )}
                       </div>
-                      {i < stu.logs.length - 1 && (
-                        <div
-                          style={{
-                            width: 20,
-                            height: 1,
-                            background: "#2a3045",
-                          }}
-                        />
-                      )}
-                    </div>
-                  ))
-                )}
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* Timeline */}
-      <div
-        style={{
-          background: "#0c0f18",
-          border: "1px solid #2a3045",
-          borderRadius: 14,
-          padding: 24,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 12,
-            color: "#3a9de8",
-            fontFamily: "'DM Mono', monospace",
-            marginBottom: 18,
-            letterSpacing: "0.06em",
-          }}
-        >
-          ◆ CHRONOLOGICAL TIMELINE
-        </div>
-        <div style={{ position: "relative", paddingLeft: 28 }}>
-          <div
-            style={{
-              position: "absolute",
-              left: 9,
-              top: 0,
-              bottom: 0,
-              width: 2,
-              background: "#1e2330",
-              borderRadius: 2,
-            }}
-          />
-          {timeline.length === 0 && (
-            <p
-              style={{
-                color: "#4a5568",
-                fontFamily: "'DM Mono', monospace",
-                fontSize: 12,
-              }}
-            >
-              No logs yet.
-            </p>
-          )}
-          {timeline.map((log, i) => (
-            <div
-              key={log._id}
-              style={{
-                position: "relative",
-                marginBottom: i < timeline.length - 1 ? 20 : 0,
-              }}
-            >
+      <div className="bg-[#0c0f18] border border-slate-800 rounded-2xl p-6">
+        <SectionLabel color="#3a9de8">Chronological Timeline</SectionLabel>
+        <div className="relative pl-6">
+          <div className="absolute left-2 top-0 bottom-0 w-0.5 bg-slate-800 rounded-full" />
+          {timeline.length === 0 ? (
+            <p className="text-[11px] text-slate-700 font-mono">No logs yet.</p>
+          ) : (
+            timeline.map((log, i) => (
               <div
-                style={{
-                  position: "absolute",
-                  left: -28,
-                  top: 4,
-                  width: 12,
-                  height: 12,
-                  borderRadius: "50%",
-                  background:
-                    log.task_status === "completed" ? "#4ade80" : "#fbbf24",
-                  border: "2px solid #0c0f18",
-                  boxShadow: `0 0 8px ${log.task_status === "completed" ? "#4ade8060" : "#fbbf2460"}`,
-                }}
-              />
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                }}
+                key={log._id}
+                className={`relative ${i < timeline.length - 1 ? "mb-5" : ""}`}
               >
-                <div>
-                  <div
-                    style={{
-                      fontFamily: "'Syne', sans-serif",
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: "#f0f4ff",
-                    }}
-                  >
-                    {log.taskTitle}
+                <div
+                  className="absolute -left-[22px] top-1 w-3 h-3 rounded-full border-2 border-[#0c0f18]"
+                  style={{
+                    background: statusColor[log.task_status],
+                    boxShadow: `0 0 8px ${statusColor[log.task_status]}60`,
+                  }}
+                />
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <div className="text-[12px] font-bold text-slate-100 font-display mb-1">
+                      {log.taskTitle}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {log.task_contributor ? (
+                        <div className="flex items-center gap-1">
+                          <Avatar name={log.task_contributor} size={12} />
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {log.task_contributor}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+                          Unassigned
+                        </span>
+                      )}
+                      <span className="text-[10px] text-slate-600 font-mono">
+                        · {fmtDate(log.createdAt)}
+                      </span>
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "#8892a4",
-                      fontFamily: "'DM Mono', monospace",
-                      marginTop: 2,
-                    }}
-                  >
-                    {log.task_contributor} · {fmtDate(log.createdAt)}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-[10px] text-amber-400 font-mono">
+                      ⬡ {log.assignedTaskPoints}pt
+                    </span>
+                    <StatusPill status={log.task_status} />
                   </div>
-                </div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      color: "#fbbf24",
-                      fontFamily: "'DM Mono', monospace",
-                    }}
-                  >
-                    ⬡ {log.assignedTaskPoints}pt
-                  </span>
-                  <Pill type={log.task_status}>{log.task_status}</Pill>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-// ─── Project View ─────────────────────────────────────────────────────────────
+// ─── PROJECT VIEW ─────────────────────────────────────────────────────────────
 const ProjectView = ({
   project,
   onEdit,
   onCreateLog,
   onCloseLog,
   onViewStudent,
+  onLogAction,
 }) => {
   const [tab, setTab] = useState("overview");
-  const [selectedLog, setSelectedLog] = useState(null);
+  const [logFilter, setLogFilter] = useState("all");
+  const [editingLog, setEditingLog] = useState(null);
+  const [closingLog, setClosingLog] = useState(null);
+  const [terminatingLog, setTerminatingLog] = useState(null);
+  const [reopeningLog, setReopeningLog] = useState(null);
+
   const TABS = ["overview", "problem", "students", "logs", "workflow"];
 
+  const filteredLogs = (project.logs || []).filter((l) => {
+    if (logFilter === "all") return true;
+    return l.task_status === logFilter;
+  });
+
+  const logCounts = {
+    all: (project.logs || []).length,
+    open: (project.logs || []).filter((l) => l.task_status === "open").length,
+    assigned: (project.logs || []).filter((l) => l.task_status === "assigned")
+      .length,
+    completed: (project.logs || []).filter((l) => l.task_status === "completed")
+      .length,
+    terminated: (project.logs || []).filter(
+      (l) => l.task_status === "terminated",
+    ).length,
+  };
+
   return (
-    <div
-      style={{
-        background: "#0f1219",
-        border: "1px solid #2a3045",
-        borderRadius: 16,
-        overflow: "hidden",
-      }}
-    >
-      {/* Header */}
+    <div className="bg-[#0f1219] border border-slate-800 rounded-2xl overflow-hidden">
+      {/* ── Header ── */}
       <div
+        className="px-7 pt-6 pb-5 relative overflow-hidden"
         style={{
-          padding: "24px 28px",
           background: "linear-gradient(135deg, #131825 0%, #0f1219 100%)",
-          borderBottom: "1px solid #2a3045",
-          position: "relative",
-          overflow: "hidden",
+          borderBottom: "1px solid #1e2330",
         }}
       >
+        {/* decorative circles */}
         <div
-          style={{
-            position: "absolute",
-            right: -20,
-            top: -20,
-            width: 160,
-            height: 160,
-            borderRadius: "50%",
-            background: "#e85d3a08",
-            border: "1px solid #e85d3a15",
-          }}
+          className="absolute -right-5 -top-5 w-40 h-40 rounded-full"
+          style={{ background: "#e85d3a08", border: "1px solid #e85d3a15" }}
         />
         <div
-          style={{
-            position: "absolute",
-            right: 20,
-            top: 20,
-            width: 80,
-            height: 80,
-            borderRadius: "50%",
-            background: "#e85d3a12",
-          }}
+          className="absolute right-5 top-5 w-20 h-20 rounded-full"
+          style={{ background: "#e85d3a10" }}
         />
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            position: "relative",
-          }}
-        >
-          <div style={{ flex: 1 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                marginBottom: 10,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 12,
-                  color: "#e85d3a",
-                  background: "#e85d3a15",
-                  padding: "3px 10px",
-                  borderRadius: 4,
-                  border: "1px solid #e85d3a30",
-                }}
-              >
+
+        <div className="relative flex justify-between items-start gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2.5 flex-wrap mb-2.5">
+              <span className="text-[11px] font-mono text-[#e85d3a] bg-[#e85d3a15] px-2.5 py-0.5 rounded border border-[#e85d3a30]">
                 {project.projectID}
               </span>
-              <span
-                style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 12,
-                  color: "#8892a4",
-                }}
-              >
-                ↔
-              </span>
-              <span
-                style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 12,
-                  color: "#3a9de8",
-                  background: "#3a9de815",
-                  padding: "3px 10px",
-                  borderRadius: 4,
-                  border: "1px solid #3a9de830",
-                }}
-              >
+              <span className="text-slate-600 font-mono text-xs">↔</span>
+              <span className="text-[11px] font-mono text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
                 {project.problem?.problemID}
               </span>
-              {project.is_blocked && <Pill type="blocked">Blocked</Pill>}
+              {project.is_blocked && <StatusPill status="blocked" />}
             </div>
-            <h2
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: 20,
-                fontWeight: 800,
-                color: "#f0f4ff",
-                margin: "0 0 10px",
-              }}
-            >
+            <h2 className="text-[18px] font-extrabold text-slate-100 font-display mb-2.5 leading-tight">
               {project.problem?.title}
             </h2>
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                flexWrap: "wrap",
-                marginBottom: 14,
-              }}
-            >
+            <div className="flex gap-2 flex-wrap mb-4">
               <Badge color="#9c3ae8">{project.problem?.theme}</Badge>
               <Badge color="#3a9de8">{project.problem?.category}</Badge>
               {project.problem?.tags?.map((t) => (
@@ -1562,7 +1504,7 @@ const ProjectView = ({
             </div>
             <ProgressBar value={project.projectProgressRate} />
           </div>
-          <div style={{ display: "flex", gap: 10, marginLeft: 20 }}>
+          <div className="flex gap-2 flex-shrink-0">
             <Btn variant="secondary" small onClick={() => onCreateLog(project)}>
               + Log
             </Btn>
@@ -1571,7 +1513,9 @@ const ProjectView = ({
             </Btn>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 24, marginTop: 20 }}>
+
+        {/* Quick stats */}
+        <div className="flex gap-6 mt-5">
           {[
             {
               label: "Contributors",
@@ -1584,250 +1528,226 @@ const ProjectView = ({
               color: "#9c3ae8",
             },
             {
+              label: "Assigned",
+              value: (project.logs || []).filter(
+                (l) => l.task_status === "assigned",
+              ).length,
+              color: "#fbbf24",
+            },
+            {
               label: "Completed",
-              value:
-                project.logs?.filter((l) => l.task_status === "completed")
-                  .length ?? 0,
+              value: (project.logs || []).filter(
+                (l) => l.task_status === "completed",
+              ).length,
               color: "#4ade80",
             },
             {
               label: "Points",
               value: totalPoints(project.logs ?? []),
-              color: "#fbbf24",
+              color: "#e85d3a",
             },
           ].map((s) => (
-            <div key={s.label} style={{ textAlign: "center" }}>
+            <div key={s.label} className="text-center">
               <div
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: 22,
-                  fontWeight: 800,
-                  color: s.color,
-                }}
+                className="text-xl font-extrabold font-display"
+                style={{ color: s.color }}
               >
                 {s.value}
               </div>
-              <div
-                style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 10,
-                  color: "#8892a4",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
+              <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest mt-0.5">
                 {s.label}
               </div>
             </div>
           ))}
         </div>
+
+        {/* Resource / Community links */}
+        {(project.resourcesLink || project.communityLink) && (
+          <div className="flex gap-3 mt-4 flex-wrap">
+            {project.resourcesLink && (
+              <a
+                href={project.resourcesLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-950/40 border border-amber-500/20 rounded-lg text-[11px] text-amber-400 font-mono hover:bg-amber-950/60 transition-colors no-underline"
+              >
+                📁 Resources ↗
+              </a>
+            )}
+            {project.communityLink && (
+              <a
+                href={project.communityLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-950/40 border border-emerald-500/20 rounded-lg text-[11px] text-emerald-400 font-mono hover:bg-emerald-950/60 transition-colors no-underline"
+              >
+                💬 Community ↗
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Tabs */}
-      <div
-        style={{
-          display: "flex",
-          borderBottom: "1px solid #2a3045",
-          padding: "0 28px",
-          overflowX: "auto",
-        }}
-      >
+      {/* ── Tabs ── */}
+      <div className="flex border-b border-slate-800 px-7 overflow-x-auto">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "14px 16px",
-              fontSize: 12,
-              fontWeight: 700,
-              fontFamily: "'DM Mono', monospace",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              color: tab === t ? "#e85d3a" : "#8892a4",
-              borderBottom:
-                tab === t ? "2px solid #e85d3a" : "2px solid transparent",
-              marginBottom: -1,
-              whiteSpace: "nowrap",
-              transition: "color 0.2s",
-            }}
+            className={`
+              px-4 py-3.5 text-[11px] font-bold font-mono uppercase tracking-widest cursor-pointer
+              border-b-2 transition-colors whitespace-nowrap bg-transparent
+              ${tab === t ? "text-[#e85d3a] border-[#e85d3a]" : "text-slate-600 border-transparent hover:text-slate-400"}
+            `}
+            style={{ marginBottom: -1 }}
           >
             {t}
+            {t === "logs" && (
+              <span className="ml-1.5 text-[9px] opacity-60">
+                ({logCounts.all})
+              </span>
+            )}
           </button>
         ))}
       </div>
 
-      <div style={{ padding: "28px" }}>
-        {/* Overview */}
+      {/* ── Tab Content ── */}
+      <div className="p-7">
+        {/* OVERVIEW */}
         {tab === "overview" && (
           <div>
-            <p
-              style={{
-                fontSize: 14,
-                color: "#c4cedf",
-                fontFamily: "'DM Mono', monospace",
-                lineHeight: 1.7,
-                marginBottom: 24,
-              }}
-            >
+            <p className="text-[13px] text-slate-400 font-mono leading-relaxed mb-6">
               {project.projectDescription}
             </p>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 16,
-                marginBottom: 20,
-              }}
-            >
-              <a
-                href={project.githubRepoLink}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  background: "#131825",
-                  border: "1px solid #2a3045",
-                  borderRadius: 10,
-                  padding: "14px 16px",
-                  textDecoration: "none",
-                }}
-              >
-                <span style={{ fontSize: 20 }}>⌥</span>
-                <div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "#8892a4",
-                      fontFamily: "'DM Mono', monospace",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
+            <div className="grid grid-cols-2 gap-4 mb-5">
+              {[
+                {
+                  label: "GitHub Repo",
+                  href: project.githubRepoLink,
+                  icon: "⌥",
+                  subLabel: "View Repository ↗",
+                  color: "#3a9de8",
+                  active: true,
+                },
+                {
+                  label: "Live Demo",
+                  href: project.liveHostedLink,
+                  icon: "◉",
+                  subLabel: project.liveHostedLink
+                    ? "Open Live ↗"
+                    : "Not deployed yet",
+                  color: "#4ade80",
+                  active: !!project.liveHostedLink,
+                },
+              ].map((lnk) =>
+                lnk.active ? (
+                  <a
+                    key={lnk.label}
+                    href={lnk.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-xl p-4 no-underline hover:border-slate-700 transition-colors"
                   >
-                    GitHub Repo
-                  </div>
+                    <span className="text-lg">{lnk.icon}</span>
+                    <div>
+                      <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+                        {lnk.label}
+                      </div>
+                      <div
+                        className="text-[11px] font-mono mt-0.5"
+                        style={{ color: lnk.color }}
+                      >
+                        {lnk.subLabel}
+                      </div>
+                    </div>
+                  </a>
+                ) : (
                   <div
-                    style={{
-                      fontSize: 12,
-                      color: "#3a9de8",
-                      fontFamily: "'DM Mono', monospace",
-                      marginTop: 2,
-                    }}
+                    key={lnk.label}
+                    className="flex items-center gap-3 bg-slate-900 border border-dashed border-slate-800 rounded-xl p-4 opacity-40"
                   >
-                    View Repository ↗
-                  </div>
-                </div>
-              </a>
-              {project.liveHostedLink ? (
-                <a
-                  href={project.liveHostedLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    background: "#131825",
-                    border: "1px solid #2a3045",
-                    borderRadius: 10,
-                    padding: "14px 16px",
-                    textDecoration: "none",
-                  }}
-                >
-                  <span style={{ fontSize: 20 }}>◉</span>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: "#8892a4",
-                        fontFamily: "'DM Mono', monospace",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                      }}
-                    >
-                      Live Demo
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: "#4ade80",
-                        fontFamily: "'DM Mono', monospace",
-                        marginTop: 2,
-                      }}
-                    >
-                      Open Live ↗
+                    <span className="text-lg">{lnk.icon}</span>
+                    <div>
+                      <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+                        {lnk.label}
+                      </div>
+                      <div className="text-[11px] text-slate-600 font-mono mt-0.5">
+                        {lnk.subLabel}
+                      </div>
                     </div>
                   </div>
-                </a>
-              ) : (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    background: "#131825",
-                    border: "1px dashed #2a3045",
-                    borderRadius: 10,
-                    padding: "14px 16px",
-                    opacity: 0.5,
-                  }}
-                >
-                  <span style={{ fontSize: 20 }}>◌</span>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: "#8892a4",
-                        fontFamily: "'DM Mono', monospace",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                      }}
-                    >
-                      Live Demo
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: "#4a5568",
-                        fontFamily: "'DM Mono', monospace",
-                        marginTop: 2,
-                      }}
-                    >
-                      Not deployed yet
-                    </div>
-                  </div>
-                </div>
+                ),
               )}
             </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: "#8892a4",
-                fontFamily: "'DM Mono', monospace",
-              }}
-            >
+
+            {/* Resources & Community */}
+            <div className="grid grid-cols-2 gap-4 mb-5">
+              {[
+                {
+                  label: "Resources",
+                  href: project.resourcesLink,
+                  icon: "📁",
+                  color: "#fbbf24",
+                },
+                {
+                  label: "Community",
+                  href: project.communityLink,
+                  icon: "💬",
+                  color: "#4ade80",
+                },
+              ].map((lnk) =>
+                lnk.href ? (
+                  <a
+                    key={lnk.label}
+                    href={lnk.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-xl p-4 no-underline hover:border-slate-700 transition-colors"
+                  >
+                    <span className="text-lg">{lnk.icon}</span>
+                    <div>
+                      <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+                        {lnk.label}
+                      </div>
+                      <div
+                        className="text-[11px] font-mono mt-0.5"
+                        style={{ color: lnk.color }}
+                      >
+                        Open ↗
+                      </div>
+                    </div>
+                  </a>
+                ) : (
+                  <div
+                    key={lnk.label}
+                    className="flex items-center gap-3 bg-slate-900 border border-dashed border-slate-800 rounded-xl p-4 opacity-30"
+                  >
+                    <span className="text-lg">{lnk.icon}</span>
+                    <div>
+                      <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+                        {lnk.label}
+                      </div>
+                      <div className="text-[11px] text-slate-600 font-mono mt-0.5">
+                        Not set
+                      </div>
+                    </div>
+                  </div>
+                ),
+              )}
+            </div>
+
+            <p className="text-[10px] text-slate-700 font-mono">
               Created {fmtDate(project.createdAt)} ·{" "}
               {project.contributors?.length} contributors ·{" "}
               {project.logs?.length} task logs
-            </div>
+            </p>
           </div>
         )}
 
-        {/* Problem */}
+        {/* PROBLEM */}
         {tab === "problem" && (
           <div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 14,
-                marginBottom: 20,
-              }}
-            >
+            <div className="grid grid-cols-2 gap-3 mb-5">
               {[
                 ["Problem ID", project.problem?.problemID, "#e85d3a"],
                 ["Title", project.problem?.title, "#f0f4ff"],
@@ -1850,72 +1770,29 @@ const ProjectView = ({
               ].map(([k, v, c]) => (
                 <div
                   key={k}
-                  style={{
-                    background: "#0c0f18",
-                    border: "1px solid #2a3045",
-                    borderRadius: 8,
-                    padding: "12px 16px",
-                  }}
+                  className="bg-[#0c0f18] border border-slate-800 rounded-xl p-3.5"
                 >
-                  <div
-                    style={{
-                      fontSize: 10,
-                      color: "#8892a4",
-                      fontFamily: "'DM Mono', monospace",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
+                  <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
                     {k}
                   </div>
                   <div
-                    style={{
-                      fontSize: 13,
-                      color: c,
-                      fontFamily: "'DM Mono', monospace",
-                      marginTop: 4,
-                      fontWeight: 600,
-                    }}
+                    className="text-[12px] font-semibold font-mono mt-1"
+                    style={{ color: c }}
                   >
                     {v}
                   </div>
                 </div>
               ))}
             </div>
-            <div
-              style={{
-                background: "#0c0f18",
-                border: "1px solid #2a3045",
-                borderRadius: 10,
-                padding: "16px 20px",
-                marginBottom: 16,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 10,
-                  color: "#8892a4",
-                  fontFamily: "'DM Mono', monospace",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: 8,
-                }}
-              >
+            <div className="bg-[#0c0f18] border border-slate-800 rounded-xl p-5 mb-4">
+              <div className="text-[10px] text-slate-600 font-mono uppercase tracking-widest mb-2">
                 Description
               </div>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "#c4cedf",
-                  fontFamily: "'DM Mono', monospace",
-                  lineHeight: 1.7,
-                  margin: 0,
-                }}
-              >
+              <p className="text-[12px] text-slate-400 font-mono leading-relaxed">
                 {project.problem?.description}
               </p>
             </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className="flex gap-2 flex-wrap">
               {project.problem?.tags?.map((t) => (
                 <Badge key={t} color="#3a9de8">
                   {t}
@@ -1925,33 +1802,24 @@ const ProjectView = ({
           </div>
         )}
 
-        {/* Students */}
+        {/* STUDENTS */}
         {tab === "students" && (
           <div>
-            <p
-              style={{
-                fontSize: 12,
-                color: "#8892a4",
-                fontFamily: "'DM Mono', monospace",
-                marginBottom: 20,
-              }}
-            >
+            <p className="text-[11px] text-slate-600 font-mono mb-4">
               {project.contributors?.length} contributor
               {project.contributors?.length !== 1 ? "s" : ""} on this project
             </p>
             <div
+              className="grid grid-cols-1 gap-4"
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                gap: 16,
+                gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))",
               }}
             >
               {project.contributors?.map((stu) => {
                 const contrib = stu.projectWiseContribution?.[0];
-                const stuLogs =
-                  project.logs?.filter(
-                    (l) => l.task_contributor === stu.name,
-                  ) ?? [];
+                const stuLogs = (project.logs || []).filter(
+                  (l) => l.task_contributor === stu.name,
+                );
                 const doneCt = stuLogs.filter(
                   (l) => l.task_status === "completed",
                 ).length;
@@ -1959,81 +1827,27 @@ const ProjectView = ({
                   <div
                     key={stu._id}
                     onClick={() => onViewStudent(stu, project.logs ?? [])}
-                    style={{
-                      background: "#0c0f18",
-                      border: "1px solid #2a3045",
-                      borderRadius: 12,
-                      padding: "18px 20px",
-                      cursor: "pointer",
-                      transition: "border-color 0.2s, transform 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#e85d3a50";
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "#2a3045";
-                      e.currentTarget.style.transform = "translateY(0)";
-                    }}
+                    className="bg-[#0c0f18] border border-slate-800 rounded-xl p-5 cursor-pointer transition-all duration-150 hover:border-[#e85d3a40] hover:-translate-y-0.5"
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 12,
-                        alignItems: "center",
-                        marginBottom: 14,
-                      }}
-                    >
+                    <div className="flex gap-3 items-center mb-3.5">
                       <Avatar name={stu.name} size={40} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontFamily: "'Syne', sans-serif",
-                            fontSize: 14,
-                            fontWeight: 700,
-                            color: "#f0f4ff",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-bold text-slate-100 font-display truncate">
                           {stu.name}
                         </div>
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: "#8892a4",
-                            fontFamily: "'DM Mono', monospace",
-                            marginTop: 2,
-                          }}
-                        >
+                        <div className="text-[10px] text-slate-600 font-mono mt-0.5 truncate">
                           {stu.email}
                         </div>
                       </div>
-                      {stu.isBlocked ? (
-                        <Pill type="blocked">Blocked</Pill>
-                      ) : (
-                        <Pill type="completed">Active</Pill>
-                      )}
+                      <StatusPill
+                        status={stu.isBlocked ? "blocked" : "active"}
+                      />
                     </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 8,
-                        flexWrap: "wrap",
-                        marginBottom: 14,
-                      }}
-                    >
+                    <div className="flex gap-2 flex-wrap mb-3.5">
                       {contrib && <Badge color="#9c3ae8">{contrib.role}</Badge>}
                       <Badge color="#3a9de8">{stu.branch}</Badge>
                     </div>
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr 1fr",
-                        gap: 8,
-                      }}
-                    >
+                    <div className="grid grid-cols-3 gap-2">
                       {[
                         ["Score", contrib?.contributionScore ?? 0, "#e85d3a"],
                         ["Tasks", stuLogs.length, "#3a9de8"],
@@ -2041,31 +1855,15 @@ const ProjectView = ({
                       ].map(([l, v, c]) => (
                         <div
                           key={l}
-                          style={{
-                            textAlign: "center",
-                            background: "#131825",
-                            borderRadius: 6,
-                            padding: "8px 4px",
-                          }}
+                          className="text-center bg-slate-900 rounded-lg py-2"
                         >
                           <div
-                            style={{
-                              fontFamily: "'Syne', sans-serif",
-                              fontSize: 16,
-                              fontWeight: 800,
-                              color: c,
-                            }}
+                            className="text-base font-extrabold font-display"
+                            style={{ color: c }}
                           >
                             {v}
                           </div>
-                          <div
-                            style={{
-                              fontFamily: "'DM Mono', monospace",
-                              fontSize: 9,
-                              color: "#8892a4",
-                              textTransform: "uppercase",
-                            }}
-                          >
+                          <div className="text-[9px] text-slate-600 font-mono uppercase">
                             {l}
                           </div>
                         </div>
@@ -2078,202 +1876,134 @@ const ProjectView = ({
           </div>
         )}
 
-        {/* Logs */}
+        {/* LOGS */}
         {tab === "logs" && (
           <div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 20,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#8892a4",
-                  fontFamily: "'DM Mono', monospace",
-                }}
-              >
-                {project.logs?.length} log
-                {project.logs?.length !== 1 ? "s" : ""} ·{" "}
-                {
-                  project.logs?.filter((l) => l.task_status === "completed")
-                    .length
-                }{" "}
-                completed
+            {/* Filter bar */}
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <div className="flex gap-1 flex-wrap">
+                {Object.entries(logCounts).map(([key, count]) => (
+                  <button
+                    key={key}
+                    onClick={() => setLogFilter(key)}
+                    className={`
+                      px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-widest cursor-pointer transition-all
+                      ${
+                        logFilter === key
+                          ? "bg-[#e85d3a] text-white"
+                          : "bg-slate-900 text-slate-500 border border-slate-800 hover:text-slate-300"
+                      }
+                    `}
+                  >
+                    {key} <span className="opacity-60">({count})</span>
+                  </button>
+                ))}
               </div>
               <Btn variant="success" small onClick={() => onCreateLog(project)}>
-                + Open New Log
+                + New Log
               </Btn>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {project.logs?.map((log) => (
-                <div
-                  key={log._id}
-                  style={{
-                    background: "#0c0f18",
-                    border: `1px solid ${log.task_status === "completed" ? "#4ade8030" : "#fbbf2430"}`,
-                    borderRadius: 12,
-                    padding: "18px 20px",
-                    borderLeft: `3px solid ${log.task_status === "completed" ? "#4ade80" : "#fbbf24"}`,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      gap: 12,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <div>
-                      <div
-                        style={{
-                          fontFamily: "'Syne', sans-serif",
-                          fontSize: 14,
-                          fontWeight: 700,
-                          color: "#f0f4ff",
-                        }}
-                      >
-                        {log.taskTitle}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          color: "#8892a4",
-                          fontFamily: "'DM Mono', monospace",
-                          marginTop: 4,
-                        }}
-                      >
-                        Assigned to{" "}
-                        <span style={{ color: "#c4cedf" }}>
-                          {log.task_contributor}
-                        </span>{" "}
-                        · {fmtDate(log.createdAt)}
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 8,
-                        alignItems: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Pill type={log.task_status}>{log.task_status}</Pill>
-                      {log.task_status === "pending" && (
-                        <Btn
-                          variant="success"
-                          small
-                          onClick={() => setSelectedLog(log)}
-                        >
-                          Close
-                        </Btn>
-                      )}
-                    </div>
-                  </div>
-                  <p
-                    style={{
-                      fontSize: 12,
-                      color: "#8892a4",
-                      fontFamily: "'DM Mono', monospace",
-                      lineHeight: 1.6,
-                      marginBottom: 12,
-                    }}
-                  >
-                    {log.description}
-                  </p>
-                  <div
-                    style={{ display: "flex", gap: 16, alignItems: "center" }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 12,
-                        color: "#fbbf24",
-                        fontFamily: "'DM Mono', monospace",
-                      }}
-                    >
-                      ⬡ {log.assignedTaskPoints} pts
-                    </span>
-                    <a
-                      href={log.githubIssueLink}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{
-                        fontSize: 12,
-                        color: "#3a9de8",
-                        fontFamily: "'DM Mono', monospace",
-                        textDecoration: "none",
-                      }}
-                    >
-                      ⌥ GitHub Issue ↗
-                    </a>
-                    {log.isPublished ? (
-                      <Badge color="#4ade80">Published</Badge>
-                    ) : (
-                      <Badge color="#8892a4">Draft</Badge>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            {selectedLog && (
+
+            {filteredLogs.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-4xl opacity-20 mb-3">◌</div>
+                <p className="text-[12px] text-slate-700 font-mono">
+                  No logs in this category.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {filteredLogs.map((log) => (
+                  <LogCard
+                    key={log._id}
+                    log={log}
+                    projectId={project._id}
+                    onPublish={(logId, isPublished) =>
+                      onLogAction("publish", project._id, logId, {
+                        isPublished,
+                      })
+                    }
+                    onEdit={(l) => setEditingLog(l)}
+                    onClose={(l) => setClosingLog(l)}
+                    onTerminate={(l) => setTerminatingLog(l)}
+                    onReopen={(l) => setReopeningLog(l)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Sub-modals triggered from log cards */}
+            {editingLog && (
+              <EditLogModal
+                log={editingLog}
+                onClose={() => setEditingLog(null)}
+                onUpdate={(form) =>
+                  onLogAction("update", project._id, editingLog._id, form).then(
+                    () => setEditingLog(null),
+                  )
+                }
+              />
+            )}
+            {closingLog && (
               <CloseLogModal
-                log={selectedLog}
-                onClose={() => setSelectedLog(null)}
+                log={closingLog}
+                onClose={() => setClosingLog(null)}
                 onCloseLog={(form) =>
-                  onCloseLog(project._id, selectedLog._id, form)
+                  onLogAction("close", project._id, closingLog._id, form).then(
+                    () => setClosingLog(null),
+                  )
+                }
+              />
+            )}
+            {terminatingLog && (
+              <TerminateLogModal
+                log={terminatingLog}
+                onClose={() => setTerminatingLog(null)}
+                onTerminate={(form) =>
+                  onLogAction(
+                    "terminate",
+                    project._id,
+                    terminatingLog._id,
+                    form,
+                  ).then(() => setTerminatingLog(null))
+                }
+              />
+            )}
+            {reopeningLog && (
+              <ReopenLogModal
+                log={reopeningLog}
+                onClose={() => setReopeningLog(null)}
+                onReopen={(form) =>
+                  onLogAction(
+                    "reopen",
+                    project._id,
+                    reopeningLog._id,
+                    form,
+                  ).then(() => setReopeningLog(null))
                 }
               />
             )}
           </div>
         )}
 
+        {/* WORKFLOW */}
         {tab === "workflow" && <WorkflowInsight project={project} />}
       </div>
     </div>
   );
 };
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// ─── SKELETON ─────────────────────────────────────────────────────────────────
 const SkeletonCard = () => (
-  <div
-    style={{
-      borderRadius: 10,
-      padding: 14,
-      background: "#0c0f18",
-      border: "1px solid #1e2330",
-      marginBottom: 8,
-    }}
-  >
-    {[80, 140, 60].map((w, i) => (
-      <div
-        key={i}
-        style={{
-          height: i === 1 ? 14 : 10,
-          width: w,
-          background: "#1e2330",
-          borderRadius: 4,
-          marginBottom: 8,
-          animation: "pulse 1.5s ease-in-out infinite",
-        }}
-      />
-    ))}
-    <div
-      style={{
-        height: 4,
-        background: "#1e2330",
-        borderRadius: 2,
-        marginTop: 10,
-      }}
-    />
+  <div className="rounded-xl p-4 bg-[#0c0f18] border border-slate-800/50 mb-2.5">
+    <div className="h-2.5 w-20 bg-slate-800 rounded mb-3 animate-pulse" />
+    <div className="h-3.5 w-36 bg-slate-800 rounded mb-2 animate-pulse" />
+    <div className="h-2 w-14 bg-slate-800 rounded mb-3 animate-pulse" />
+    <div className="h-1 bg-slate-800 rounded animate-pulse" />
   </div>
 );
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 const ManageProjects = () => {
   const { axios, adminToken } = useAppContext();
   const navigate = useNavigate();
@@ -2291,13 +2021,15 @@ const ManageProjects = () => {
 
   const showToast = (message, type = "success") => setToast({ message, type });
 
-  // ── Fetch all assigned projects ─────────────────────────────────────────────
+  const authHeader = { Authorization: `Bearer ${adminToken}` };
+
+  // ── Fetch ────────────────────────────────────────────────────────────────────
   const fetchProjects = useCallback(
     async (silent = false) => {
       silent ? setRefreshing(true) : setLoading(true);
       try {
         const { data } = await axios.get("/api/admin/projects", {
-          headers: { Authorization: `Bearer ${adminToken}` },
+          headers: authHeader,
         });
         if (data.success) {
           setProjects(data.projects);
@@ -2320,11 +2052,10 @@ const ManageProjects = () => {
     if (adminToken) fetchProjects();
   }, [adminToken]);
 
-  // ── Refresh single project helper ───────────────────────────────────────────
   const refreshProject = async (projectId) => {
     try {
       const { data } = await axios.get(`/api/admin/projects/${projectId}`, {
-        headers: { Authorization: `Bearer ${adminToken}` },
+        headers: authHeader,
       });
       if (data.success)
         setProjects((prev) =>
@@ -2333,39 +2064,36 @@ const ManageProjects = () => {
     } catch (_) {}
   };
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
+  // ── Project save ─────────────────────────────────────────────────────────────
   const handleSaveProject = async (form) => {
     try {
       const { data } = await axios.put(
         `/api/admin/projects/${editingProject._id}`,
         form,
-        {
-          headers: { Authorization: `Bearer ${adminToken}` },
-        },
+        { headers: authHeader },
       );
       if (data.success) {
         setProjects((prev) =>
           prev.map((p) => (p._id === data.project._id ? data.project : p)),
         );
-        showToast("Project updated successfully.");
+        showToast("Project updated.");
       }
     } catch (err) {
       showToast(err?.response?.data?.message || "Update failed.", "error");
     }
   };
 
+  // ── Create log ───────────────────────────────────────────────────────────────
   const handleCreateLog = async (project, form) => {
     try {
       const { data } = await axios.post(
         `/api/admin/projects/${project._id}/logs`,
         form,
-        {
-          headers: { Authorization: `Bearer ${adminToken}` },
-        },
+        { headers: authHeader },
       );
       if (data.success) {
         await refreshProject(project._id);
-        showToast("Task log opened.");
+        showToast("Log created as draft.");
       }
     } catch (err) {
       showToast(
@@ -2375,18 +2103,50 @@ const ManageProjects = () => {
     }
   };
 
-  const handleCloseLog = async (projectId, logId, form) => {
+  // ── Log lifecycle actions ────────────────────────────────────────────────────
+  const handleLogAction = async (action, projectId, logId, payload = {}) => {
+    const routes = {
+      publish: () =>
+        axios.patch(
+          `/api/admin/projects/${projectId}/logs/${logId}/publish`,
+          {},
+          { headers: authHeader },
+        ),
+      update: () =>
+        axios.patch(`/api/admin/logs/${logId}/update`, payload, {
+          headers: authHeader,
+        }),
+      close: () =>
+        axios.put(`/api/admin/logs/${logId}/close`, payload, {
+          headers: authHeader,
+        }),
+      terminate: () =>
+        axios.patch(`/api/admin/logs/${logId}/terminate`, payload, {
+          headers: authHeader,
+        }),
+      reopen: () =>
+        axios.patch(`/api/admin/logs/${logId}/reopen`, payload, {
+          headers: authHeader,
+        }),
+    };
+
+    const messages = {
+      publish: "Publish state toggled.",
+      update: "Log updated.",
+      close: "Log closed and points awarded.",
+      terminate: "Log terminated.",
+      reopen: "Log reopened and published.",
+    };
+
     try {
-      const { data } = await axios.put(`/api/admin/logs/${logId}/close`, form, {
-        headers: { Authorization: `Bearer ${adminToken}` },
-      });
+      const { data } = await routes[action]();
       if (data.success) {
         await refreshProject(projectId);
-        showToast(data.message || "Log closed and points awarded.");
+        showToast(data.message || messages[action]);
       }
     } catch (err) {
       showToast(
-        err?.response?.data?.message || "Failed to close log.",
+        err?.response?.data?.message || `Action '${action}' failed.`,
         "error",
       );
     }
@@ -2398,127 +2158,63 @@ const ManageProjects = () => {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
+        .font-display { font-family: 'Syne', sans-serif; }
+        .font-mono    { font-family: 'DM Mono', monospace; }
+        @keyframes slideIn { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: #0c0f18; }
         ::-webkit-scrollbar-thumb { background: #2a3045; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #e85d3a; }
         input[type=range] { -webkit-appearance: none; height: 4px; border-radius: 2px; background: #1e2330; outline: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer; border: 2px solid #0c0f18; }
-        @keyframes spin    { to { transform: rotate(360deg); } }
-        @keyframes pulse   { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-        @keyframes slideIn { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        details summary::-webkit-details-marker { display: none; }
       `}</style>
 
       <div
-        style={{
-          minHeight: "100vh",
-          background: "#080c14",
-          color: "#f0f4ff",
-          fontFamily: "'DM Mono', monospace",
-        }}
+        className="min-h-screen font-mono"
+        style={{ background: "#080c14", color: "#f0f4ff" }}
       >
-        {/* ── Top Header ── */}
+        {/* ── Top Nav ── */}
         <div
-          style={{
-            padding: "0 32px",
-            height: 64,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderBottom: "1px solid #1e2330",
-            background: "#0c0f18",
-            position: "sticky",
-            top: 0,
-            zIndex: 100,
-          }}
+          className="sticky top-0 z-[100] flex items-center justify-between px-8 h-16 border-b border-slate-800/80"
+          style={{ background: "#0c0f18" }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                background: "#e85d3a",
-                borderRadius: 8,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 14,
-                fontWeight: 800,
-                fontFamily: "'Syne', sans-serif",
-              }}
-            >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#e85d3a] rounded-lg flex items-center justify-center text-sm font-extrabold font-display text-white">
               I
             </div>
             <div>
-              <div
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: 16,
-                  fontWeight: 800,
-                  color: "#f0f4ff",
-                  letterSpacing: "-0.01em",
-                }}
-              >
+              <div className="text-[15px] font-extrabold text-slate-100 font-display tracking-tight">
                 InterConnect
               </div>
-              <div
-                style={{
-                  fontSize: 10,
-                  color: "#8892a4",
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                }}
-              >
+              <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
                 Admin Portal
               </div>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="flex items-center gap-3">
             <button
               onClick={() => navigate("/")}
-              style={{
-                background: "none",
-                border: "1px solid #1e2330",
-                borderRadius: 8,
-                padding: "7px 14px",
-                color: "#8892a4",
-                fontSize: 12,
-                fontFamily: "'DM Mono', monospace",
-                cursor: "pointer",
-              }}
+              className="px-3.5 py-1.5 rounded-lg text-[11px] font-mono text-slate-500 border border-slate-800 hover:text-slate-300 hover:border-slate-700 transition-colors bg-transparent cursor-pointer"
             >
               ← Dashboard
             </button>
             <button
               onClick={() => fetchProjects(true)}
               disabled={refreshing}
-              style={{
-                background: "#1e2330",
-                border: "1px solid #2a3045",
-                borderRadius: 8,
-                padding: "7px 14px",
-                color: "#8892a4",
-                fontSize: 12,
-                fontFamily: "'DM Mono', monospace",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              }}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[11px] font-mono text-slate-500 bg-slate-900 border border-slate-800 hover:text-slate-300 transition-colors cursor-pointer disabled:opacity-50"
             >
-              {refreshing ? <Spinner size={12} /> : "↻"}{" "}
+              {refreshing ? <Spinner size={11} /> : "↻"}{" "}
               {refreshing ? "Syncing…" : "Sync"}
             </button>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Avatar name="Admin User" size={32} />
+            <div className="flex items-center gap-2">
+              <Avatar name="Admin User" size={30} />
               <div>
-                <div
-                  style={{ fontSize: 12, fontWeight: 700, color: "#f0f4ff" }}
-                >
+                <div className="text-[11px] font-bold text-slate-300">
                   Admin
                 </div>
-                <div style={{ fontSize: 10, color: "#8892a4" }}>
+                <div className="text-[9px] text-slate-600 font-mono">
                   admin@inteconnect.io
                 </div>
               </div>
@@ -2526,135 +2222,77 @@ const ManageProjects = () => {
           </div>
         </div>
 
-        <div style={{ display: "flex", height: "calc(100vh - 64px)" }}>
+        <div className="flex" style={{ height: "calc(100vh - 64px)" }}>
           {/* ── Sidebar ── */}
           <div
-            style={{
-              width: 280,
-              background: "#0c0f18",
-              borderRight: "1px solid #1e2330",
-              padding: "24px 16px",
-              overflowY: "auto",
-              flexShrink: 0,
-            }}
+            className="w-72 flex-shrink-0 border-r border-slate-800/60 overflow-y-auto py-5 px-4"
+            style={{ background: "#0c0f18" }}
           >
-            <div
-              style={{
-                fontSize: 10,
-                color: "#8892a4",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                marginBottom: 16,
-                paddingLeft: 8,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <span>Assigned ({projects.length})</span>
+            <div className="flex items-center justify-between px-2 mb-4">
+              <span className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
+                Assigned ({projects.length})
+              </span>
               {refreshing && <Spinner size={11} />}
             </div>
 
             {loading ? (
               [1, 2, 3].map((i) => <SkeletonCard key={i} />)
             ) : projects.length === 0 ? (
-              <div
-                style={{
-                  padding: "20px 8px",
-                  fontSize: 12,
-                  color: "#4a5568",
-                  fontFamily: "'DM Mono', monospace",
-                  textAlign: "center",
-                }}
-              >
-                No projects assigned yet.
+              <div className="text-center py-10 px-4">
+                <div className="text-3xl opacity-10 mb-2">◌</div>
+                <p className="text-[11px] text-slate-700 font-mono">
+                  No projects assigned.
+                </p>
               </div>
             ) : (
               projects.map((p) => {
                 const isActive = p._id === activeId;
-                const done =
-                  p.logs?.filter((l) => l.task_status === "completed").length ??
-                  0;
+                const done = (p.logs || []).filter(
+                  (l) => l.task_status === "completed",
+                ).length;
+                const assigned = (p.logs || []).filter(
+                  (l) => l.task_status === "assigned",
+                ).length;
                 return (
                   <div
                     key={p._id}
                     onClick={() => setActiveId(p._id)}
-                    style={{
-                      borderRadius: 10,
-                      padding: "14px",
-                      background: isActive ? "#131825" : "transparent",
-                      border: isActive
-                        ? "1px solid #e85d3a40"
-                        : "1px solid transparent",
-                      borderLeft: isActive
-                        ? "3px solid #e85d3a"
-                        : "3px solid transparent",
-                      cursor: "pointer",
-                      marginBottom: 8,
-                      transition: "all 0.2s",
-                    }}
+                    className={`
+                      rounded-xl p-3.5 mb-2 cursor-pointer transition-all duration-150 border-l-2
+                      ${
+                        isActive
+                          ? "bg-[#131825] border border-[#e85d3a30] border-l-[#e85d3a]"
+                          : "bg-transparent border border-transparent border-l-transparent hover:bg-slate-900/40"
+                      }
+                    `}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        marginBottom: 8,
-                      }}
-                    >
+                    <div className="flex justify-between items-start mb-2">
                       <span
-                        style={{
-                          fontSize: 11,
-                          color: isActive ? "#e85d3a" : "#8892a4",
-                          fontFamily: "'DM Mono', monospace",
-                        }}
+                        className={`text-[10px] font-mono ${isActive ? "text-[#e85d3a]" : "text-slate-600"}`}
                       >
                         {p.projectID}
                       </span>
-                      {p.is_blocked && <Pill type="blocked">Blocked</Pill>}
+                      {p.is_blocked && <StatusPill status="blocked" />}
                     </div>
                     <div
-                      style={{
-                        fontFamily: "'Syne', sans-serif",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        color: isActive ? "#f0f4ff" : "#c4cedf",
-                        lineHeight: 1.3,
-                        marginBottom: 10,
-                      }}
+                      className={`text-[12px] font-bold font-display mb-2.5 leading-tight ${isActive ? "text-slate-100" : "text-slate-400"}`}
                     >
                       {p.problem?.title}
                     </div>
-                    <div
-                      style={{
-                        height: 3,
-                        background: "#1e2330",
-                        borderRadius: 2,
-                        marginBottom: 6,
-                        overflow: "hidden",
-                      }}
-                    >
+                    <div className="h-1 bg-slate-800 rounded-full mb-1.5 overflow-hidden">
                       <div
+                        className="h-full rounded-full transition-all duration-500"
                         style={{
-                          height: "100%",
                           width: `${p.projectProgressRate}%`,
                           background: isActive ? "#e85d3a" : "#3a9de8",
-                          borderRadius: 2,
-                          transition: "width 0.5s",
                         }}
                       />
                     </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        fontSize: 10,
-                        color: "#8892a4",
-                      }}
-                    >
+                    <div className="flex justify-between text-[9px] text-slate-700 font-mono">
                       <span>{p.projectProgressRate}%</span>
                       <span>
-                        {done}/{p.logs?.length ?? 0} tasks
+                        {done}/{(p.logs || []).length} done{" "}
+                        {assigned > 0 && `· ${assigned} active`}
                       </span>
                     </div>
                   </div>
@@ -2663,50 +2301,19 @@ const ManageProjects = () => {
             )}
           </div>
 
-          {/* ── Main Content ── */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "32px" }}>
+          {/* ── Main ── */}
+          <div className="flex-1 overflow-y-auto p-8">
             {loading ? (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "60%",
-                  flexDirection: "column",
-                  gap: 16,
-                }}
-              >
+              <div className="flex flex-col items-center justify-center h-3/4 gap-4">
                 <Spinner size={36} />
-                <p
-                  style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: 12,
-                    color: "#8892a4",
-                    letterSpacing: "0.1em",
-                  }}
-                >
+                <p className="text-[11px] text-slate-600 font-mono tracking-widest">
                   Loading projects…
                 </p>
               </div>
             ) : !currentProject ? (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "60%",
-                  flexDirection: "column",
-                  gap: 12,
-                }}
-              >
-                <div style={{ fontSize: 48, opacity: 0.3 }}>◌</div>
-                <p
-                  style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: 13,
-                    color: "#8892a4",
-                  }}
-                >
+              <div className="flex flex-col items-center justify-center h-3/4 gap-3">
+                <div className="text-5xl opacity-10">◌</div>
+                <p className="text-[12px] text-slate-700 font-mono">
                   No project selected.
                 </p>
               </div>
@@ -2715,18 +2322,21 @@ const ManageProjects = () => {
                 project={currentProject}
                 onEdit={setEditingProject}
                 onCreateLog={setCreatingLog}
-                onCloseLog={handleCloseLog}
+                onCloseLog={(pid, lid, form) =>
+                  handleLogAction("close", pid, lid, form)
+                }
                 onViewStudent={(s, logs) => {
                   setViewingStudent(s);
                   setViewingStudentLogs(logs);
                 }}
+                onLogAction={handleLogAction}
               />
             )}
           </div>
         </div>
       </div>
 
-      {/* ── Modals ── */}
+      {/* ── Top-level modals ── */}
       {editingProject && (
         <EditProjectModal
           project={editingProject}

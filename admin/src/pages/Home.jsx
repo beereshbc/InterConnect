@@ -9,125 +9,60 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] },
 });
 
-// ─── Nav ──────────────────────────────────────────────────────────────────────
 const Navbar = ({ onLogout }) => (
   <nav
+    className="sticky top-0 z-[100] flex items-center justify-between px-10 h-16 font-mono"
     style={{
-      position: "sticky",
-      top: 0,
-      zIndex: 100,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      padding: "0 40px",
-      height: 64,
       background: "#0c0f18cc",
       backdropFilter: "blur(12px)",
       borderBottom: "1px solid #1e2330",
     }}
   >
-    {/* Logo */}
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <div className="flex items-center gap-2.5">
       <div
-        style={{
-          width: 36,
-          height: 36,
-          background: "#e85d3a",
-          borderRadius: 10,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 800,
-          fontSize: 16,
-          color: "#fff",
-          boxShadow: "0 0 16px #e85d3a40",
-        }}
+        className="w-9 h-9 rounded-xl flex items-center justify-center font-display font-extrabold text-base text-white"
+        style={{ background: "#e85d3a", boxShadow: "0 0 16px #e85d3a40" }}
       >
         I
       </div>
       <div>
         <div
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: 17,
-            fontWeight: 800,
-            color: "#f0f4ff",
-            letterSpacing: "-0.02em",
-            lineHeight: 1,
-          }}
+          className="font-display text-[17px] font-extrabold leading-none"
+          style={{ color: "#f0f4ff", letterSpacing: "-0.02em" }}
         >
           InterConnect
         </div>
         <div
-          style={{
-            fontSize: 9,
-            color: "#8892a4",
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            lineHeight: 1,
-            marginTop: 2,
-          }}
+          className="font-mono text-[9px] uppercase tracking-widest mt-0.5"
+          style={{ color: "#8892a4" }}
         >
           Admin Portal
         </div>
       </div>
     </div>
-
-    {/* Right */}
-    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+    <div className="flex items-center gap-3">
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 7,
-          padding: "5px 12px",
-          background: "#4ade8014",
-          border: "1px solid #4ade8030",
-          borderRadius: 8,
-        }}
+        className="flex items-center gap-1.5 px-3 py-1 rounded-lg"
+        style={{ background: "#4ade8014", border: "1px solid #4ade8030" }}
       >
         <span
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: "50%",
-            background: "#4ade80",
-            boxShadow: "0 0 6px #4ade80",
-            display: "inline-block",
-          }}
+          className="w-1.5 h-1.5 rounded-full inline-block"
+          style={{ background: "#4ade80", boxShadow: "0 0 6px #4ade80" }}
         />
         <span
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            color: "#4ade80",
-            fontFamily: "'DM Mono', monospace",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-          }}
+          className="font-mono text-[11px] font-bold uppercase tracking-widest"
+          style={{ color: "#4ade80" }}
         >
           System Live
         </span>
       </div>
-
       <button
         onClick={onLogout}
+        className="flex items-center gap-1.5 px-4 py-2 rounded-lg font-mono text-[12px] font-bold cursor-pointer transition-all duration-200"
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 7,
-          padding: "8px 16px",
-          borderRadius: 8,
           background: "#3a1a1a",
           border: "1px solid #f8717140",
           color: "#f87171",
-          fontSize: 12,
-          fontWeight: 700,
-          fontFamily: "'DM Mono', monospace",
-          cursor: "pointer",
-          letterSpacing: "0.04em",
-          transition: "all 0.2s",
         }}
         onMouseEnter={(e) => (e.currentTarget.style.background = "#4a1a1a")}
         onMouseLeave={(e) => (e.currentTarget.style.background = "#3a1a1a")}
@@ -138,7 +73,6 @@ const Navbar = ({ onLogout }) => (
   </nav>
 );
 
-// ─── Action Button ─────────────────────────────────────────────────────────────
 const ActionBtn = ({
   icon,
   label,
@@ -151,18 +85,11 @@ const ActionBtn = ({
     whileHover={{ y: -3, transition: { duration: 0.18 } }}
     whileTap={{ scale: 0.97 }}
     onClick={onClick}
+    className="flex items-center gap-3.5 rounded-xl cursor-pointer transition-all duration-200 min-w-[220px] text-left"
     style={{
-      display: "flex",
-      alignItems: "center",
-      gap: 14,
       padding: "16px 24px",
-      borderRadius: 12,
-      cursor: "pointer",
       background: secondary ? "#0c0f18" : `${accent}18`,
       border: `1px solid ${secondary ? "#1e2330" : `${accent}40`}`,
-      transition: "border-color 0.2s, box-shadow 0.2s",
-      minWidth: 220,
-      textAlign: "left",
     }}
     onMouseEnter={(e) => {
       e.currentTarget.style.borderColor = `${accent}70`;
@@ -174,39 +101,21 @@ const ActionBtn = ({
     }}
   >
     <div
-      style={{
-        width: 42,
-        height: 42,
-        borderRadius: 10,
-        flexShrink: 0,
-        background: `${accent}18`,
-        border: `1px solid ${accent}30`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 18,
-      }}
+      className="w-[42px] h-[42px] rounded-xl flex-shrink-0 flex items-center justify-center text-lg"
+      style={{ background: `${accent}18`, border: `1px solid ${accent}30` }}
     >
       {icon}
     </div>
     <div>
       <div
-        style={{
-          fontFamily: "'Syne', sans-serif",
-          fontSize: 14,
-          fontWeight: 700,
-          color: "#f0f4ff",
-        }}
+        className="font-display text-sm font-bold"
+        style={{ color: "#f0f4ff" }}
       >
         {label}
       </div>
       <div
-        style={{
-          fontFamily: "'DM Mono', monospace",
-          fontSize: 11,
-          color: "#8892a4",
-          marginTop: 2,
-        }}
+        className="font-mono text-[11px] mt-0.5"
+        style={{ color: "#8892a4" }}
       >
         {sublabel}
       </div>
@@ -214,104 +123,61 @@ const ActionBtn = ({
   </motion.button>
 );
 
-// ─── Feature Card ─────────────────────────────────────────────────────────────
 const FeatureCard = ({ icon, title, body, accent, delay }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
-    transition={{ delay, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+    transition={{ delay, duration: 0.45 }}
+    className="relative rounded-2xl overflow-hidden"
     style={{
       background: "#0c0f18",
       border: "1px solid #1e2330",
-      borderRadius: 14,
       padding: "22px 24px",
-      position: "relative",
-      overflow: "hidden",
     }}
   >
     <div
-      style={{
-        position: "absolute",
-        top: -30,
-        right: -30,
-        width: 90,
-        height: 90,
-        borderRadius: "50%",
-        background: `${accent}0a`,
-        filter: "blur(20px)",
-      }}
+      className="absolute -top-8 -right-8 w-[90px] h-[90px] rounded-full pointer-events-none"
+      style={{ background: `${accent}0a`, filter: "blur(20px)" }}
     />
     <div
-      style={{
-        width: 42,
-        height: 42,
-        borderRadius: 10,
-        background: `${accent}14`,
-        border: `1px solid ${accent}25`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 18,
-        marginBottom: 16,
-      }}
+      className="w-[42px] h-[42px] rounded-xl flex items-center justify-center text-lg mb-4"
+      style={{ background: `${accent}14`, border: `1px solid ${accent}25` }}
     >
       {icon}
     </div>
     <div
-      style={{
-        fontFamily: "'Syne', sans-serif",
-        fontSize: 14,
-        fontWeight: 700,
-        color: "#f0f4ff",
-        marginBottom: 8,
-      }}
+      className="font-display text-sm font-bold mb-2"
+      style={{ color: "#f0f4ff" }}
     >
       {title}
     </div>
     <div
-      style={{
-        fontFamily: "'DM Mono', monospace",
-        fontSize: 12,
-        color: "#6b7a99",
-        lineHeight: 1.7,
-      }}
+      className="font-mono text-[12px] leading-relaxed"
+      style={{ color: "#6b7a99" }}
     >
       {body}
     </div>
   </motion.div>
 );
 
-// ─── Stat ─────────────────────────────────────────────────────────────────────
 const StatPill = ({ value, label, color }) => (
-  <div style={{ textAlign: "center" }}>
+  <div className="text-center">
     <div
-      style={{
-        fontFamily: "'Syne', sans-serif",
-        fontSize: 28,
-        fontWeight: 800,
-        color,
-        lineHeight: 1,
-      }}
+      className="font-display font-extrabold leading-none"
+      style={{ fontSize: 28, color }}
     >
       {value}
     </div>
     <div
-      style={{
-        fontFamily: "'DM Mono', monospace",
-        fontSize: 10,
-        color: "#6b7a99",
-        textTransform: "uppercase",
-        letterSpacing: "0.1em",
-        marginTop: 4,
-      }}
+      className="font-mono text-[10px] uppercase tracking-widest mt-1"
+      style={{ color: "#6b7a99" }}
     >
       {label}
     </div>
   </div>
 );
 
-// ─── Home ─────────────────────────────────────────────────────────────────────
 const Home = () => {
   const navigate = useNavigate();
   const { logout } = useAppContext();
@@ -320,63 +186,48 @@ const Home = () => {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
+        .font-display { font-family: 'Syne', sans-serif !important; }
+        .font-mono    { font-family: 'DM Mono', monospace !important; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #080c14; }
         ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #0c0f18; }
-        ::-webkit-scrollbar-thumb { background: #1e2330; border-radius: 3px; }
-        @keyframes floatA { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-18px)} }
-        @keyframes floatB { 0%,100%{transform:translateY(-10px)} 50%{transform:translateY(10px)} }
+        ::-webkit-scrollbar-track  { background: #0c0f18; }
+        ::-webkit-scrollbar-thumb  { background: #1e2330; border-radius: 3px; }
       `}</style>
 
       <div
-        style={{
-          minHeight: "100vh",
-          background: "#080c14",
-          color: "#f0f4ff",
-          fontFamily: "'DM Mono', monospace",
-        }}
+        className="min-h-screen font-mono"
+        style={{ background: "#080c14", color: "#f0f4ff" }}
       >
         {/* Ambient glows */}
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            pointerEvents: "none",
-            zIndex: 0,
-            overflow: "hidden",
-          }}
-        >
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
           <div
+            className="absolute"
             style={{
-              position: "absolute",
               top: -200,
               left: "20%",
               width: 700,
               height: 700,
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, #e85d3a06 0%, transparent 70%)",
+                "radial-gradient(circle,#e85d3a06 0%,transparent 70%)",
             }}
           />
           <div
+            className="absolute"
             style={{
-              position: "absolute",
               bottom: -300,
               right: "5%",
               width: 600,
               height: 600,
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, #3a9de808 0%, transparent 70%)",
+                "radial-gradient(circle,#3a9de808 0%,transparent 70%)",
             }}
           />
-          {/* Grid overlay */}
           <div
+            className="absolute inset-0 opacity-[0.04]"
             style={{
-              position: "absolute",
-              inset: 0,
-              opacity: 0.04,
               backgroundImage:
                 "linear-gradient(#ffffff11 1px,transparent 1px),linear-gradient(90deg,#ffffff11 1px,transparent 1px)",
               backgroundSize: "60px 60px",
@@ -384,66 +235,35 @@ const Home = () => {
           />
         </div>
 
-        <div style={{ position: "relative", zIndex: 1 }}>
+        <div className="relative z-10">
           <Navbar onLogout={logout} />
 
-          {/* ── Hero ── */}
-          <section
-            style={{
-              maxWidth: 900,
-              margin: "0 auto",
-              padding: "80px 40px 60px",
-              textAlign: "center",
-            }}
-          >
-            {/* System badge */}
+          {/* Hero */}
+          <section className="max-w-4xl mx-auto px-10 py-20 pb-16 text-center">
             <motion.div
               {...fadeUp(0)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "6px 18px",
-                background: "#e85d3a14",
-                border: "1px solid #e85d3a30",
-                borderRadius: 100,
-                marginBottom: 28,
-              }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-7"
+              style={{ background: "#e85d3a14", border: "1px solid #e85d3a30" }}
             >
               <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "#e85d3a",
-                  display: "inline-block",
-                }}
+                className="w-1.5 h-1.5 rounded-full inline-block"
+                style={{ background: "#e85d3a" }}
               />
               <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "#e85d3a",
-                  fontFamily: "'DM Mono', monospace",
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                }}
+                className="font-mono text-[11px] font-bold uppercase tracking-widest"
+                style={{ color: "#e85d3a" }}
               >
                 System v2.0 · Operational
               </span>
             </motion.div>
 
-            {/* Headline */}
             <motion.h1
               {...fadeUp(0.06)}
+              className="font-display font-extrabold leading-tight mb-5"
               style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: "clamp(32px, 5.5vw, 58px)",
-                fontWeight: 800,
-                lineHeight: 1.08,
+                fontSize: "clamp(32px,5.5vw,58px)",
                 letterSpacing: "-0.025em",
                 color: "#f0f4ff",
-                marginBottom: 22,
               }}
             >
               Orchestrate the Future of
@@ -451,7 +271,7 @@ const Home = () => {
               <span
                 style={{
                   background:
-                    "linear-gradient(135deg, #e85d3a 0%, #f0944d 50%, #fbbf24 100%)",
+                    "linear-gradient(135deg,#e85d3a 0%,#f0944d 50%,#fbbf24 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                 }}
@@ -460,36 +280,21 @@ const Home = () => {
               </span>
             </motion.h1>
 
-            {/* Subtitle */}
             <motion.p
               {...fadeUp(0.12)}
-              style={{
-                fontSize: 15,
-                color: "#6b7a99",
-                lineHeight: 1.8,
-                maxWidth: 580,
-                margin: "0 auto 40px",
-                fontFamily: "'DM Mono', monospace",
-              }}
+              className="font-mono text-[15px] leading-loose max-w-[580px] mx-auto mb-10"
+              style={{ color: "#6b7a99" }}
             >
               Empower collaboration across domains. Use the{" "}
               <span style={{ color: "#4ade80", fontWeight: 600 }}>
                 central command center
               </span>{" "}
-              to oversee student innovations, manage problem statements, and
-              monitor platform activity in real-time.
+              to oversee student innovations and monitor platform activity.
             </motion.p>
 
-            {/* CTA Buttons */}
             <motion.div
               {...fadeUp(0.18)}
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "center",
-                gap: 14,
-                marginBottom: 56,
-              }}
+              className="flex flex-wrap justify-center gap-3.5 mb-14"
             >
               <ActionBtn
                 icon="◈"
@@ -516,17 +321,12 @@ const Home = () => {
               />
             </motion.div>
 
-            {/* Stats strip */}
             <motion.div
               {...fadeUp(0.24)}
+              className="inline-flex items-center rounded-2xl overflow-hidden"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 0,
                 background: "#0c0f18",
                 border: "1px solid #1e2330",
-                borderRadius: 14,
-                overflow: "hidden",
                 padding: "20px 32px",
                 gap: 0,
               }}
@@ -539,12 +339,13 @@ const Home = () => {
                 { value: "GMIT", label: "Institution", color: "#9c3ae8" },
               ].map((s, i, arr) => (
                 <React.Fragment key={s.label}>
-                  <div style={{ padding: "0 28px" }}>
+                  <div className="px-7">
                     <StatPill {...s} />
                   </div>
                   {i < arr.length - 1 && (
                     <div
-                      style={{ width: 1, height: 40, background: "#1e2330" }}
+                      className="w-px h-10"
+                      style={{ background: "#1e2330" }}
                     />
                   )}
                 </React.Fragment>
@@ -552,95 +353,42 @@ const Home = () => {
             </motion.div>
           </section>
 
-          {/* ── About ── */}
-          <section
-            style={{ maxWidth: 900, margin: "0 auto", padding: "0 40px 60px" }}
-          >
+          {/* About */}
+          <section className="max-w-4xl mx-auto px-10 pb-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              style={{
-                background: "#0c0f18",
-                border: "1px solid #1e2330",
-                borderRadius: 18,
-                padding: "36px 40px",
-                position: "relative",
-                overflow: "hidden",
-              }}
+              className="relative rounded-2xl overflow-hidden p-9"
+              style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
             >
               <div
-                style={{
-                  position: "absolute",
-                  top: -60,
-                  right: -60,
-                  width: 200,
-                  height: 200,
-                  borderRadius: "50%",
-                  background: "#e85d3a05",
-                  filter: "blur(40px)",
-                }}
+                className="absolute -top-14 -right-14 w-48 h-48 rounded-full pointer-events-none"
+                style={{ background: "#e85d3a05", filter: "blur(40px)" }}
               />
               <div
-                style={{
-                  position: "absolute",
-                  bottom: -40,
-                  left: -40,
-                  width: 160,
-                  height: 160,
-                  borderRadius: "50%",
-                  background: "#3a9de806",
-                  filter: "blur(40px)",
-                }}
+                className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full pointer-events-none"
+                style={{ background: "#3a9de806", filter: "blur(40px)" }}
               />
-
-              <div style={{ position: "relative", zIndex: 1 }}>
-                {/* Section label */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    marginBottom: 24,
-                  }}
-                >
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-6">
                   <div
-                    style={{
-                      width: 4,
-                      height: 24,
-                      background: "#e85d3a",
-                      borderRadius: 2,
-                    }}
+                    className="w-1 h-6 rounded-sm"
+                    style={{ background: "#e85d3a" }}
                   />
                   <h2
-                    style={{
-                      fontFamily: "'Syne', sans-serif",
-                      fontSize: 20,
-                      fontWeight: 800,
-                      color: "#f0f4ff",
-                    }}
+                    className="font-display text-xl font-extrabold"
+                    style={{ color: "#f0f4ff" }}
                   >
                     About the Event Administration
                   </h2>
                 </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 24,
-                  }}
-                >
+                <div className="grid grid-cols-2 gap-6">
                   <div>
                     <p
-                      style={{
-                        fontSize: 13,
-                        color: "#8892a4",
-                        lineHeight: 1.85,
-                        fontFamily: "'DM Mono', monospace",
-                        marginBottom: 20,
-                      }}
+                      className="font-mono text-[13px] leading-loose mb-5"
+                      style={{ color: "#8892a4" }}
                     >
                       Welcome to the official administration panel for{" "}
                       <span style={{ color: "#e85d3a", fontWeight: 600 }}>
@@ -656,64 +404,41 @@ const Home = () => {
                       </span>{" "}
                       at GM Institute of Technology, Davanagere.
                     </p>
-
                     <div
+                      className="rounded-r-lg"
                       style={{
                         background: "#131825",
-                        border: "1px solid #2a3045",
                         borderLeft: "3px solid #e85d3a",
-                        borderRadius: "0 8px 8px 0",
                         padding: "14px 18px",
                       }}
                     >
                       <div
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          color: "#e85d3a",
-                          fontFamily: "'DM Mono', monospace",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.1em",
-                          marginBottom: 6,
-                        }}
+                        className="font-mono text-[10px] font-bold uppercase tracking-widest mb-1.5"
+                        style={{ color: "#e85d3a" }}
                       >
                         Core Mission
                       </div>
                       <p
-                        style={{
-                          fontSize: 12,
-                          color: "#8892a4",
-                          fontFamily: "'DM Mono', monospace",
-                          fontStyle: "italic",
-                        }}
+                        className="font-mono text-[12px] italic"
+                        style={{ color: "#8892a4" }}
                       >
                         "Connecting Minds · Sharing Knowledge · Solving Real
                         Problems"
                       </p>
                     </div>
                   </div>
-
                   <div>
                     <p
-                      style={{
-                        fontSize: 13,
-                        color: "#8892a4",
-                        lineHeight: 1.85,
-                        fontFamily: "'DM Mono', monospace",
-                        marginBottom: 16,
-                      }}
+                      className="font-mono text-[13px] leading-loose mb-4"
+                      style={{ color: "#8892a4" }}
                     >
                       As an administrator, you bridge the gap between students
                       from diverse backgrounds — Engineering, Law, Pharmacy,
                       MBA, BCA, B.Com, BBA, MCA, M.Tech, and Science.
                     </p>
                     <p
-                      style={{
-                        fontSize: 13,
-                        color: "#8892a4",
-                        lineHeight: 1.85,
-                        fontFamily: "'DM Mono', monospace",
-                      }}
+                      className="font-mono text-[13px] leading-loose"
+                      style={{ color: "#8892a4" }}
                     >
                       Oversee real-world challenge submissions, coordinate
                       interdisciplinary teams, and help every problem statement
@@ -725,48 +450,28 @@ const Home = () => {
             </motion.div>
           </section>
 
-          {/* ── Feature Grid ── */}
-          <section
-            style={{ maxWidth: 900, margin: "0 auto", padding: "0 40px 60px" }}
-          >
+          {/* Feature Grid */}
+          <section className="max-w-4xl mx-auto px-10 pb-16">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4 }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                marginBottom: 24,
-              }}
+              className="flex items-center gap-3 mb-6"
             >
-              <div
-                style={{
-                  width: 4,
-                  height: 24,
-                  background: "#3a9de8",
-                  borderRadius: 2,
-                }}
-              />
+              <div className="w-1 h-6 rounded-sm bg-[#3a9de8]" />
               <h2
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: 20,
-                  fontWeight: 800,
-                  color: "#f0f4ff",
-                }}
+                className="font-display text-xl font-extrabold"
+                style={{ color: "#f0f4ff" }}
               >
                 Admin Capabilities
               </h2>
-              <div style={{ flex: 1, height: 1, background: "#1e2330" }} />
+              <div className="flex-1 h-px" style={{ background: "#1e2330" }} />
             </motion.div>
-
             <div
+              className="grid gap-4"
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-                gap: 16,
+                gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))",
               }}
             >
               {[
@@ -787,7 +492,7 @@ const Home = () => {
                 {
                   icon: "◎",
                   title: "Task Log System",
-                  body: "Open granular task logs per contributor, link GitHub issues, and close with earned point awards.",
+                  body: "Open granular task logs, link GitHub issues, and close with earned point awards.",
                   accent: "#4ade80",
                   delay: 0.15,
                 },
@@ -801,7 +506,7 @@ const Home = () => {
                 {
                   icon: "↯",
                   title: "Workflow Insights",
-                  body: "Visualize contributor lanes and chronological task timelines for end-to-end project roadmaps.",
+                  body: "Visualize contributor lanes and chronological task timelines for end-to-end roadmaps.",
                   accent: "#9c3ae8",
                   delay: 0.25,
                 },
@@ -818,37 +523,19 @@ const Home = () => {
             </div>
           </section>
 
-          {/* ── Footer ── */}
+          {/* Footer */}
           <footer
-            style={{
-              borderTop: "1px solid #1e2330",
-              background: "#0c0f18",
-              padding: "40px",
-              textAlign: "center",
-            }}
+            className="p-10 text-center"
+            style={{ borderTop: "1px solid #1e2330", background: "#0c0f18" }}
           >
-            <div style={{ maxWidth: 900, margin: "0 auto" }}>
+            <div className="max-w-4xl mx-auto">
               <h3
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: 20,
-                  fontWeight: 800,
-                  color: "#f0f4ff",
-                  marginBottom: 20,
-                }}
+                className="font-display text-xl font-extrabold mb-5"
+                style={{ color: "#f0f4ff" }}
               >
                 Ready to manage the network?
               </h3>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  justifyContent: "center",
-                  gap: 12,
-                  marginBottom: 32,
-                }}
-              >
+              <div className="flex flex-wrap justify-center gap-3 mb-8">
                 {[
                   {
                     label: "Dashboard",
@@ -871,81 +558,39 @@ const Home = () => {
                     whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={b.onClick}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-mono text-[12px] font-bold uppercase tracking-wide cursor-pointer"
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      padding: "10px 22px",
-                      borderRadius: 10,
                       background: `${b.accent}14`,
                       border: `1px solid ${b.accent}30`,
                       color: b.accent,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      fontFamily: "'DM Mono', monospace",
-                      cursor: "pointer",
-                      letterSpacing: "0.06em",
                     }}
                   >
                     {b.label} →
                   </motion.button>
                 ))}
               </div>
-
               <div
+                className="w-full h-px mb-6"
                 style={{
-                  width: "100%",
-                  height: 1,
                   background:
-                    "linear-gradient(90deg, transparent, #1e2840, transparent)",
-                  marginBottom: 24,
+                    "linear-gradient(90deg,transparent,#1e2840,transparent)",
                 }}
               />
-
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 10,
-                  marginBottom: 8,
-                }}
-              >
+              <div className="flex items-center justify-center gap-2.5 mb-2">
                 <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    background: "#e85d3a",
-                    borderRadius: 7,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontFamily: "'Syne', sans-serif",
-                    fontWeight: 800,
-                    fontSize: 12,
-                    color: "#fff",
-                  }}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center font-display font-extrabold text-xs text-white"
+                  style={{ background: "#e85d3a" }}
                 >
                   I
                 </div>
                 <span
-                  style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: "#f0f4ff",
-                  }}
+                  className="font-display text-sm font-bold"
+                  style={{ color: "#f0f4ff" }}
                 >
                   InteConnect Admin
                 </span>
               </div>
-              <p
-                style={{
-                  fontSize: 11,
-                  color: "#4a5568",
-                  fontFamily: "'DM Mono', monospace",
-                }}
-              >
+              <p className="font-mono text-[11px]" style={{ color: "#4a5568" }}>
                 © {new Date().getFullYear()} GMIT · Team-Falcon. All rights
                 reserved.
               </p>

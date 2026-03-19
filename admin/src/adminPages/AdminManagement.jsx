@@ -20,32 +20,41 @@ const saAxios = () =>
     headers: { Authorization: `Bearer ${localStorage.getItem("saToken")}` },
   });
 
+const InfoRow = ({ label, value }) => (
+  <div
+    className="rounded-lg p-2.5"
+    style={{ background: "#060810", border: "1px solid #1e2330" }}
+  >
+    <div
+      className="font-mono text-[9px] uppercase tracking-widest"
+      style={{ color: "#6b7a99" }}
+    >
+      {label}
+    </div>
+    <div className="font-mono text-[12px] mt-1" style={{ color: "#c4cedf" }}>
+      {String(value)}
+    </div>
+  </div>
+);
+
 const AdminDetailModal = ({ admin, onClose }) => (
   <SAModal title={`Admin · ${admin.name}`} onClose={onClose}>
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
-        marginBottom: 20,
-      }}
-    >
+    <div className="flex items-center gap-3.5 mb-5">
       <Avatar name={admin.name} size={52} />
       <div>
         <div
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: 17,
-            fontWeight: 800,
-            color: "#f0f4ff",
-          }}
+          className="font-display text-[17px] font-extrabold"
+          style={{ color: "#f0f4ff" }}
         >
           {admin.name}
         </div>
-        <div style={{ fontSize: 12, color: "#6b7a99", marginTop: 2 }}>
+        <div
+          className="font-mono text-[12px] mt-0.5"
+          style={{ color: "#6b7a99" }}
+        >
           {admin.email}
         </div>
-        <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+        <div className="flex gap-1.5 mt-2">
           <Pill type={admin.isBlocked ? "blocked" : "active"}>
             {admin.isBlocked ? "Blocked" : "Active"}
           </Pill>
@@ -53,14 +62,7 @@ const AdminDetailModal = ({ admin, onClose }) => (
         </div>
       </div>
     </div>
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 10,
-        marginBottom: 16,
-      }}
-    >
+    <div className="grid grid-cols-2 gap-2.5 mb-4">
       {[
         ["Phone", admin.phone || "—"],
         ["College", admin.college || "—"],
@@ -72,36 +74,7 @@ const AdminDetailModal = ({ admin, onClose }) => (
         ["Total Tasks", admin.totalTaskCreated ?? 0],
         ["Total Points", admin.totalPoints ?? 0],
       ].map(([k, v]) => (
-        <div
-          key={k}
-          style={{
-            background: "#060810",
-            border: "1px solid #1e2330",
-            borderRadius: 8,
-            padding: "10px 14px",
-          }}
-        >
-          <div
-            style={{
-              fontSize: 9,
-              color: "#6b7a99",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            {k}
-          </div>
-          <div
-            style={{
-              fontSize: 12,
-              color: "#c4cedf",
-              fontFamily: "'DM Mono', monospace",
-              marginTop: 4,
-            }}
-          >
-            {String(v)}
-          </div>
-        </div>
+        <InfoRow key={k} label={k} value={v} />
       ))}
     </div>
   </SAModal>
@@ -112,30 +85,21 @@ const DeleteConfirmModal = ({ admin, onClose, onDelete }) => {
   return (
     <SAModal title="Confirm Delete" onClose={onClose}>
       <div
-        style={{
-          background: "#3a1a1a",
-          border: "1px solid #f8717130",
-          borderRadius: 10,
-          padding: "14px 16px",
-          marginBottom: 20,
-        }}
+        className="rounded-xl p-4 mb-5"
+        style={{ background: "#3a1a1a", border: "1px solid #f8717130" }}
       >
         <div
-          style={{
-            fontSize: 13,
-            color: "#f87171",
-            fontWeight: 700,
-            marginBottom: 4,
-          }}
+          className="font-mono text-[13px] font-bold mb-1"
+          style={{ color: "#f87171" }}
         >
           ⚠ This action is irreversible.
         </div>
-        <div style={{ fontSize: 12, color: "#c4cedf" }}>
+        <div className="font-mono text-[12px]" style={{ color: "#c4cedf" }}>
           Admin <strong>{admin.name}</strong> ({admin.email}) will be
           permanently removed.
         </div>
       </div>
-      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+      <div className="flex gap-2.5 justify-end">
         <SABtn variant="secondary" onClick={onClose}>
           Cancel
         </SABtn>
@@ -161,8 +125,7 @@ const AdminManagement = () => {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all"); // all | active | blocked
-
+  const [filter, setFilter] = useState("all");
   const [detailAdmin, setDetailAdmin] = useState(null);
   const [deleteAdmin, setDeleteAdmin] = useState(null);
 
@@ -220,13 +183,13 @@ const AdminManagement = () => {
   };
 
   const filtered = admins.filter((a) => {
-    const matchSearch =
+    const m =
       a.name.toLowerCase().includes(search.toLowerCase()) ||
       a.email.toLowerCase().includes(search.toLowerCase()) ||
       a.college?.toLowerCase().includes(search.toLowerCase());
-    if (filter === "active") return !a.isBlocked && matchSearch;
-    if (filter === "blocked") return a.isBlocked && matchSearch;
-    return matchSearch;
+    if (filter === "active") return !a.isBlocked && m;
+    if (filter === "blocked") return a.isBlocked && m;
+    return m;
   });
 
   return (
@@ -235,47 +198,31 @@ const AdminManagement = () => {
       subtitle="View, block & manage all admin accounts"
     >
       {/* Controls */}
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          alignItems: "center",
-          marginBottom: 20,
-          flexWrap: "wrap",
-        }}
-      >
+      <div className="flex gap-3 items-center mb-5 flex-wrap">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search admins…"
+          className="rounded-xl font-mono text-[12px] outline-none"
           style={{
             background: "#0c0f18",
             border: "1px solid #1e2330",
-            borderRadius: 9,
             padding: "9px 14px",
             color: "#f0f4ff",
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 12,
-            outline: "none",
             width: 260,
           }}
         />
-        <div style={{ display: "flex", gap: 6 }}>
+        <div className="flex gap-1.5">
           {["all", "active", "blocked"].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
+              className="rounded-lg font-mono text-[11px] font-bold cursor-pointer capitalize tracking-wide"
               style={{
                 padding: "7px 14px",
-                borderRadius: 8,
                 border: `1px solid ${filter === f ? `${SA_ACCENT}60` : "#1e2330"}`,
                 background: filter === f ? `${SA_ACCENT}18` : "#0c0f18",
                 color: filter === f ? SA_ACCENT : "#6b7a99",
-                fontSize: 11,
-                fontWeight: 700,
-                fontFamily: "'DM Mono', monospace",
-                cursor: "pointer",
-                textTransform: "capitalize",
               }}
             >
               {f}{" "}
@@ -285,49 +232,31 @@ const AdminManagement = () => {
           ))}
         </div>
         <div
-          style={{
-            marginLeft: "auto",
-            fontSize: 12,
-            color: "#6b7a99",
-            fontFamily: "'DM Mono', monospace",
-          }}
+          className="ml-auto font-mono text-[12px]"
+          style={{ color: "#6b7a99" }}
         >
           {filtered.length} admin{filtered.length !== 1 ? "s" : ""}
         </div>
       </div>
 
       {loading ? (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "50vh",
-            flexDirection: "column",
-            gap: 16,
-          }}
-        >
+        <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
           <Spinner size={32} />
-          <p style={{ color: "#6b7a99", fontSize: 12 }}>Loading admins…</p>
+          <p className="font-mono text-[12px]" style={{ color: "#6b7a99" }}>
+            Loading admins…
+          </p>
         </div>
       ) : filtered.length === 0 ? (
         <div
-          style={{
-            textAlign: "center",
-            color: "#4a5568",
-            fontSize: 13,
-            marginTop: 60,
-          }}
+          className="text-center font-mono text-[13px] mt-16"
+          style={{ color: "#4a5568" }}
         >
           No admins found.
         </div>
       ) : (
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
-            gap: 14,
-          }}
+          className="grid gap-3.5"
+          style={{ gridTemplateColumns: "repeat(auto-fill,minmax(340px,1fr))" }}
         >
           {filtered.map((admin, i) => (
             <motion.div
@@ -335,46 +264,25 @@ const AdminManagement = () => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
+              className="rounded-2xl p-5"
               style={{
                 background: "#0c0f18",
                 border: `1px solid ${admin.isBlocked ? "#f8717120" : "#1e2330"}`,
-                borderRadius: 13,
-                padding: "18px 20px",
                 borderLeft: `3px solid ${admin.isBlocked ? "#f87171" : "#4ade80"}`,
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 12,
-                  marginBottom: 14,
-                }}
-              >
+              <div className="flex items-start gap-3 mb-3.5">
                 <Avatar name={admin.name} size={42} />
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="flex-1 min-w-0">
                   <div
-                    style={{
-                      fontFamily: "'Syne', sans-serif",
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: "#f0f4ff",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
+                    className="font-display text-sm font-bold truncate"
+                    style={{ color: "#f0f4ff" }}
                   >
                     {admin.name}
                   </div>
                   <div
-                    style={{
-                      fontSize: 11,
-                      color: "#6b7a99",
-                      marginTop: 2,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
+                    className="font-mono text-[11px] mt-0.5 truncate"
+                    style={{ color: "#6b7a99" }}
                   >
                     {admin.email}
                   </div>
@@ -384,14 +292,7 @@ const AdminManagement = () => {
                 </Pill>
               </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
-                  gap: 8,
-                  marginBottom: 14,
-                }}
-              >
+              <div className="grid grid-cols-3 gap-2 mb-3.5">
                 {[
                   ["Projects", admin.managedProjects?.length ?? 0, "#3a9de8"],
                   ["Tasks", admin.totalTaskCreated ?? 0, "#fbbf24"],
@@ -399,29 +300,18 @@ const AdminManagement = () => {
                 ].map(([l, v, c]) => (
                   <div
                     key={l}
-                    style={{
-                      textAlign: "center",
-                      background: "#131825",
-                      borderRadius: 6,
-                      padding: "8px 4px",
-                    }}
+                    className="text-center rounded-lg py-2"
+                    style={{ background: "#131825" }}
                   >
                     <div
-                      style={{
-                        fontFamily: "'Syne', sans-serif",
-                        fontSize: 16,
-                        fontWeight: 800,
-                        color: c,
-                      }}
+                      className="font-display text-base font-extrabold"
+                      style={{ color: c }}
                     >
                       {v}
                     </div>
                     <div
-                      style={{
-                        fontSize: 9,
-                        color: "#6b7a99",
-                        textTransform: "uppercase",
-                      }}
+                      className="font-mono text-[9px] uppercase"
+                      style={{ color: "#6b7a99" }}
                     >
                       {l}
                     </div>
@@ -429,12 +319,15 @@ const AdminManagement = () => {
                 ))}
               </div>
 
-              <div style={{ fontSize: 11, color: "#6b7a99", marginBottom: 14 }}>
+              <div
+                className="font-mono text-[11px] mb-3.5"
+                style={{ color: "#6b7a99" }}
+              >
                 {admin.college || "—"} · {admin.branch || "—"} · Joined{" "}
                 {fmtDate(admin.createdAt)}
               </div>
 
-              <div style={{ display: "flex", gap: 8 }}>
+              <div className="flex gap-2">
                 <SABtn
                   small
                   variant="ghost"

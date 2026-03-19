@@ -1,27 +1,211 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plus,
-  X,
-  Server,
   Building,
-  Hash,
   Tag,
   Users,
   CheckCircle,
   Briefcase,
   Mail,
-  FileText,
   ArrowRight,
   ChevronRight,
-  Circle,
   User,
+  Plus,
+  X,
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import JoditEditor from "jodit-react";
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const fmtDate = (d) =>
+  d
+    ? new Date(d).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "—";
+
+// ─── Primitives ───────────────────────────────────────────────────────────────
+const ThemeBadge = ({ children }) => (
+  <span
+    className="inline-block font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-md"
+    style={{
+      background: "#0f1a2e",
+      border: "1px solid #1a2d4a",
+      color: "#60a5fa",
+    }}
+  >
+    {children}
+  </span>
+);
+
+const ProblemTag = ({ children }) => (
+  <span
+    className="inline-block font-mono text-[11px] font-medium px-2.5 py-0.5 rounded-md"
+    style={{
+      background: "#111720",
+      border: "1px solid #1e2840",
+      color: "#7c8ea8",
+    }}
+  >
+    {children}
+  </span>
+);
+
+const Label = ({ children, required }) => (
+  <label
+    className="block font-mono text-[11px] font-bold uppercase tracking-widest mb-1.5"
+    style={{ color: "#4a5568" }}
+  >
+    {children}
+    {required && (
+      <span className="ml-1" style={{ color: "#3b5bdb" }}>
+        *
+      </span>
+    )}
+  </label>
+);
+
+const Input = ({
+  label,
+  name,
+  value,
+  onChange,
+  placeholder,
+  required,
+  className = "",
+}) => (
+  <div className={className}>
+    <Label required={required}>{label}</Label>
+    <input
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      required={required}
+      className="w-full rounded-lg font-mono text-[13px] outline-none transition-all focus:ring-1"
+      style={{
+        background: "#0d1017",
+        border: "1px solid #1e2330",
+        padding: "10px 13px",
+        color: "#c8d0dc",
+        focusRingColor: "#3b5bdb",
+      }}
+      onFocus={(e) => (e.target.style.borderColor = "#3b5bdb")}
+      onBlur={(e) => (e.target.style.borderColor = "#1e2330")}
+    />
+  </div>
+);
+
+const DetailBox = ({ icon: Icon, label, value }) => (
+  <div
+    className="flex items-start gap-2.5 rounded-xl p-3"
+    style={{ background: "#0d1017", border: "1px solid #1a2030" }}
+  >
+    <div
+      className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+      style={{ background: "#131925", border: "1px solid #1e2840" }}
+    >
+      <Icon size={13} style={{ color: "#4a7cf7" }} />
+    </div>
+    <div className="min-w-0">
+      <p
+        className="font-mono text-[10px] font-semibold uppercase tracking-widest mb-0.5"
+        style={{ color: "#3e4d6c" }}
+      >
+        {label}
+      </p>
+      <p
+        className="font-mono text-[13px] font-medium truncate"
+        style={{ color: "#b0bac8" }}
+      >
+        {value || "—"}
+      </p>
+    </div>
+  </div>
+);
+
+// ─── Overlay ──────────────────────────────────────────────────────────────────
+const Overlay = ({ children, onClose, title, subtitle, badge }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto"
+    style={{
+      background: "rgba(0,0,0,.65)",
+      backdropFilter: "blur(4px)",
+      padding: "80px 16px 24px",
+    }}
+    onClick={onClose}
+  >
+    <motion.div
+      initial={{ scale: 0.97, y: 12 }}
+      animate={{ scale: 1, y: 0 }}
+      exit={{ scale: 0.97, y: 12 }}
+      transition={{ duration: 0.18 }}
+      className="relative w-full rounded-2xl overflow-hidden shadow-2xl"
+      style={{
+        maxWidth: 740,
+        background: "#0b0f18",
+        border: "1px solid #1a2236",
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div
+        className="sticky top-0 z-10 flex items-start justify-between gap-3 px-6 pt-5 pb-4"
+        style={{ background: "#0b0f18", borderBottom: "1px solid #141b26" }}
+      >
+        <div className="flex-1 min-w-0">
+          {badge && (
+            <span
+              className="inline-block font-mono text-[11px] mb-1.5 px-2 py-0.5 rounded-md"
+              style={{
+                background: "#0d1525",
+                border: "1px solid #1a2d4a",
+                color: "#4a7cf7",
+              }}
+            >
+              {badge}
+            </span>
+          )}
+          <h2
+            className="font-display font-bold text-[17px] leading-tight truncate"
+            style={{ color: "#dde3ee" }}
+          >
+            {title}
+          </h2>
+          {subtitle && (
+            <p
+              className="font-mono text-[12px] mt-1"
+              style={{ color: "#4e5a72" }}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={onClose}
+          className="flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0 cursor-pointer transition-colors hover:border-slate-600"
+          style={{
+            background: "transparent",
+            border: "1px solid #1e2330",
+            color: "#5a6478",
+          }}
+        >
+          <X size={15} />
+        </button>
+      </div>
+      <div className="px-6 py-5">{children}</div>
+    </motion.div>
+  </motion.div>
+);
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 const Problems = () => {
   const { studentToken, axios } = useAppContext();
   const navigate = useNavigate();
@@ -31,6 +215,9 @@ const Problems = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedProblem, setSelectedProblem] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [search, setSearch] = useState("");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -50,12 +237,12 @@ const Problems = () => {
       theme: "dark",
       placeholder:
         "Describe the problem statement, requirements, and expected outcomes in detail...",
-      minHeight: 240,
+      minHeight: 220,
       style: {
-        background: "#111318",
+        background: "#0d1017",
         color: "#cbd5e1",
         fontSize: "13px",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'DM Mono',monospace",
       },
       buttons: [
         "bold",
@@ -71,23 +258,33 @@ const Problems = () => {
         "undo",
         "redo",
       ],
+      toolbarAdaptive: false,
     }),
     [],
   );
 
   useEffect(() => {
-    const fetchProblems = async () => {
+    fetchProblems();
+  }, []);
+
+  const fetchProblems = async () => {
+    setIsLoading(true);
+    try {
+      // FIX: correct route is /api/student/problems/published
+      const { data } = await axios.get("/api/student/problems/published");
+      if (data.success) setProblems(data.problems || []);
+    } catch {
+      // fallback to legacy route
       try {
         const { data } = await axios.get("/api/student/published");
-        if (data.success) setProblems(data.problems);
+        if (data.success) setProblems(data.problems || []);
       } catch {
         toast.error("Failed to load problems.");
-      } finally {
-        setIsLoading(false);
       }
-    };
-    fetchProblems();
-  }, [axios]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -105,8 +302,13 @@ const Problems = () => {
     e.preventDefault();
     if (!formData.description || formData.description === "<p><br></p>")
       return toast.error("Description cannot be empty.");
+    setSubmitting(true);
     try {
-      const { data } = await axios.post("/api/student/create", formData);
+      // FIX: correct route is /api/student/problems/create
+      const { data } = await axios.post(
+        "/api/student/problems/create",
+        formData,
+      );
       if (data.success) {
         toast.success(data.message);
         setIsCreateOpen(false);
@@ -125,6 +327,8 @@ const Problems = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to submit problem.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -134,131 +338,119 @@ const Problems = () => {
       navigate("/register");
       return;
     }
+    setJoining(true);
     try {
-      const { data } = await axios.post(`/api/student/${problemId}/join`);
+      // FIX: correct route is /api/student/problems/:id/join
+      const { data } = await axios.post(
+        `/api/student/problems/${problemId}/join`,
+      );
       if (data.success) {
         toast.success("Successfully joined the project!");
         setSelectedProblem(null);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to join project.");
+    } finally {
+      setJoining(false);
     }
   };
+
+  const filtered = problems.filter(
+    (p) =>
+      !search ||
+      p.title?.toLowerCase().includes(search.toLowerCase()) ||
+      p.organization?.toLowerCase().includes(search.toLowerCase()) ||
+      p.theme?.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-        .ps-root * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
-        .ps-mono { font-family: 'DM Mono', monospace; }
-        .ps-scroll::-webkit-scrollbar { width: 4px; }
-        .ps-scroll::-webkit-scrollbar-track { background: transparent; }
-        .ps-scroll::-webkit-scrollbar-thumb { background: #2a2f3a; border-radius: 4px; }
-        .ps-row:hover { background: rgba(255,255,255,0.025); }
-        .ps-input { width: 100%; background: #0d1017; border: 1px solid #1e2330; color: #c8d0dc; font-size: 13px; border-radius: 8px; padding: 10px 13px; outline: none; transition: border-color 0.15s; }
-        .ps-input:focus { border-color: #3b5bdb; }
-        .ps-input::placeholder { color: #3e4758; }
-        .ps-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234a5568' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
-        .ps-btn-primary { background: #1e2d6b; color: #a5b4fc; border: 1px solid #2d3f8a; font-size: 13px; font-weight: 500; padding: 9px 18px; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
-        .ps-btn-primary:hover { background: #263380; border-color: #3b5bdb; color: #c7d2fe; }
-        .ps-btn-ghost { background: transparent; color: #5a6478; border: 1px solid #1e2330; font-size: 13px; font-weight: 500; padding: 9px 18px; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
-        .ps-btn-ghost:hover { color: #a0aec0; border-color: #2d3748; }
-        .ps-btn-join { background: #0f2318; color: #34d399; border: 1px solid #1a3d29; font-size: 13px; font-weight: 500; padding: 10px 22px; border-radius: 8px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 7px; }
-        .ps-btn-join:hover { background: #142d20; border-color: #22c55e; }
-        .ps-label { font-size: 11px; font-weight: 500; color: #4a5568; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; display: block; }
-        .ps-tag { background: #111720; border: 1px solid #1e2840; color: #7c8ea8; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 5px; }
-        .ps-theme-badge { background: #0f1a2e; border: 1px solid #1a2d4a; color: #60a5fa; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 5px; }
-        .ps-detail-card { background: #0d1017; border: 1px solid #1a2030; border-radius: 8px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; }
-        .ps-icon-wrap { width: 28px; height: 28px; background: #131925; border: 1px solid #1e2840; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .ps-prose h1,h2,h3,h4 { color: #c8d0dc; margin: 12px 0 6px; font-size: 14px; }
-        .ps-prose p { color: #8a95a8; font-size: 13px; line-height: 1.7; margin: 0 0 8px; }
-        .ps-prose ul,ol { color: #8a95a8; font-size: 13px; padding-left: 18px; }
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Mono:wght@400;500&display=swap');
+        .font-display{font-family:'Syne',sans-serif!important}
+        .font-mono{font-family:'DM Mono',monospace!important}
+        *{box-sizing:border-box}
+        ::-webkit-scrollbar{width:4px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:#2a2f3a;border-radius:4px}
+        .prob-row:hover{background:rgba(255,255,255,0.025) !important}
+        .jodit-container{border-color:#1e2330 !important}
+        .jodit-workplace{background:#0d1017 !important}
+        .jodit-toolbar{background:#0d1017 !important;border-color:#1e2330 !important}
       `}</style>
 
       <div
-        className="ps-root"
-        style={{ maxWidth: 1100, margin: "0 auto", width: "100%" }}
+        className="font-mono w-full"
+        style={{ maxWidth: 1100, margin: "0 auto" }}
       >
         {/* ── Header ── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 12,
-            marginBottom: 28,
-          }}
-        >
+        <div className="flex items-start justify-between flex-wrap gap-3 mb-7">
           <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                marginBottom: 4,
-              }}
-            >
+            <div className="flex items-center gap-2 mb-1">
               <div
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background: "#3b5bdb",
-                }}
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ background: "#3b5bdb" }}
               />
               <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: "#3b5bdb",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
+                className="font-mono text-[11px] font-bold uppercase tracking-widest"
+                style={{ color: "#3b5bdb" }}
               >
                 Problem Board
               </span>
             </div>
             <h1
-              style={{
-                fontSize: 22,
-                fontWeight: 600,
-                color: "#dde3ee",
-                margin: 0,
-                letterSpacing: "-0.01em",
-              }}
+              className="font-display font-semibold text-[22px] leading-tight"
+              style={{ color: "#dde3ee", letterSpacing: "-0.01em" }}
             >
               Active Problem Statements
             </h1>
-            <p style={{ fontSize: 13, color: "#4e5a72", margin: "4px 0 0" }}>
+            <p
+              className="font-mono text-[13px] mt-1"
+              style={{ color: "#4e5a72" }}
+            >
               Discover, inspect, and contribute to real-world challenges.
             </p>
           </div>
           <button
             onClick={handleUploadClick}
-            className="ps-btn-primary"
-            style={{ display: "flex", alignItems: "center", gap: 6 }}
+            className="inline-flex items-center gap-1.5 rounded-lg font-mono font-medium text-[13px] px-4 py-2.5 cursor-pointer transition-all hover:border-[#3b5bdb]"
+            style={{
+              background: "#1e2d6b",
+              color: "#a5b4fc",
+              border: "1px solid #2d3f8a",
+            }}
           >
             <Plus size={14} strokeWidth={2.5} /> Upload Statement
           </button>
         </div>
 
+        {/* ── Search ── */}
+        <div className="mb-4">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by title, organization or theme…"
+            className="w-full rounded-xl font-mono text-[13px] outline-none max-w-xs"
+            style={{
+              background: "#0c0f18",
+              border: "1px solid #1e2330",
+              padding: "9px 14px",
+              color: "#f0f4ff",
+            }}
+            onFocus={(e) => (e.target.style.borderColor = "#3b5bdb")}
+            onBlur={(e) => (e.target.style.borderColor = "#1e2330")}
+          />
+        </div>
+
         {/* ── Table ── */}
         <div
-          style={{
-            background: "#0b0f18",
-            border: "1px solid #191f2e",
-            borderRadius: 12,
-            overflow: "hidden",
-          }}
+          className="rounded-xl overflow-hidden"
+          style={{ background: "#0b0f18", border: "1px solid #191f2e" }}
         >
-          <div style={{ overflowX: "auto" }}>
+          <div className="overflow-x-auto">
             <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 13,
-              }}
+              className="w-full font-mono text-[13px]"
+              style={{ borderCollapse: "collapse" }}
             >
               <thead>
                 <tr
@@ -267,133 +459,108 @@ const Problems = () => {
                     borderBottom: "1px solid #191f2e",
                   }}
                 >
-                  {["Problem ID", "Title", "Organization", "Theme", ""].map(
-                    (h, i) => (
-                      <th
-                        key={i}
-                        style={{
-                          padding: "10px 16px",
-                          fontWeight: 500,
-                          fontSize: 11,
-                          color: "#3e4d6c",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.07em",
-                          textAlign: i === 4 ? "right" : "left",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
+                  {[
+                    "Problem ID",
+                    "Title",
+                    "Organization",
+                    "Theme",
+                    "Date",
+                    "",
+                  ].map((h, i) => (
+                    <th
+                      key={i}
+                      className="font-mono text-[11px] font-medium uppercase tracking-widest whitespace-nowrap"
+                      style={{
+                        padding: "10px 16px",
+                        color: "#3e4d6c",
+                        textAlign: i === 5 ? "right" : "left",
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
                     <td
-                      colSpan={5}
-                      style={{
-                        textAlign: "center",
-                        padding: "40px 16px",
-                        color: "#3e4d6c",
-                        fontSize: 13,
-                      }}
+                      colSpan={6}
+                      className="text-center py-10 font-mono text-[13px]"
+                      style={{ color: "#3e4d6c" }}
                     >
                       Loading problems…
                     </td>
                   </tr>
-                ) : problems.length === 0 ? (
+                ) : filtered.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
-                      style={{
-                        textAlign: "center",
-                        padding: "40px 16px",
-                        color: "#3e4d6c",
-                        fontSize: 13,
-                      }}
+                      colSpan={6}
+                      className="text-center py-10 font-mono text-[13px]"
+                      style={{ color: "#3e4d6c" }}
                     >
-                      No published problems at the moment.
+                      {search
+                        ? "No problems match your search."
+                        : "No published problems at the moment."}
                     </td>
                   </tr>
                 ) : (
-                  problems.map((prob, idx) => (
+                  filtered.map((prob, idx) => (
                     <tr
                       key={prob._id}
-                      className="ps-row"
+                      className="prob-row cursor-pointer transition-colors"
                       onClick={() => setSelectedProblem(prob)}
                       style={{
                         borderBottom:
-                          idx < problems.length - 1
+                          idx < filtered.length - 1
                             ? "1px solid #111720"
                             : "none",
-                        cursor: "pointer",
-                        transition: "background 0.1s",
                       }}
                     >
                       <td style={{ padding: "12px 16px" }}>
                         <span
-                          className="ps-mono"
+                          className="font-mono text-[12px] px-2 py-0.5 rounded-md"
                           style={{
-                            fontSize: 12,
-                            color: "#4a7cf7",
                             background: "#0d1525",
                             border: "1px solid #1a2d4a",
-                            padding: "2px 8px",
-                            borderRadius: 5,
+                            color: "#4a7cf7",
                           }}
                         >
                           {prob.problemID}
                         </span>
                       </td>
-                      <td
-                        style={{
-                          padding: "12px 16px",
-                          fontWeight: 500,
-                          color: "#c8d0dc",
-                          maxWidth: 280,
-                        }}
-                      >
+                      <td style={{ padding: "12px 16px", maxWidth: 280 }}>
                         <span
-                          style={{
-                            display: "block",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
+                          className="font-mono font-medium truncate block"
+                          style={{ color: "#c8d0dc" }}
                         >
                           {prob.title}
                         </span>
                       </td>
                       <td style={{ padding: "12px 16px" }}>
                         <span
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 5,
-                            color: "#6b7a94",
-                            fontSize: 12,
-                          }}
+                          className="inline-flex items-center gap-1.5 font-mono text-[12px]"
+                          style={{ color: "#6b7a94" }}
                         >
-                          <Building size={12} style={{ flexShrink: 0 }} />
+                          <Building size={12} className="flex-shrink-0" />{" "}
                           {prob.organization}
                         </span>
                       </td>
                       <td style={{ padding: "12px 16px" }}>
-                        <span className="ps-theme-badge">{prob.theme}</span>
+                        <ThemeBadge>{prob.theme}</ThemeBadge>
+                      </td>
+                      <td style={{ padding: "12px 16px" }}>
+                        <span
+                          className="font-mono text-[11px]"
+                          style={{ color: "#4e5a72" }}
+                        >
+                          {fmtDate(prob.createdAt)}
+                        </span>
                       </td>
                       <td style={{ padding: "12px 16px", textAlign: "right" }}>
                         <span
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 3,
-                            justifyContent: "flex-end",
-                            color: "#4a7cf7",
-                            fontSize: 12,
-                            fontWeight: 500,
-                          }}
+                          className="inline-flex items-center gap-0.5 font-mono text-[12px] font-medium"
+                          style={{ color: "#4a7cf7" }}
                         >
                           View <ChevronRight size={13} />
                         </span>
@@ -406,6 +573,17 @@ const Problems = () => {
           </div>
         </div>
 
+        {/* ── Count ── */}
+        {!isLoading && (
+          <p
+            className="font-mono text-[11px] mt-3"
+            style={{ color: "#4e5a72" }}
+          >
+            {filtered.length} problem{filtered.length !== 1 ? "s" : ""}{" "}
+            {search ? "found" : "published"}
+          </p>
+        )}
+
         {/* ── MODALS ── */}
         <AnimatePresence>
           {/* Create Problem */}
@@ -415,88 +593,86 @@ const Problems = () => {
               title="Submit Problem Statement"
               subtitle="Fill in the details below. Your submission will be reviewed before publishing."
             >
-              <form
-                onSubmit={handleSubmit}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 14,
-                }}
-              >
-                <FormField
-                  label="Problem Title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="e.g., Blockchain Voting System"
-                  style={{ gridColumn: "1 / -1" }}
-                />
-                <FormField
-                  label="Category"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  placeholder="e.g., Web App, AI Model"
-                />
-                <FormField
-                  label="Theme"
-                  name="theme"
-                  value={formData.theme}
-                  onChange={handleChange}
-                  placeholder="e.g., FinTech, Healthcare"
-                />
-                <FormField
-                  label="Organization"
-                  name="organization"
-                  value={formData.organization}
-                  onChange={handleChange}
-                  placeholder="Company / College Name"
-                />
-                <FormField
-                  label="Department"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  placeholder="e.g., R&D, IT"
-                />
-                <FormField
-                  label="Owner Name"
-                  name="ownerName"
-                  value={formData.ownerName}
-                  onChange={handleChange}
-                  placeholder="Your Full Name"
-                />
-                <FormField
-                  label="Coordinator Name"
-                  name="problem_coordinator"
-                  value={formData.problem_coordinator}
-                  onChange={handleChange}
-                  placeholder="Coordinator overseeing this"
-                />
-                <FormField
-                  label="Contact Info"
-                  name="contactInfo"
-                  value={formData.contactInfo}
-                  onChange={handleChange}
-                  placeholder="Email or Phone"
-                  style={{ gridColumn: "1 / -1" }}
-                />
-                <FormField
-                  label="Tags (comma separated)"
-                  name="tags"
-                  value={formData.tags}
-                  onChange={handleChange}
-                  placeholder="react, nodejs, blockchain"
-                  style={{ gridColumn: "1 / -1" }}
-                />
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label className="ps-label">Detailed Description</label>
+              <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-3.5">
+                  <Input
+                    label="Problem Title"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    placeholder="e.g., Blockchain Voting System"
+                    required
+                    className="sm:col-span-2"
+                  />
+                  <Input
+                    label="Category"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    placeholder="e.g., Web App, AI Model"
+                    required
+                  />
+                  <Input
+                    label="Theme"
+                    name="theme"
+                    value={formData.theme}
+                    onChange={handleChange}
+                    placeholder="e.g., FinTech, Healthcare"
+                    required
+                  />
+                  <Input
+                    label="Organization"
+                    name="organization"
+                    value={formData.organization}
+                    onChange={handleChange}
+                    placeholder="Company / College Name"
+                    required
+                  />
+                  <Input
+                    label="Department"
+                    name="department"
+                    value={formData.department}
+                    onChange={handleChange}
+                    placeholder="e.g., R&D, IT"
+                  />
+                  <Input
+                    label="Owner Name"
+                    name="ownerName"
+                    value={formData.ownerName}
+                    onChange={handleChange}
+                    placeholder="Your Full Name"
+                    required
+                  />
+                  <Input
+                    label="Coordinator Name"
+                    name="problem_coordinator"
+                    value={formData.problem_coordinator}
+                    onChange={handleChange}
+                    placeholder="Coordinator overseeing this"
+                  />
+                  <Input
+                    label="Contact Info"
+                    name="contactInfo"
+                    value={formData.contactInfo}
+                    onChange={handleChange}
+                    placeholder="Email or Phone"
+                    className="sm:col-span-2"
+                  />
+                  <Input
+                    label="Tags (comma separated)"
+                    name="tags"
+                    value={formData.tags}
+                    onChange={handleChange}
+                    placeholder="react, nodejs, blockchain"
+                    className="sm:col-span-2"
+                  />
+                </div>
+
+                <div className="mb-5">
+                  <Label required>Detailed Description</Label>
                   <div
-                    style={{
-                      border: "1px solid #1e2330",
-                      borderRadius: 8,
-                      overflow: "hidden",
-                    }}
+                    className="rounded-xl overflow-hidden"
+                    style={{ border: "1px solid #1e2330" }}
                   >
                     <JoditEditor
                       ref={editorRef}
@@ -508,67 +684,71 @@ const Problems = () => {
                     />
                   </div>
                 </div>
+
                 <div
-                  style={{
-                    gridColumn: "1 / -1",
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: 10,
-                    paddingTop: 8,
-                  }}
+                  className="flex justify-end gap-2.5 pt-4"
+                  style={{ borderTop: "1px solid #141b26" }}
                 >
                   <button
                     type="button"
                     onClick={() => setIsCreateOpen(false)}
-                    className="ps-btn-ghost"
+                    className="px-4 py-2 rounded-lg font-mono text-[13px] font-medium cursor-pointer transition-colors"
+                    style={{
+                      background: "transparent",
+                      border: "1px solid #1e2330",
+                      color: "#5a6478",
+                    }}
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="ps-btn-primary">
-                    Submit for Review
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-[13px] font-medium cursor-pointer disabled:opacity-60 transition-colors"
+                    style={{
+                      background: "#1e2d6b",
+                      border: "1px solid #2d3f8a",
+                      color: "#a5b4fc",
+                    }}
+                  >
+                    {submitting ? "Submitting…" : "Submit for Review"}
                   </button>
                 </div>
               </form>
             </Overlay>
           )}
 
-          {/* Inspect Problem */}
+          {/* View Problem */}
           {selectedProblem && (
             <Overlay
               onClose={() => setSelectedProblem(null)}
               title={selectedProblem.title}
               badge={selectedProblem.problemID}
             >
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 22 }}
-              >
+              <div className="space-y-5">
                 {/* Description */}
                 <div>
-                  <label className="ps-label">Description</label>
+                  <Label>Description</Label>
                   <div
-                    className="ps-prose"
+                    className="rounded-xl overflow-y-auto max-h-52 prose-invert"
                     style={{
                       background: "#0d1017",
                       border: "1px solid #1a2030",
-                      borderRadius: 8,
                       padding: "14px 16px",
-                      maxHeight: 240,
-                      overflowY: "auto",
                     }}
-                    dangerouslySetInnerHTML={{
-                      __html: selectedProblem.description,
-                    }}
-                  />
+                  >
+                    <div
+                      className="font-mono text-[13px] leading-relaxed"
+                      style={{ color: "#8a95a8" }}
+                      dangerouslySetInnerHTML={{
+                        __html: selectedProblem.description,
+                      }}
+                    />
+                  </div>
                 </div>
 
-                {/* Details Grid */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 10,
-                  }}
-                >
+                {/* Details grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <DetailBox
                     icon={Building}
                     label="Organization"
@@ -604,51 +784,54 @@ const Problems = () => {
                 {/* Tags */}
                 {selectedProblem.tags?.length > 0 && (
                   <div>
-                    <label className="ps-label">Tags</label>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      {selectedProblem.tags.map((tag, i) => (
-                        <span key={i} className="ps-tag">
-                          {tag}
-                        </span>
+                    <Label>Tags</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProblem.tags.map((t, i) => (
+                        <ProblemTag key={i}>{t}</ProblemTag>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Footer Action */}
+                {/* Footer */}
                 <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    paddingTop: 16,
-                    borderTop: "1px solid #141b26",
-                    flexWrap: "wrap",
-                    gap: 12,
-                  }}
+                  className="flex items-center justify-between flex-wrap gap-3 pt-4"
+                  style={{ borderTop: "1px solid #141b26" }}
                 >
                   <div
+                    className="inline-flex items-center gap-2 rounded-lg px-3 py-2"
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 7,
                       background: "#0d1017",
                       border: "1px solid #1a2030",
-                      padding: "7px 14px",
-                      borderRadius: 8,
                     }}
                   >
                     <Users size={13} style={{ color: "#4a7cf7" }} />
-                    <span style={{ fontSize: 12, color: "#6b7a94" }}>
+                    <span
+                      className="font-mono text-[12px]"
+                      style={{ color: "#6b7a94" }}
+                    >
                       {selectedProblem.assignedStudents?.length || 0}{" "}
-                      contributors active
+                      contributors
                     </span>
                   </div>
                   <button
                     onClick={() => handleJoinProject(selectedProblem._id)}
-                    className="ps-btn-join"
+                    disabled={joining}
+                    className="inline-flex items-center gap-2 rounded-lg font-mono font-medium text-[13px] px-5 py-2.5 cursor-pointer disabled:opacity-60 transition-colors"
+                    style={{
+                      background: "#0f2318",
+                      border: "1px solid #1a3d29",
+                      color: "#34d399",
+                    }}
                   >
-                    Join Project Pipeline <ArrowRight size={14} />
+                    {joining ? (
+                      "Joining…"
+                    ) : (
+                      <>
+                        <span>Join Project Pipeline</span>
+                        <ArrowRight size={14} />
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -659,175 +842,5 @@ const Problems = () => {
     </>
   );
 };
-
-/* ── Overlay Component ── */
-const Overlay = ({ children, onClose, title, subtitle, badge }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    style={{
-      position: "fixed",
-      inset: 0,
-      zIndex: 100,
-      display: "flex",
-      alignItems: "flex-start",
-      justifyContent: "center",
-      padding: "80px 16px 24px",
-      background: "rgba(0,0,0,0.65)",
-      backdropFilter: "blur(4px)",
-    }}
-  >
-    <motion.div
-      initial={{ scale: 0.97, y: 12 }}
-      animate={{ scale: 1, y: 0 }}
-      exit={{ scale: 0.97, y: 12 }}
-      transition={{ duration: 0.18 }}
-      className="ps-scroll"
-      style={{
-        position: "relative",
-        width: "100%",
-        maxWidth: 740,
-        maxHeight: "82vh",
-        background: "#0b0f18",
-        border: "1px solid #1a2236",
-        borderRadius: 14,
-        overflowY: "auto",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
-      }}
-    >
-      {/* Modal Header */}
-      <div
-        style={{
-          padding: "20px 24px 16px",
-          borderBottom: "1px solid #141b26",
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: 12,
-          position: "sticky",
-          top: 0,
-          background: "#0b0f18",
-          zIndex: 1,
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {badge && (
-            <span
-              className="ps-mono"
-              style={{
-                fontSize: 11,
-                color: "#4a7cf7",
-                background: "#0d1525",
-                border: "1px solid #1a2d4a",
-                padding: "2px 8px",
-                borderRadius: 5,
-                display: "inline-block",
-                marginBottom: 6,
-              }}
-            >
-              {badge}
-            </span>
-          )}
-          <h2
-            style={{
-              margin: 0,
-              fontSize: 17,
-              fontWeight: 600,
-              color: "#dde3ee",
-              lineHeight: 1.3,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {title}
-          </h2>
-          {subtitle && (
-            <p style={{ margin: "4px 0 0", fontSize: 12, color: "#4e5a72" }}>
-              {subtitle}
-            </p>
-          )}
-        </div>
-        <button
-          onClick={onClose}
-          style={{
-            background: "transparent",
-            border: "1px solid #1e2330",
-            color: "#5a6478",
-            borderRadius: 6,
-            padding: 5,
-            cursor: "pointer",
-            display: "flex",
-            flexShrink: 0,
-            transition: "all 0.12s",
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.color = "#c8d0dc";
-            e.target.style.borderColor = "#2d3748";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.color = "#5a6478";
-            e.target.style.borderColor = "#1e2330";
-          }}
-        >
-          <X size={15} />
-        </button>
-      </div>
-      <div style={{ padding: "20px 24px 24px" }}>{children}</div>
-    </motion.div>
-  </motion.div>
-);
-
-/* ── Form Field ── */
-const FormField = ({ label, name, value, onChange, placeholder, style }) => (
-  <div style={style}>
-    <label className="ps-label">{label}</label>
-    <input
-      className="ps-input"
-      name={name}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      required
-    />
-  </div>
-);
-
-/* ── Detail Box ── */
-const DetailBox = ({ icon: Icon, label, value }) => (
-  <div className="ps-detail-card">
-    <div className="ps-icon-wrap">
-      <Icon size={13} style={{ color: "#4a7cf7" }} />
-    </div>
-    <div style={{ minWidth: 0 }}>
-      <p
-        style={{
-          margin: "0 0 2px",
-          fontSize: 10,
-          fontWeight: 600,
-          color: "#3e4d6c",
-          textTransform: "uppercase",
-          letterSpacing: "0.07em",
-        }}
-      >
-        {label}
-      </p>
-      <p
-        style={{
-          margin: 0,
-          fontSize: 13,
-          color: "#b0bac8",
-          fontWeight: 500,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {value}
-      </p>
-    </div>
-  </div>
-);
 
 export default Problems;

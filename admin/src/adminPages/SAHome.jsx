@@ -55,6 +55,8 @@ const SAHome = () => {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
+        .font-display { font-family: 'Syne', sans-serif !important; }
+        .font-mono    { font-family: 'DM Mono', monospace !important; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes scanline { 0%{top:0} 100%{top:100%} }
         ::-webkit-scrollbar { width: 5px; }
@@ -62,33 +64,26 @@ const SAHome = () => {
       `}</style>
 
       <div
-        style={{
-          minHeight: "100vh",
-          background: "#06080f",
-          color: "#f0f4ff",
-          fontFamily: "'DM Mono', monospace",
-          position: "relative",
-          overflow: "hidden",
-        }}
+        className="min-h-screen relative overflow-hidden font-mono"
+        style={{ background: "#06080f", color: "#f0f4ff" }}
       >
         {/* BG */}
-        <div style={{ position: "fixed", inset: 0, pointerEvents: "none" }}>
+        <div className="fixed inset-0 pointer-events-none">
           <div
+            className="absolute"
             style={{
-              position: "absolute",
               top: "-20%",
               left: "20%",
               width: "60%",
               height: "60%",
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, #9c3ae808 0%, transparent 70%)",
+                "radial-gradient(circle,#9c3ae808 0%,transparent 70%)",
             }}
           />
           <div
+            className="absolute inset-0"
             style={{
-              position: "absolute",
-              inset: 0,
               opacity: 0.03,
               backgroundImage:
                 "linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)",
@@ -96,13 +91,10 @@ const SAHome = () => {
             }}
           />
           <div
+            className="absolute left-0 right-0 h-px"
             style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              height: 1,
               background:
-                "linear-gradient(90deg, transparent, #9c3ae820, transparent)",
+                "linear-gradient(90deg,transparent,#9c3ae820,transparent)",
               animation: "scanline 5s linear infinite",
             }}
           />
@@ -110,34 +102,18 @@ const SAHome = () => {
 
         {/* Navbar */}
         <nav
+          className="sticky top-0 z-[100] h-16 flex items-center justify-between px-10 font-mono"
           style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 100,
-            height: 64,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "0 40px",
             background: "#0c0f18cc",
             backdropFilter: "blur(12px)",
             borderBottom: "1px solid #1e2330",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="flex items-center gap-3">
             <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center font-display font-extrabold text-sm text-white"
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                background: "linear-gradient(135deg, #9c3ae8, #7c2abf)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: 13,
-                color: "#fff",
+                background: "linear-gradient(135deg,#9c3ae8,#7c2abf)",
                 boxShadow: "0 0 16px #9c3ae840",
               }}
             >
@@ -145,74 +121,42 @@ const SAHome = () => {
             </div>
             <div>
               <div
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: 16,
-                  fontWeight: 800,
-                  color: "#f0f4ff",
-                  letterSpacing: "-0.01em",
-                }}
+                className="font-display text-base font-extrabold"
+                style={{ color: "#f0f4ff", letterSpacing: "-0.01em" }}
               >
                 InterConnect
               </div>
               <div
-                style={{
-                  fontSize: 9,
-                  color: "#9c3ae8",
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                }}
+                className="font-mono text-[9px] uppercase tracking-widest"
+                style={{ color: "#9c3ae8" }}
               >
                 Super Admin Portal
               </div>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="flex items-center gap-3">
             <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 7,
-                padding: "5px 12px",
-                background: "#9c3ae814",
-                border: "1px solid #9c3ae830",
-                borderRadius: 8,
-              }}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg"
+              style={{ background: "#9c3ae814", border: "1px solid #9c3ae830" }}
             >
               <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "#9c3ae8",
-                  display: "inline-block",
-                  boxShadow: "0 0 6px #9c3ae8",
-                }}
+                className="w-1.5 h-1.5 rounded-full inline-block"
+                style={{ background: "#9c3ae8", boxShadow: "0 0 6px #9c3ae8" }}
               />
               <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: "#9c3ae8",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                }}
+                className="font-mono text-[10px] font-bold uppercase tracking-widest"
+                style={{ color: "#9c3ae8" }}
               >
                 Alpha Access
               </span>
             </div>
             <button
               onClick={handleLogout}
+              className="px-4 py-1.5 rounded-lg font-mono text-[12px] font-bold cursor-pointer"
               style={{
-                padding: "7px 16px",
-                borderRadius: 8,
                 background: "#3a1a1a",
                 border: "1px solid #f8717140",
                 color: "#f87171",
-                fontSize: 12,
-                fontWeight: 700,
-                fontFamily: "'DM Mono', monospace",
-                cursor: "pointer",
               }}
             >
               ⊗ Logout
@@ -220,72 +164,41 @@ const SAHome = () => {
           </div>
         </nav>
 
-        <div
-          style={{
-            maxWidth: 960,
-            margin: "0 auto",
-            padding: "60px 40px",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
+        <div className="max-w-4xl mx-auto px-10 py-16 relative z-10">
           {/* Hero */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            style={{ marginBottom: 52, textAlign: "center" }}
+            transition={{ duration: 0.5 }}
+            className="mb-14 text-center"
           >
             <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "5px 16px",
-                background: "#9c3ae814",
-                border: "1px solid #9c3ae830",
-                borderRadius: 100,
-                marginBottom: 20,
-              }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-5"
+              style={{ background: "#9c3ae814", border: "1px solid #9c3ae830" }}
             >
               <span
-                style={{
-                  fontSize: 9,
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "#9c3ae8",
-                  display: "inline-block",
-                }}
+                className="w-1.5 h-1.5 rounded-full inline-block"
+                style={{ background: "#9c3ae8" }}
               />
               <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: "#9c3ae8",
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                }}
+                className="font-mono text-[10px] font-bold uppercase tracking-widest"
+                style={{ color: "#9c3ae8" }}
               >
                 Super Admin Command Center
               </span>
             </div>
-
             <h1
+              className="font-display font-extrabold leading-tight mb-4"
               style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: "clamp(28px, 4vw, 48px)",
-                fontWeight: 800,
-                lineHeight: 1.1,
-                letterSpacing: "-0.025em",
+                fontSize: "clamp(28px,4vw,48px)",
                 color: "#f0f4ff",
-                marginBottom: 16,
+                letterSpacing: "-0.025em",
               }}
             >
               Welcome,{" "}
               <span
                 style={{
-                  background: "linear-gradient(135deg, #9c3ae8, #b65aff)",
+                  background: "linear-gradient(135deg,#9c3ae8,#b65aff)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                 }}
@@ -294,14 +207,10 @@ const SAHome = () => {
               </span>
             </h1>
             <p
-              style={{
-                fontSize: 13,
-                color: "#6b7a99",
-                maxWidth: 500,
-                margin: "0 auto",
-              }}
+              className="font-mono text-[13px] max-w-md mx-auto"
+              style={{ color: "#6b7a99" }}
             >
-              Full platform oversight — approve problems, manage admins &
+              Full platform oversight — approve problems, manage admins &amp;
               students, monitor all activity.
             </p>
           </motion.div>
@@ -311,11 +220,7 @@ const SAHome = () => {
             initial="hidden"
             animate="visible"
             variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: 16,
-            }}
+            className="grid grid-cols-2 gap-4 mb-7"
           >
             {TILES.map((tile) => (
               <motion.div
@@ -330,16 +235,12 @@ const SAHome = () => {
                 }}
                 whileHover={{ y: -4, transition: { duration: 0.18 } }}
                 onClick={() => navigate(tile.path)}
+                className="relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
                 style={{
                   gridColumn: tile.span === 2 ? "span 2" : "span 1",
                   background: "#0c0f18",
                   border: `1px solid ${tile.accent}25`,
-                  borderRadius: 16,
                   padding: tile.span === 2 ? "28px 32px" : "24px",
-                  cursor: "pointer",
-                  position: "relative",
-                  overflow: "hidden",
-                  transition: "border-color 0.2s, box-shadow 0.2s",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = `${tile.accent}50`;
@@ -350,10 +251,9 @@ const SAHome = () => {
                   e.currentTarget.style.boxShadow = "none";
                 }}
               >
-                {/* Background glow */}
                 <div
+                  className="absolute pointer-events-none"
                   style={{
-                    position: "absolute",
                     top: tile.span === 2 ? -60 : -40,
                     right: -40,
                     width: tile.span === 2 ? 180 : 120,
@@ -361,30 +261,19 @@ const SAHome = () => {
                     borderRadius: "50%",
                     background: `${tile.accent}08`,
                     filter: "blur(30px)",
-                    pointerEvents: "none",
                   }}
                 />
                 <div
-                  style={{
-                    position: "relative",
-                    zIndex: 1,
-                    display: "flex",
-                    alignItems: tile.span === 2 ? "center" : "flex-start",
-                    gap: 20,
-                  }}
+                  className={`relative z-10 flex ${tile.span === 2 ? "items-center" : "items-start"} gap-5`}
                 >
                   <div
+                    className="rounded-2xl flex items-center justify-center flex-shrink-0"
                     style={{
                       width: tile.span === 2 ? 56 : 48,
                       height: tile.span === 2 ? 56 : 48,
-                      borderRadius: 14,
                       background: `${tile.accent}14`,
                       border: `1px solid ${tile.accent}30`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
                       fontSize: tile.span === 2 ? 22 : 18,
-                      flexShrink: 0,
                       color: tile.accent,
                     }}
                   >
@@ -392,34 +281,25 @@ const SAHome = () => {
                   </div>
                   <div>
                     <div
+                      className="font-display font-extrabold mb-1.5"
                       style={{
-                        fontFamily: "'Syne', sans-serif",
                         fontSize: tile.span === 2 ? 20 : 15,
-                        fontWeight: 800,
                         color: "#f0f4ff",
-                        marginBottom: 6,
                       }}
                     >
                       {tile.title}
                     </div>
                     <div
-                      style={{
-                        fontFamily: "'DM Mono', monospace",
-                        fontSize: 12,
-                        color: "#6b7a99",
-                        lineHeight: 1.6,
-                      }}
+                      className="font-mono text-[12px] leading-relaxed"
+                      style={{ color: "#6b7a99" }}
                     >
                       {tile.sub}
                     </div>
                   </div>
                   {tile.span === 2 && (
                     <div
-                      style={{
-                        marginLeft: "auto",
-                        fontSize: 18,
-                        color: `${tile.accent}80`,
-                      }}
+                      className="ml-auto text-lg"
+                      style={{ color: `${tile.accent}80` }}
                     >
                       →
                     </div>
@@ -429,21 +309,16 @@ const SAHome = () => {
             ))}
           </motion.div>
 
-          {/* Quick stats preview */}
+          {/* Quick stats */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
+            className="rounded-2xl flex justify-around flex-wrap gap-4"
             style={{
-              marginTop: 28,
               background: "#0c0f18",
               border: "1px solid #1e2330",
-              borderRadius: 14,
               padding: "18px 28px",
-              display: "flex",
-              justifyContent: "space-around",
-              flexWrap: "wrap",
-              gap: 16,
             }}
           >
             {[
@@ -452,26 +327,16 @@ const SAHome = () => {
               { label: "Edition", value: "26.0", color: "#e85d3a" },
               { label: "System", value: "LIVE", color: "#3a9de8" },
             ].map((s) => (
-              <div key={s.label} style={{ textAlign: "center" }}>
+              <div key={s.label} className="text-center">
                 <div
-                  style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontSize: 18,
-                    fontWeight: 800,
-                    color: s.color,
-                  }}
+                  className="font-display text-lg font-extrabold"
+                  style={{ color: s.color }}
                 >
                   {s.value}
                 </div>
                 <div
-                  style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: 10,
-                    color: "#6b7a99",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    marginTop: 3,
-                  }}
+                  className="font-mono text-[10px] uppercase tracking-widest mt-1"
+                  style={{ color: "#6b7a99" }}
                 >
                   {s.label}
                 </div>

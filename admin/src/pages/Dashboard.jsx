@@ -26,18 +26,13 @@ import {
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
 
-// ─── Animation Variants ───────────────────────────────────────────────────────
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] },
 });
-
-const stagger = {
-  animate: { transition: { staggerChildren: 0.07 } },
-};
-
-const cardVariant = {
+const stagger = { animate: { transition: { staggerChildren: 0.07 } } };
+const cardVar = {
   initial: { opacity: 0, y: 20 },
   animate: {
     opacity: 1,
@@ -46,99 +41,52 @@ const cardVariant = {
   },
 };
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
 const StatCard = ({ icon: Icon, label, value, accent, suffix, badge }) => (
   <motion.div
-    variants={cardVariant}
+    variants={cardVar}
     whileHover={{ y: -4, transition: { duration: 0.2 } }}
+    className="relative rounded-2xl overflow-hidden cursor-default transition-all duration-200 hover:border-slate-700"
     style={{
       background: "#0c0f18",
-      border: `1px solid #1e2330`,
-      borderRadius: 16,
+      border: "1px solid #1e2330",
       padding: "24px",
-      position: "relative",
-      overflow: "hidden",
-      cursor: "default",
     }}
-    className="stat-card"
   >
-    {/* Background glow */}
     <div
-      style={{
-        position: "absolute",
-        top: -40,
-        right: -40,
-        width: 120,
-        height: 120,
-        borderRadius: "50%",
-        background: `${accent}10`,
-        filter: "blur(30px)",
-        pointerEvents: "none",
-      }}
+      className="absolute -top-10 -right-10 w-28 h-28 rounded-full pointer-events-none"
+      style={{ background: `${accent}10`, filter: "blur(30px)" }}
     />
-    {/* Faint icon watermark */}
-    <div
-      style={{
-        position: "absolute",
-        bottom: -10,
-        right: -10,
-        opacity: 0.04,
-        pointerEvents: "none",
-      }}
-    >
+    <div className="absolute -bottom-2.5 -right-2.5 opacity-[0.04] pointer-events-none">
       <Icon size={90} color={accent} />
     </div>
-
-    <div style={{ position: "relative", zIndex: 1 }}>
+    <div className="relative z-10">
       <div
+        className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
         style={{
-          width: 44,
-          height: 44,
-          borderRadius: 12,
           background: `${accent}14`,
           border: `1px solid ${accent}30`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 18,
           boxShadow: `0 0 20px ${accent}20`,
         }}
       >
         <Icon size={20} color={accent} />
       </div>
       <p
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          color: "#6b7a99",
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          fontFamily: "'DM Mono', monospace",
-          marginBottom: 8,
-        }}
+        className="font-mono text-[11px] font-bold uppercase tracking-widest mb-2"
+        style={{ color: "#6b7a99" }}
       >
         {label}
       </p>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
+      <div className="flex items-end gap-2.5">
         <span
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: 36,
-            fontWeight: 800,
-            color: "#f0f4ff",
-            lineHeight: 1,
-          }}
+          className="font-display font-extrabold leading-none"
+          style={{ fontSize: 36, color: "#f0f4ff" }}
         >
           {value}
         </span>
         {suffix && (
           <span
-            style={{
-              fontSize: 12,
-              color: "#6b7a99",
-              fontFamily: "'DM Mono', monospace",
-              paddingBottom: 4,
-            }}
+            className="font-mono text-[12px] pb-1"
+            style={{ color: "#6b7a99" }}
           >
             {suffix}
           </span>
@@ -146,32 +94,20 @@ const StatCard = ({ icon: Icon, label, value, accent, suffix, badge }) => (
       </div>
       {badge && (
         <div
+          className="mt-3 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wide"
           style={{
-            marginTop: 12,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
             background: `${accent}14`,
             border: `1px solid ${accent}30`,
-            borderRadius: 6,
-            padding: "4px 10px",
-            fontSize: 10,
-            fontWeight: 700,
             color: accent,
-            fontFamily: "'DM Mono', monospace",
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
           }}
         >
-          {badge.icon && <badge.icon size={10} />}
-          {badge.text}
+          {badge.icon && <badge.icon size={10} />} {badge.text}
         </div>
       )}
     </div>
   </motion.div>
 );
 
-// ─── Profile Field ────────────────────────────────────────────────────────────
 const ProfileField = ({
   icon: Icon,
   label,
@@ -181,44 +117,24 @@ const ProfileField = ({
   accent = "#e85d3a",
 }) => (
   <motion.div
-    variants={cardVariant}
-    whileHover={{ borderColor: `${accent}40`, transition: { duration: 0.15 } }}
+    variants={cardVar}
+    className="flex items-start gap-3.5 rounded-xl transition-all duration-150"
     style={{
-      display: "flex",
-      alignItems: "flex-start",
-      gap: 14,
       padding: "16px 18px",
       background: "#0c0f18",
       border: "1px solid #1e2330",
-      borderRadius: 12,
     }}
   >
     <div
-      style={{
-        width: 38,
-        height: 38,
-        borderRadius: 10,
-        flexShrink: 0,
-        background: `${accent}10`,
-        border: `1px solid ${accent}20`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+      className="w-[38px] h-[38px] rounded-xl flex-shrink-0 flex items-center justify-center"
+      style={{ background: `${accent}10`, border: `1px solid ${accent}20` }}
     >
       <Icon size={16} color={accent} />
     </div>
-    <div style={{ flex: 1, minWidth: 0 }}>
+    <div className="flex-1 min-w-0">
       <p
-        style={{
-          fontSize: 10,
-          fontWeight: 700,
-          color: "#6b7a99",
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          fontFamily: "'DM Mono', monospace",
-          marginBottom: 5,
-        }}
+        className="font-mono text-[10px] font-bold uppercase tracking-widest mb-1.5"
+        style={{ color: "#6b7a99" }}
       >
         {label}
       </p>
@@ -227,30 +143,15 @@ const ProfileField = ({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            color: accent,
-            fontSize: 13,
-            fontWeight: 600,
-            fontFamily: "'DM Mono', monospace",
-            textDecoration: "none",
-          }}
+          className="inline-flex items-center gap-1.5 font-mono text-[13px] font-semibold no-underline hover:opacity-80 transition-opacity"
+          style={{ color: accent }}
         >
           {value} <ExternalLink size={12} />
         </a>
       ) : (
         <p
-          style={{
-            fontSize: 13,
-            color: "#c4cedf",
-            fontFamily: "'DM Mono', monospace",
-            fontWeight: 500,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
+          className="font-mono text-[13px] font-medium truncate"
+          style={{ color: "#c4cedf" }}
         >
           {value || "—"}
         </p>
@@ -259,95 +160,60 @@ const ProfileField = ({
   </motion.div>
 );
 
-// ─── Status Node ──────────────────────────────────────────────────────────────
 const StatusNode = ({ isBlocked }) => {
   const color = isBlocked ? "#f87171" : "#4ade80";
   const label = isBlocked ? "RESTRICTED" : "OPERATIONAL";
   return (
     <motion.div
-      variants={cardVariant}
+      variants={cardVar}
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="relative rounded-2xl overflow-hidden"
       style={{
         background: "#0c0f18",
         border: "1px solid #1e2330",
-        borderRadius: 16,
         padding: "24px",
-        position: "relative",
-        overflow: "hidden",
       }}
     >
       <div
-        style={{
-          position: "absolute",
-          top: -40,
-          right: -40,
-          width: 120,
-          height: 120,
-          borderRadius: "50%",
-          background: `${color}0c`,
-          filter: "blur(30px)",
-        }}
+        className="absolute -top-10 -right-10 w-28 h-28 rounded-full pointer-events-none"
+        style={{ background: `${color}0c`, filter: "blur(30px)" }}
       />
-      <div style={{ position: "relative", zIndex: 1 }}>
+      <div className="relative z-10">
         <div
+          className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: 12,
             background: `${color}14`,
             border: `1px solid ${color}30`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: 18,
             boxShadow: `0 0 20px ${color}20`,
           }}
         >
           <CheckCircle size={20} color={color} />
         </div>
         <p
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            color: "#6b7a99",
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            fontFamily: "'DM Mono', monospace",
-            marginBottom: 10,
-          }}
+          className="font-mono text-[11px] font-bold uppercase tracking-widest mb-2.5"
+          style={{ color: "#6b7a99" }}
         >
           Node Status
         </p>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ position: "relative", width: 10, height: 10 }}>
+        <div className="flex items-center gap-2.5">
+          <div className="relative w-2.5 h-2.5">
             {!isBlocked && (
               <span
+                className="absolute inset-0 rounded-full opacity-40"
                 style={{
-                  position: "absolute",
-                  inset: 0,
-                  borderRadius: "50%",
                   background: color,
-                  opacity: 0.4,
                   animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite",
                 }}
               />
             )}
             <span
-              style={{
-                position: "absolute",
-                inset: 0,
-                borderRadius: "50%",
-                background: color,
-              }}
+              className="absolute inset-0 rounded-full"
+              style={{ background: color }}
             />
           </div>
           <span
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontSize: 18,
-              fontWeight: 800,
-              color,
-            }}
+            className="font-display text-lg font-extrabold"
+            style={{ color }}
           >
             {label}
           </span>
@@ -357,50 +223,30 @@ const StatusNode = ({ isBlocked }) => {
   );
 };
 
-// ─── Loading Screen ───────────────────────────────────────────────────────────
 const LoadingScreen = () => (
   <div
-    style={{
-      minHeight: "100vh",
-      background: "#080c14",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 20,
-    }}
+    className="min-h-screen flex flex-col items-center justify-center gap-5"
+    style={{ background: "#080c14" }}
   >
-    <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap');`}</style>
+    <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap'); @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(.95)}}`}</style>
     <div
+      className="w-12 h-12 rounded-2xl flex items-center justify-center"
       style={{
-        width: 48,
-        height: 48,
-        borderRadius: 14,
         background: "#e85d3a",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
         animation: "pulse 1.5s ease-in-out infinite",
       }}
     >
       <Zap size={22} color="#fff" />
     </div>
     <p
-      style={{
-        fontFamily: "'DM Mono', monospace",
-        fontSize: 11,
-        color: "#6b7a99",
-        letterSpacing: "0.18em",
-        textTransform: "uppercase",
-      }}
+      className="font-mono text-[11px] uppercase tracking-widest"
+      style={{ color: "#6b7a99" }}
     >
       Decrypting profile…
     </p>
-    <style>{`@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.7;transform:scale(0.95)} }`}</style>
   </div>
 );
 
-// ─── Main Dashboard ───────────────────────────────────────────────────────────
 const Dashboard = () => {
   const { axios, adminToken } = useAppContext();
   const navigate = useNavigate();
@@ -415,8 +261,7 @@ const Dashboard = () => {
         headers: { Authorization: `Bearer ${adminToken}` },
       });
       if (data.success) setAdminData(data.admin);
-    } catch (error) {
-      console.error("Failed to fetch admin data:", error);
+    } catch {
       setAdminData({
         name: "Admin User",
         email: "admin@inteconnect.io",
@@ -465,163 +310,98 @@ const Dashboard = () => {
         year: "numeric",
       })
     : "N/A";
-
   const firstName = adminData.name?.split(" ")[0] || "Admin";
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
+        .font-display { font-family: 'Syne', sans-serif !important; }
+        .font-mono    { font-family: 'DM Mono', monospace !important; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        @keyframes ping { 75%,100% { transform: scale(1.8); opacity: 0; } }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes ping { 75%,100%{transform:scale(1.8);opacity:0} }
+        @keyframes spin { to{transform:rotate(360deg)} }
         body { background: #080c14; }
-        .stat-card:hover { border-color: #2a3045 !important; box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0c0f18; }
         ::-webkit-scrollbar-thumb { background: #1e2330; border-radius: 3px; }
       `}</style>
 
       <div
-        style={{
-          minHeight: "100vh",
-          background: "#080c14",
-          color: "#f0f4ff",
-          fontFamily: "'DM Mono', monospace",
-        }}
+        className="min-h-screen font-mono"
+        style={{ background: "#080c14", color: "#f0f4ff" }}
       >
-        {/* ── Ambient background ── */}
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            pointerEvents: "none",
-            zIndex: 0,
-            overflow: "hidden",
-          }}
-        >
+        {/* Ambient BG */}
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
           <div
+            className="absolute"
             style={{
-              position: "absolute",
               top: -200,
               left: "30%",
               width: 600,
               height: 600,
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, #e85d3a06 0%, transparent 70%)",
+                "radial-gradient(circle,#e85d3a06 0%,transparent 70%)",
             }}
           />
           <div
+            className="absolute"
             style={{
-              position: "absolute",
               bottom: -200,
               right: "10%",
               width: 500,
               height: 500,
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, #3a9de808 0%, transparent 70%)",
+                "radial-gradient(circle,#3a9de808 0%,transparent 70%)",
             }}
           />
         </div>
 
-        <div
-          style={{
-            position: "relative",
-            zIndex: 1,
-            maxWidth: 1100,
-            margin: "0 auto",
-            padding: "0 28px 60px",
-          }}
-        >
-          {/* ── Top Nav ── */}
+        <div className="relative z-10 max-w-[1100px] mx-auto px-7 pb-16">
+          {/* Top Nav */}
           <motion.div
             {...fadeUp(0)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              paddingTop: 32,
-              marginBottom: 40,
-            }}
+            className="flex items-center justify-between pt-8 mb-10"
           >
             <button
               onClick={() => navigate("/")}
+              className="flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-[12px] font-bold tracking-wide cursor-pointer transition-all duration-200 hover:border-[#e85d3a40] hover:text-slate-100"
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
                 background: "#0c0f18",
                 border: "1px solid #1e2330",
-                borderRadius: 10,
-                padding: "9px 16px",
                 color: "#8892a4",
-                fontSize: 12,
-                fontWeight: 700,
-                fontFamily: "'DM Mono', monospace",
-                cursor: "pointer",
-                letterSpacing: "0.04em",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#e85d3a40";
-                e.currentTarget.style.color = "#f0f4ff";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#1e2330";
-                e.currentTarget.style.color = "#8892a4";
               }}
             >
               <ArrowLeft size={14} /> Command Center
             </button>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div className="flex items-center gap-3">
               <div
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wide"
                 style={{
-                  padding: "6px 14px",
-                  borderRadius: 8,
                   background: "#4ade8014",
                   border: "1px solid #4ade8030",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 11,
                   color: "#4ade80",
-                  fontFamily: "'DM Mono', monospace",
-                  fontWeight: 700,
-                  letterSpacing: "0.06em",
                 }}
               >
                 <span
+                  className="w-1.5 h-1.5 rounded-full inline-block"
                   style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
                     background: "#4ade80",
                     boxShadow: "0 0 6px #4ade80",
                   }}
                 />
                 LIVE
               </div>
-
               <motion.button
                 whileTap={{ scale: 0.96 }}
                 onClick={fetchAdminProfile}
+                className="flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-[12px] font-bold tracking-wide cursor-pointer"
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
                   background: "#0c0f18",
                   border: "1px solid #e85d3a40",
-                  borderRadius: 10,
-                  padding: "9px 16px",
                   color: "#e85d3a",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  fontFamily: "'DM Mono', monospace",
-                  cursor: "pointer",
-                  letterSpacing: "0.04em",
                 }}
               >
                 <RefreshCcw
@@ -637,51 +417,32 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* ── Header ── */}
-          <motion.div {...fadeUp(0.05)} style={{ marginBottom: 44 }}>
-            {/* Role badge */}
+          {/* Header */}
+          <motion.div {...fadeUp(0.05)} className="mb-11">
             <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                background: "#e85d3a14",
-                border: "1px solid #e85d3a30",
-                borderRadius: 8,
-                padding: "5px 14px",
-                marginBottom: 20,
-              }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg mb-5"
+              style={{ background: "#e85d3a14", border: "1px solid #e85d3a30" }}
             >
               <Shield size={13} color="#e85d3a" />
               <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "#e85d3a",
-                  fontFamily: "'DM Mono', monospace",
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                }}
+                className="font-mono text-[11px] font-bold uppercase tracking-widest"
+                style={{ color: "#e85d3a" }}
               >
                 {adminData.role} · Access Level
               </span>
             </div>
-
             <h1
+              className="font-display font-extrabold leading-tight mb-3.5"
               style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: "clamp(28px, 5vw, 48px)",
-                fontWeight: 800,
+                fontSize: "clamp(28px,5vw,48px)",
                 color: "#f0f4ff",
-                lineHeight: 1.1,
                 letterSpacing: "-0.02em",
-                marginBottom: 14,
               }}
             >
               Welcome back,{" "}
               <span
                 style={{
-                  background: "linear-gradient(135deg, #e85d3a, #f0944d)",
+                  background: "linear-gradient(135deg,#e85d3a,#f0944d)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                 }}
@@ -689,51 +450,33 @@ const Dashboard = () => {
                 {firstName}
               </span>
             </h1>
-
             <p
-              style={{
-                fontSize: 14,
-                color: "#6b7a99",
-                lineHeight: 1.75,
-                maxWidth: 560,
-                fontFamily: "'DM Mono', monospace",
-              }}
+              className="font-mono text-sm leading-relaxed max-w-[560px]"
+              style={{ color: "#6b7a99" }}
             >
               Centralized overview of your administrative metrics, active
-              projects, and network activity within the InteConnect ecosystem.
+              projects, and network activity.
             </p>
-
-            {/* Joined date strip */}
             <div
+              className="inline-flex items-center gap-2 mt-4 px-3.5 py-1.5 rounded-lg font-mono text-[11px]"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                marginTop: 16,
-                padding: "6px 14px",
                 background: "#0c0f18",
                 border: "1px solid #1e2330",
-                borderRadius: 8,
-                fontSize: 11,
                 color: "#6b7a99",
-                fontFamily: "'DM Mono', monospace",
               }}
             >
-              <Clock size={11} color="#6b7a99" />
-              Member since {joinDate}
+              <Clock size={11} color="#6b7a99" /> Member since {joinDate}
             </div>
           </motion.div>
 
-          {/* ── Stats Grid ── */}
+          {/* Stats Grid */}
           <motion.div
             variants={stagger}
             initial="initial"
             animate="animate"
+            className="grid gap-4 mb-9"
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-              gap: 16,
-              marginBottom: 36,
+              gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))",
             }}
           >
             <StatCard
@@ -760,17 +503,14 @@ const Dashboard = () => {
             <StatusNode isBlocked={adminData.isBlocked} />
           </motion.div>
 
-          {/* ── Analytics Bar ── */}
-          <motion.div {...fadeUp(0.2)} style={{ marginBottom: 36 }}>
+          {/* Analytics Bar */}
+          <motion.div {...fadeUp(0.2)} className="mb-9">
             <div
+              className="rounded-2xl flex overflow-hidden"
               style={{
                 background: "#0c0f18",
                 border: "1px solid #1e2330",
-                borderRadius: 16,
                 padding: "20px 24px",
-                display: "flex",
-                gap: 0,
-                overflow: "hidden",
               }}
             >
               {[
@@ -815,68 +555,39 @@ const Dashboard = () => {
               ].map((item, i, arr) => (
                 <div
                   key={item.label}
+                  className="flex-1 flex items-center gap-3.5 px-6"
                   style={{
-                    flex: 1,
-                    padding: "0 24px",
                     borderRight:
                       i < arr.length - 1 ? "1px solid #1e2330" : "none",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 14,
                   }}
                 >
                   <div
+                    className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center"
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      flexShrink: 0,
                       background: `${item.color}14`,
                       border: `1px solid ${item.color}25`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
                     }}
                   >
                     <item.icon size={16} color={item.color} />
                   </div>
                   <div>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "baseline",
-                        gap: 4,
-                      }}
-                    >
+                    <div className="flex items-baseline gap-1">
                       <span
-                        style={{
-                          fontFamily: "'Syne', sans-serif",
-                          fontSize: 22,
-                          fontWeight: 800,
-                          color: item.color,
-                        }}
+                        className="font-display text-[22px] font-extrabold"
+                        style={{ color: item.color }}
                       >
                         {item.value}
                       </span>
                       <span
-                        style={{
-                          fontSize: 11,
-                          color: "#6b7a99",
-                          fontFamily: "'DM Mono', monospace",
-                        }}
+                        className="font-mono text-[11px]"
+                        style={{ color: "#6b7a99" }}
                       >
                         {item.suffix}
                       </span>
                     </div>
                     <p
-                      style={{
-                        fontSize: 10,
-                        color: "#6b7a99",
-                        fontFamily: "'DM Mono', monospace",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
-                        marginTop: 2,
-                      }}
+                      className="font-mono text-[10px] uppercase tracking-widest mt-0.5"
+                      style={{ color: "#6b7a99" }}
                     >
                       {item.label}
                     </p>
@@ -886,63 +597,38 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* ── Identity Matrix ── */}
+          {/* Identity Matrix */}
           <motion.div {...fadeUp(0.25)}>
-            {/* Section header */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                marginBottom: 20,
-              }}
-            >
+            <div className="flex items-center gap-3 mb-5">
               <div
-                style={{
-                  width: 4,
-                  height: 28,
-                  background: "#e85d3a",
-                  borderRadius: 2,
-                }}
+                className="w-1 h-7 rounded-sm"
+                style={{ background: "#e85d3a" }}
               />
               <h2
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: 18,
-                  fontWeight: 800,
-                  color: "#f0f4ff",
-                }}
+                className="font-display text-lg font-extrabold"
+                style={{ color: "#f0f4ff" }}
               >
                 Identity Matrix
               </h2>
-              <div style={{ flex: 1, height: 1, background: "#1e2330" }} />
+              <div className="flex-1 h-px" style={{ background: "#1e2330" }} />
               <div
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-[11px]"
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "5px 12px",
                   background: "#0c0f18",
                   border: "1px solid #1e2330",
-                  borderRadius: 8,
-                  fontSize: 11,
                   color: "#6b7a99",
-                  fontFamily: "'DM Mono', monospace",
                 }}
               >
-                <Shield size={11} color="#4ade80" />
-                Verified Node
+                <Shield size={11} color="#4ade80" /> Verified Node
               </div>
             </div>
-
             <motion.div
               variants={stagger}
               initial="initial"
               animate="animate"
+              className="grid gap-3"
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                gap: 12,
+                gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))",
               }}
             >
               <ProfileField
@@ -1004,105 +690,59 @@ const Dashboard = () => {
             </motion.div>
           </motion.div>
 
-          {/* ── Managed Projects Preview ── */}
+          {/* Managed Projects Preview */}
           {adminData.managedProjects?.length > 0 && (
-            <motion.div {...fadeUp(0.3)} style={{ marginTop: 36 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  marginBottom: 20,
-                }}
-              >
-                <div
-                  style={{
-                    width: 4,
-                    height: 28,
-                    background: "#3a9de8",
-                    borderRadius: 2,
-                  }}
-                />
+            <motion.div {...fadeUp(0.3)} className="mt-9">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-1 h-7 rounded-sm bg-[#3a9de8]" />
                 <h2
-                  style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontSize: 18,
-                    fontWeight: 800,
-                    color: "#f0f4ff",
-                  }}
+                  className="font-display text-lg font-extrabold"
+                  style={{ color: "#f0f4ff" }}
                 >
                   Assigned Projects
                 </h2>
-                <div style={{ flex: 1, height: 1, background: "#1e2330" }} />
+                <div
+                  className="flex-1 h-px"
+                  style={{ background: "#1e2330" }}
+                />
                 <button
                   onClick={() => navigate("/manage-projects")}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-mono text-[11px] font-bold uppercase tracking-wide cursor-pointer"
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "7px 14px",
                     background: "#3a9de814",
                     border: "1px solid #3a9de830",
-                    borderRadius: 8,
                     color: "#3a9de8",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    fontFamily: "'DM Mono', monospace",
-                    cursor: "pointer",
-                    letterSpacing: "0.06em",
                   }}
                 >
                   View All <ExternalLink size={11} />
                 </button>
               </div>
-
               <div
-                style={{
-                  background: "#0c0f18",
-                  border: "1px solid #1e2330",
-                  borderRadius: 16,
-                  padding: "20px 24px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 16,
-                }}
+                className="flex items-center justify-between gap-4 rounded-2xl p-5 pl-6"
+                style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div className="flex items-center gap-4">
                   <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center"
                     style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 14,
                       background: "#3a9de814",
                       border: "1px solid #3a9de830",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
                     }}
                   >
                     <FolderKanban size={22} color="#3a9de8" />
                   </div>
                   <div>
                     <p
-                      style={{
-                        fontFamily: "'Syne', sans-serif",
-                        fontSize: 16,
-                        fontWeight: 700,
-                        color: "#f0f4ff",
-                      }}
+                      className="font-display text-base font-bold"
+                      style={{ color: "#f0f4ff" }}
                     >
                       {adminData.managedProjects.length} Project
                       {adminData.managedProjects.length !== 1 ? "s" : ""}{" "}
                       Assigned
                     </p>
                     <p
-                      style={{
-                        fontSize: 12,
-                        color: "#6b7a99",
-                        fontFamily: "'DM Mono', monospace",
-                        marginTop: 3,
-                      }}
+                      className="font-mono text-[12px] mt-0.5"
+                      style={{ color: "#6b7a99" }}
                     >
                       Assigned by Super Admin · Manage tasks, logs &
                       contributors
@@ -1111,21 +751,11 @@ const Dashboard = () => {
                 </div>
                 <button
                   onClick={() => navigate("/manage-projects")}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-display font-bold text-[12px] tracking-wide cursor-pointer flex-shrink-0"
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "10px 20px",
                     background: "#e85d3a",
-                    border: "none",
-                    borderRadius: 10,
                     color: "#fff",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    fontFamily: "'Syne', sans-serif",
-                    cursor: "pointer",
-                    letterSpacing: "0.04em",
-                    flexShrink: 0,
+                    border: "none",
                     boxShadow: "0 4px 16px #e85d3a30",
                   }}
                 >

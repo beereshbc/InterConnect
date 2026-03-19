@@ -2,89 +2,41 @@ import mongoose from "mongoose";
 
 const projectSchema = new mongoose.Schema(
   {
-    // Custom Project ID
     projectID: {
       type: String,
       unique: true,
       default: () => `PROJ-${Math.floor(100000 + Math.random() * 900000)}`,
     },
-
-    // Reference to the original Problem this project is solving
     problem: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Problem",
       required: true,
     },
+    contributors: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],
+    logs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Log" }],
+    coordinators: [{ type: mongoose.Schema.Types.ObjectId, ref: "Admin" }],
+    topContributors: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],
 
-    // Array of Student Contributors
-    contributors: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Student",
-      },
-    ],
+    githubRepoLink: { type: String, required: true, trim: true },
+    liveHostedLink: { type: String, trim: true, default: "" },
+    resourcesLink: { type: String, trim: true, default: "" },
+    communityLink: { type: String, trim: true, default: "" },
+    projectDescription: { type: String, required: true },
 
-    // The core requirement: Storing 1000+ logs via references
-    logs: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Log",
-      },
-    ],
+    // Auto-recalculated on every log status change via syncProjectStats()
+    projectProgressRate: { type: Number, default: 0, min: 0, max: 100 },
+    totalTasksCreated: { type: Number, default: 0 },
+    totalTasksCompleted: { type: Number, default: 0 },
+    totalPointsDistributed: { type: Number, default: 0 },
 
-    githubRepoLink: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    liveHostedLink: {
-      type: String,
-      trim: true,
-    },
-
-    // Array of Coordinators (Can be Admins or Senior Students)
-    coordinators: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Admin", // Assuming you have an Admin model
-      },
-    ],
-
-    projectDescription: {
-      type: String,
-      required: true,
-    },
-
-    // Visual percentage (e.g., 75 for 75%)
-    projectProgressRate: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100,
-    },
-
-    // Array of top performers for this specific project
-    topContributors: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Student",
-      },
-    ],
-
-    is_blocked: {
-      type: Boolean,
-      default: false,
-    },
+    is_blocked: { type: Boolean, default: false },
   },
-  {
-    timestamps: true, // Tracks project creation and last update
-  },
+  { timestamps: true },
 );
 
-// Indexing logs for faster lookups since you expect high volume (1000+)
 projectSchema.index({ logs: 1 });
+projectSchema.index({ problem: 1 });
+projectSchema.index({ contributors: 1 });
 
 const Project = mongoose.model("Project", projectSchema);
-
 export default Project;

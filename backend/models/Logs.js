@@ -1,72 +1,85 @@
 import mongoose from "mongoose";
 
+const actionSchema = new mongoose.Schema(
+  {
+    actionType: {
+      type: String,
+      enum: [
+        "opened",
+        "published",
+        "unpublished",
+        "self_assigned",
+        "completed",
+        "terminated",
+        "reopened",
+        "updated",
+      ],
+      required: true,
+    },
+    note: { type: String, default: "" },
+    by: { type: String, default: "" },
+  },
+  { _id: false, timestamps: true },
+);
+
 const logSchema = new mongoose.Schema(
   {
-    taskTitle: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    taskTitle: { type: String, required: true, trim: true },
+    description: { type: String, required: true },
+    requirements: { type: String, default: "" },
 
-    description: {
-      type: String,
-      required: true,
-    },
-
-    // Reference to a Problem/Task ID
     problemId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Problem", // Assuming you have a Problem model
+      ref: "Problem",
+      required: true,
+    },
+    projectId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
       required: true,
     },
 
-    githubIssueLink: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    githubIssueLink: { type: String, required: true, trim: true },
+    githubPrLink: { type: String, trim: true, default: "" },
+    closureNote: { type: String, default: "" },
 
-    assignedTaskPoints: {
-      type: Number,
-      default: 0,
-    },
+    assignedTaskPoints: { type: Number, default: 10 },
 
-    // The Student who is doing the work
     contributorID: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Student",
-      required: true,
+      default: null,
     },
 
-    // The person (Admin/Lead) who assigned or coordinates the task
     task_coordinator_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin", // Or "Student" if peer-coordinated
+      ref: "Admin",
       required: true,
     },
 
-    // String version of the contributor name for quick display
-    task_contributor: {
-      type: String,
-      required: true,
-    },
-
+    // open → assigned → completed | terminated
     task_status: {
       type: String,
-      enum: ["pending", "completed"],
-      default: "pending",
+      enum: ["open", "assigned", "completed", "terminated"],
+      default: "open",
     },
 
-    isPublished: {
-      type: Boolean,
-      default: false,
-    },
+    isPublished: { type: Boolean, default: false },
+
+    deadlineDays: { type: Number, default: 7, min: 1 },
+    deadlineAt: { type: Date, default: null },
+    assignedAt: { type: Date, default: null },
+    closedAt: { type: Date, default: null },
+
+    reopenCount: { type: Number, default: 0 },
+    actions: { type: [actionSchema], default: [] },
   },
-  {
-    timestamps: true, // Captures created_at (log time) and updated_at
-  },
+  { timestamps: true },
 );
 
-const Log = mongoose.model("Log", logSchema);
+logSchema.index({ task_status: 1, deadlineAt: 1 });
+logSchema.index({ projectId: 1, isPublished: 1, task_status: 1 });
+logSchema.index({ contributorID: 1, task_status: 1 });
 
+const Log = mongoose.model("Log", logSchema);
 export default Log;

@@ -1,9 +1,26 @@
 import Student from "../models/Student.js";
+import Project from "../models/Project.js";
+import Problem from "../models/Problem.js";
+import Log from "../models/Logs.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
-import Problem from "../models/Problem.js";
-import Project from "../models/Project.js";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const generateToken = (id) =>
+  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// AUTH
+// ═════════════════════════════════════════════════════════════════════════════
 
 export const registerStudent = async (req, res) => {
   try {
@@ -16,48 +33,47 @@ export const registerStudent = async (req, res) => {
       semester,
       usn,
       github,
+      department,
+      branch,
       password,
     } = req.body;
 
-    // 1. Check if student already exists
     const existingStudent = await Student.findOne({ email });
-    if (existingStudent) {
-      return res.status(400).json({ message: "Email already registered" });
-    }
+    if (existingStudent)
+      return res
+        .status(400)
+        .json({ success: false, message: "Email already registered." });
 
-    // 2. Hash Password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // 3. Create Student
     const newStudent = new Student({
       name,
       email,
       phone,
       college,
       program,
-      semester,
-      usn, // Make sure to add this if it's in your Schema
-      githubLink: github, // Mapping frontend github to model githubLink
+      department: department || "",
+      branch: branch || "",
+      githubLink: github || "",
       password: hashedPassword,
     });
 
     await newStudent.save();
 
-    // 4. Generate JWT Token for Auto-Login
-    const token = jwt.sign({ id: newStudent._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
-    // 5. Send Response with Token
+    const token = generateToken(newStudent._id);
     res.status(201).json({
       success: true,
       message: "Registration Successful",
-      token, // Sending the token back
-      student: { name: newStudent.name, email: newStudent.email },
+      token,
+      student: {
+        _id: newStudent._id,
+        name: newStudent.name,
+        email: newStudent.email,
+      },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -66,79 +82,73 @@ export const loginStudent = async (req, res) => {
     const { email, password } = req.body;
 
     const student = await Student.findOne({ email });
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
-    }
+    if (!student)
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found." });
+    if (student.isBlocked)
+      return res
+        .status(403)
+        .json({ success: false, message: "Your account has been blocked." });
 
     const isMatch = await bcrypt.compare(password, student.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
+    if (!isMatch)
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid credentials." });
 
-    // Generate JWT Token
-    const token = jwt.sign({ id: student._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
+    const token = generateToken(student._id);
     res.status(200).json({
       success: true,
+      message: "Login successful.",
       token,
-      student: { name: student.name, email: student.email },
+      student: { _id: student._id, name: student.name, email: student.email },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
-
-// Configure your email transporter (Replace with your actual email credentials)
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER, // Your email address
-    pass: process.env.EMAIL_PASS, // Your App Password (if using Gmail)
-  },
-});
 
 export const sendResetOtp = async (req, res) => {
   try {
     const { email } = req.body;
     const student = await Student.findOne({ email });
-
-    if (!student) {
+    if (!student)
       return res
         .status(404)
-        .json({ message: "No account found with that email." });
-    }
+        .json({ success: false, message: "No account found with that email." });
 
-    // Generate a 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Hash the OTP before saving to DB for security (Optional but recommended)
     const salt = await bcrypt.genSalt(10);
     student.resetPasswordOtp = await bcrypt.hash(otp, salt);
-    student.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes from now
+    student.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
     await student.save();
 
-    // Send the email
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: student.email,
-      subject: "InterConnect - Password Reset OTP",
+      subject: "InterConnect — Password Reset OTP",
       html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px;">
-          <h2>Password Reset Request</h2>
-          <p>Hello ${student.name},</p>
-          <p>You requested to reset your password. Use the following OTP to proceed. It is valid for 10 minutes.</p>
-          <h1 style="color: #2563eb; letter-spacing: 5px;">${otp}</h1>
-          <p>If you did not request this, please ignore this email.</p>
-        </div>
-      `,
+        <div style="font-family:monospace;background:#080c14;color:#f0f4ff;padding:32px;border-radius:12px;max-width:600px">
+          <h2 style="color:#3a9de8">Password Reset Request</h2>
+          <p style="color:#8892a4">Hello ${student.name},</p>
+          <p style="color:#8892a4">Use the OTP below to reset your password. Valid for <strong>10 minutes</strong>.</p>
+          <div style="background:#0c0f18;border:1px solid #3a9de830;border-radius:8px;padding:24px;text-align:center;margin:20px 0">
+            <h1 style="color:#3a9de8;letter-spacing:10px;margin:0">${otp}</h1>
+          </div>
+          <p style="color:#6b7a99;font-size:12px">If you did not request this, please ignore this email.</p>
+          <hr style="border-color:#1e2330;margin:20px 0">
+          <p style="color:#4a5568;font-size:10px">© InteConnect 26.0 · GMIT</p>
+        </div>`,
     };
 
     await transporter.sendMail(mailOptions);
     res.status(200).json({ success: true, message: "OTP sent to your email." });
   } catch (error) {
-    res.status(500).json({ message: "Failed to send OTP. Try again later." });
+    res.status(500).json({
+      success: false,
+      message: "Failed to send OTP. Try again later.",
+    });
   }
 };
 
@@ -146,29 +156,22 @@ export const resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
     const student = await Student.findOne({ email });
-
-    if (!student) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    // Check if OTP is expired
-    if (student.resetPasswordExpires < Date.now()) {
+    if (!student)
       return res
-        .status(400)
-        .json({ message: "OTP has expired. Please request a new one." });
-    }
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    if (student.resetPasswordExpires < Date.now())
+      return res.status(400).json({
+        success: false,
+        message: "OTP has expired. Please request a new one.",
+      });
 
-    // Verify OTP
     const isMatch = await bcrypt.compare(otp, student.resetPasswordOtp);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid OTP." });
-    }
+    if (!isMatch)
+      return res.status(400).json({ success: false, message: "Invalid OTP." });
 
-    // Hash the new password
     const salt = await bcrypt.genSalt(10);
     student.password = await bcrypt.hash(newPassword, salt);
-
-    // Clear OTP fields
     student.resetPasswordOtp = undefined;
     student.resetPasswordExpires = undefined;
     await student.save();
@@ -178,31 +181,82 @@ export const resetPassword = async (req, res) => {
       message: "Password reset successfully! You can now login.",
     });
   } catch (error) {
-    res.status(500).json({ message: "Something went wrong." });
+    res.status(500).json({ success: false, message: "Something went wrong." });
   }
 };
 
-// @desc    Get all published problems
-// @route   GET /api/problems/published
-export const getPublishedProblems = async (req, res) => {
-  try {
-    // Only fetch problems where is_published is true
-    // Populate assignedStudents to get the count for the frontend
-    const problems = await Problem.find({ is_published: true })
-      .populate("assignedStudents", "name email") // Optional: populates student details
-      .sort({ createdAt: -1 }); // Newest first
+// ═════════════════════════════════════════════════════════════════════════════
+// PROFILE
+// ═════════════════════════════════════════════════════════════════════════════
 
-    res.status(200).json({
-      success: true,
-      problems,
-    });
+export const getStudentProfile = async (req, res) => {
+  try {
+    const student = await Student.findById(req.studentId)
+      .select("-password -resetPasswordOtp -resetPasswordExpires")
+      .populate({
+        path: "projects",
+        select: "projectID problem projectProgressRate contributors is_blocked",
+        populate: { path: "problem", select: "problemID title category theme" },
+      })
+      .populate({
+        path: "logs",
+        select:
+          "taskTitle description task_status assignedTaskPoints deadlineAt closedAt createdAt projectId",
+      });
+
+    if (!student)
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found." });
+
+    res.status(200).json({ success: true, student });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Create a new problem statement
-// @route   POST /api/problems/create
+export const updateStudentProfile = async (req, res) => {
+  try {
+    const { name, phone, department, program, branch, college, githubLink } =
+      req.body;
+    const student = await Student.findById(req.studentId);
+    if (!student)
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found." });
+
+    if (name !== undefined) student.name = name;
+    if (phone !== undefined) student.phone = phone;
+    if (department !== undefined) student.department = department;
+    if (program !== undefined) student.program = program;
+    if (branch !== undefined) student.branch = branch;
+    if (college !== undefined) student.college = college;
+    if (githubLink !== undefined) student.githubLink = githubLink;
+    await student.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: "Profile updated.", student });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PROBLEMS
+// ═════════════════════════════════════════════════════════════════════════════
+
+export const getPublishedProblems = async (req, res) => {
+  try {
+    const problems = await Problem.find({ is_published: true }).sort({
+      createdAt: -1,
+    });
+    res.status(200).json({ success: true, problems });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const createProblem = async (req, res) => {
   try {
     const {
@@ -217,24 +271,20 @@ export const createProblem = async (req, res) => {
       contactInfo,
       problem_coordinator,
     } = req.body;
-
     const newProblem = new Problem({
       title,
       category,
       description,
       theme,
-      // Safely split tags if they are provided as a comma-separated string
-      tags: tags ? tags.split(",").map((tag) => tag.trim()) : [],
+      tags: tags ? tags.split(",").map((t) => t.trim()) : [],
       ownerName,
       organization,
       department,
       contactInfo,
       problem_coordinator,
-      is_published: false, // Default to false pending admin review
+      is_published: false,
     });
-
     await newProblem.save();
-
     res.status(201).json({
       success: true,
       message: "Problem submitted successfully. Pending admin review.",
@@ -244,61 +294,401 @@ export const createProblem = async (req, res) => {
   }
 };
 
-// @desc    Student joins a problem/project
-// @route   POST /api/problems/:id/join
 export const joinProblem = async (req, res) => {
   try {
     const problemId = req.params.id;
-    const studentId = req.studentId; // This comes from the studentAuth middleware
+    const studentId = req.studentId;
+    const role = req.body?.role || "Contributor";
 
     const problem = await Problem.findById(problemId);
-
-    if (!problem) {
+    if (!problem)
       return res
         .status(404)
         .json({ success: false, message: "Problem not found." });
-    }
 
-    // 1. Check if student has already joined this problem
-    if (problem.assignedStudents.includes(studentId)) {
-      return res.status(400).json({
+    if (!problem.is_published)
+      return res.status(403).json({
         success: false,
-        message: "You have already joined this project pipeline.",
+        message: "This problem is not open for contributors yet.",
       });
-    }
 
-    // 2. Add student to the Problem's assignedStudents array
-    problem.assignedStudents.push(studentId);
-    await problem.save();
-
-    // 3. Find the corresponding Project or create one if it doesn't exist yet
     let project = await Project.findOne({ problem: problemId });
 
-    if (!project) {
-      // If it's the first student joining, initialize the Project
+    if (project) {
+      if (project.contributors.map(String).includes(studentId.toString()))
+        return res.status(400).json({
+          success: false,
+          message: "You have already joined this project.",
+        });
+      project.contributors.push(studentId);
+    } else {
       project = new Project({
         problem: problemId,
         contributors: [studentId],
+        coordinators: [],
         projectDescription: problem.description,
-        githubRepoLink: "Pending Setup", // Required field based on your schema
+        githubRepoLink: "https://github.com/placeholder",
       });
-    } else {
-      // If project exists, add the student to contributors if not already there
-      if (!project.contributors.includes(studentId)) {
-        project.contributors.push(studentId);
-      }
     }
 
     await project.save();
 
-    // 4. Update the Student model to include this project
+    await Problem.findByIdAndUpdate(problemId, {
+      $addToSet: { assignedStudents: studentId },
+    });
+
     await Student.findByIdAndUpdate(studentId, {
-      $addToSet: { projects: project._id }, // $addToSet prevents duplicates
+      $addToSet: { projects: project._id },
+      $push: {
+        projectWiseContribution: {
+          project: project._id,
+          contributionScore: 0,
+          role: role,
+        },
+      },
     });
 
     res.status(200).json({
       success: true,
       message: "Successfully joined the project pipeline!",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PROJECTS
+// ═════════════════════════════════════════════════════════════════════════════
+
+export const getMyProjects = async (req, res) => {
+  try {
+    const student = await Student.findById(req.studentId).select(
+      "projects projectWiseContribution",
+    );
+    if (!student)
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found." });
+
+    const projects = await Project.find({ _id: { $in: student.projects } })
+      .populate({
+        path: "problem",
+        select:
+          "problemID title category theme description tags ownerName organization",
+      })
+      .populate({
+        path: "contributors",
+        select: "name email branch department",
+      })
+      .populate({
+        path: "logs",
+        select:
+          "taskTitle task_status assignedTaskPoints deadlineAt task_contributor isPublished createdAt",
+      });
+
+    const enriched = projects
+      .map((proj) => {
+        const contrib = student.projectWiseContribution?.find(
+          (c) => c.project?.toString() === proj._id?.toString(),
+        );
+        return {
+          ...proj.toObject(),
+          myContribution: {
+            score: contrib?.contributionScore ?? 0,
+            role: contrib?.role ?? "",
+            description: contrib?.description ?? "",
+          },
+        };
+      })
+      .sort((a, b) => b.myContribution.score - a.myContribution.score);
+
+    res
+      .status(200)
+      .json({ success: true, count: enriched.length, projects: enriched });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// LOGS (Task Claiming Logic)
+// ═════════════════════════════════════════════════════════════════════════════
+
+export const getMyLogs = async (req, res) => {
+  try {
+    const { status } = req.query;
+    const query = { contributorID: req.studentId };
+    if (status) query.task_status = status;
+
+    const logs = await Log.find(query)
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "projectId",
+        select: "projectID problem",
+        populate: { path: "problem", select: "title" },
+      });
+
+    res.status(200).json({ success: true, count: logs.length, logs });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const selfAssignLog = async (req, res) => {
+  try {
+    const log = await Log.findById(req.params.logId);
+    if (!log)
+      return res
+        .status(404)
+        .json({ success: false, message: "Task log not found." });
+
+    if (!log.isPublished)
+      return res.status(400).json({
+        success: false,
+        message: "This task is not published by the admin yet.",
+      });
+
+    if (log.task_status !== "open")
+      return res.status(400).json({
+        success: false,
+        message: "This task has already been claimed.",
+      });
+
+    const project = await Project.findOne({
+      _id: log.projectId,
+      contributors: req.studentId,
+    });
+
+    if (!project)
+      return res.status(403).json({
+        success: false,
+        message: "You must join this project before initiating its tasks.",
+      });
+
+    const student = await Student.findById(req.studentId).select("name");
+    if (!student)
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found." });
+
+    const activeLogs = await Log.countDocuments({
+      contributorID: req.studentId,
+      task_status: "assigned",
+    });
+
+    if (activeLogs >= 5)
+      return res.status(400).json({
+        success: false,
+        message:
+          "You already have 5 active tasks. Complete some before taking more.",
+      });
+
+    const now = new Date();
+    const deadlineAt = new Date(
+      now.getTime() + log.deadlineDays * 24 * 60 * 60 * 1000,
+    );
+
+    log.contributorID = req.studentId;
+    log.task_contributor = student.name;
+    log.task_status = "assigned";
+    log.assignedAt = now;
+    log.deadlineAt = deadlineAt;
+
+    log.actions.push({
+      actionType: "self_assigned",
+      note: `Task initiated by ${student.name}. Deadline: ${deadlineAt.toISOString()}`,
+      by: req.studentId.toString(),
+    });
+
+    await log.save();
+
+    await Student.findByIdAndUpdate(req.studentId, {
+      $addToSet: { logs: log._id },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Task initiated! You have ${log.deadlineDays} day(s) to complete it.`,
+      log,
+      deadlineAt,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// LEADERBOARD
+// ═════════════════════════════════════════════════════════════════════════════
+
+export const getLeaderboard = async (req, res) => {
+  try {
+    const students = await Student.find({ isBlocked: false })
+      .select("name email department college branch projectWiseContribution")
+      .lean();
+
+    const ranked = students
+      .map((s) => ({
+        _id: s._id.toString(),
+        name: s.name,
+        email: s.email,
+        department: s.department,
+        college: s.college,
+        branch: s.branch,
+        totalScore: (s.projectWiseContribution || []).reduce(
+          (a, c) => a + (c.contributionScore || 0),
+          0,
+        ),
+        projectCount: s.projectWiseContribution?.length ?? 0,
+      }))
+      .sort((a, b) => b.totalScore - a.totalScore);
+
+    const myRank = ranked.findIndex((s) => s._id === req.studentId) + 1;
+
+    res.status(200).json({
+      success: true,
+      leaderboard: ranked.slice(0, 50),
+      myRank,
+      totalStudents: ranked.length,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// DASHBOARD — all-in-one endpoint
+// ═════════════════════════════════════════════════════════════════════════════
+// Inside controllers/studentController.js
+
+export const getStudentDashboard = async (req, res) => {
+  try {
+    const student = await Student.findById(req.studentId)
+      .select("-password -resetPasswordOtp -resetPasswordExpires")
+      .populate({
+        path: "projects",
+        select:
+          "projectID problem projectProgressRate contributors logs is_blocked resourcesLink communityLink githubRepoLink liveHostedLink",
+        populate: [
+          {
+            path: "problem",
+            select: "problemID title category theme tags description",
+          },
+          { path: "contributors", select: "name email branch" },
+        ],
+      })
+      .populate({
+        path: "logs",
+        select:
+          "taskTitle description requirements task_status assignedTaskPoints deadlineDays deadlineAt assignedAt closedAt githubIssueLink githubPrLink closureNote isPublished reopenCount createdAt projectId",
+        populate: {
+          path: "projectId",
+          select: "projectID problem",
+          populate: { path: "problem", select: "title" },
+        },
+        options: { sort: { createdAt: -1 } },
+      });
+
+    if (!student)
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found." });
+
+    const logs = student.logs || [];
+    const totalScore = (student.projectWiseContribution || []).reduce(
+      (a, c) => a + (c.contributionScore || 0),
+      0,
+    );
+    const completedLogs = logs.filter((l) => l.task_status === "completed");
+    const assignedLogs = logs.filter((l) => l.task_status === "assigned");
+    const terminatedLogs = logs.filter((l) => l.task_status === "terminated");
+    const totalPoints = completedLogs.reduce(
+      (a, l) => a + (l.assignedTaskPoints || 0),
+      0,
+    );
+
+    const projectsEnriched = (student.projects || [])
+      .map((proj) => {
+        const contrib = student.projectWiseContribution?.find(
+          (c) => c.project?.toString() === proj._id?.toString(),
+        );
+        const projLogs = logs.filter(
+          (l) =>
+            l.projectId?._id?.toString() === proj._id?.toString() ||
+            l.projectId?.toString() === proj._id?.toString(),
+        );
+        return {
+          ...proj.toObject(),
+          myScore: contrib?.contributionScore ?? 0,
+          myRole: contrib?.role ?? "",
+          myDescription: contrib?.description ?? "",
+          myLogs: projLogs,
+          myTasksDone: projLogs.filter((l) => l.task_status === "completed")
+            .length,
+          myTasksActive: projLogs.filter((l) => l.task_status === "assigned")
+            .length,
+        };
+      })
+      .sort((a, b) => b.myScore - a.myScore);
+
+    const projectIds = (student.projects || []).map((p) => p._id);
+
+    // FIX IS HERE: Added "task_status isPublished" to the .select()
+    const openLogs = await Log.find({
+      projectId: { $in: projectIds },
+      isPublished: true,
+      task_status: "open",
+    })
+      .select(
+        "taskTitle description requirements assignedTaskPoints deadlineDays createdAt projectId githubIssueLink task_status isPublished",
+      )
+      .populate({
+        path: "projectId",
+        select: "projectID problem",
+        populate: { path: "problem", select: "title" },
+      })
+      .sort({ createdAt: -1 });
+
+    const allStudents = await Student.find({ isBlocked: false })
+      .select("name projectWiseContribution department")
+      .lean();
+
+    const ranked = allStudents
+      .map((s) => ({
+        _id: s._id.toString(),
+        name: s.name,
+        department: s.department,
+        totalScore: (s.projectWiseContribution || []).reduce(
+          (a, c) => a + (c.contributionScore || 0),
+          0,
+        ),
+      }))
+      .sort((a, b) => b.totalScore - a.totalScore);
+
+    const myRank = ranked.findIndex((s) => s._id === req.studentId) + 1;
+    const top10 = ranked.slice(0, 10);
+
+    res.status(200).json({
+      success: true,
+      student: student.toObject(),
+      stats: {
+        totalScore,
+        totalPoints,
+        totalProjects: projectsEnriched.length,
+        totalLogs: logs.length,
+        completedLogs: completedLogs.length,
+        assignedLogs: assignedLogs.length,
+        terminatedLogs: terminatedLogs.length,
+        completionRate:
+          logs.length > 0
+            ? Math.round((completedLogs.length / logs.length) * 100)
+            : 0,
+      },
+      projects: projectsEnriched,
+      recentLogs: logs.slice(0, 10),
+      openLogs,
+      ranking: { myRank, totalStudents: ranked.length, top10 },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

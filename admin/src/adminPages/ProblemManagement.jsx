@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import axios from "axios";
 import {
   SALayout,
@@ -31,67 +31,43 @@ const ApproveModal = ({ problem, admins, onClose, onApprove }) => {
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const handleApprove = async () => {
-    if (!form.coordinatorId) return;
-    setSaving(true);
-    await onApprove(problem._id, form);
-    setSaving(false);
-    onClose();
-  };
-
   return (
     <SAModal title={`Approve · ${problem.problemID}`} onClose={onClose}>
       <div
-        style={{
-          background: "#0c0f18",
-          border: "1px solid #1e2330",
-          borderRadius: 10,
-          padding: "14px 16px",
-          marginBottom: 20,
-        }}
+        className="rounded-xl p-3.5 mb-5"
+        style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
       >
         <div
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: 14,
-            fontWeight: 700,
-            color: "#f0f4ff",
-          }}
+          className="font-display text-sm font-bold"
+          style={{ color: "#f0f4ff" }}
         >
           {problem.title}
         </div>
-        <div style={{ fontSize: 12, color: "#6b7a99", marginTop: 4 }}>
+        <div
+          className="font-mono text-[12px] mt-1"
+          style={{ color: "#6b7a99" }}
+        >
           {problem.ownerName} · {problem.organization}
         </div>
       </div>
 
       <div
-        style={{
-          fontSize: 11,
-          color: "#4ade80",
-          letterSpacing: "0.08em",
-          marginBottom: 16,
-          textTransform: "uppercase",
-          fontWeight: 700,
-        }}
+        className="font-mono text-[11px] uppercase tracking-widest font-bold mb-4"
+        style={{ color: "#4ade80" }}
       >
         ◆ Assign Coordinator *
       </div>
 
-      <div style={{ marginBottom: 16 }}>
+      <div className="mb-4">
         <select
           value={form.coordinatorId}
           onChange={set("coordinatorId")}
+          className="w-full rounded-lg font-mono text-[13px] outline-none"
           style={{
-            width: "100%",
             background: "#060810",
             border: "1px solid #1e2330",
-            borderRadius: 8,
             padding: "10px 14px",
             color: form.coordinatorId ? "#f0f4ff" : "#6b7a99",
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 13,
-            outline: "none",
           }}
         >
           <option value="">— Select Admin Coordinator —</option>
@@ -118,29 +94,31 @@ const ApproveModal = ({ problem, admins, onClose, onApprove }) => {
       />
 
       <div
+        className="rounded-lg p-3 font-mono text-[12px] mb-5"
         style={{
           background: "#1a3a2a",
           border: "1px solid #4ade8030",
-          borderRadius: 8,
-          padding: "10px 14px",
-          fontSize: 12,
           color: "#4ade80",
-          marginBottom: 20,
         }}
       >
         ✓ This will publish the problem, create a new project, and notify the
         problem owner via email.
       </div>
 
-      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+      <div className="flex gap-2.5 justify-end">
         <SABtn variant="secondary" onClick={onClose}>
           Cancel
         </SABtn>
         <SABtn
           variant="success"
-          onClick={handleApprove}
           loading={saving}
           disabled={!form.coordinatorId}
+          onClick={async () => {
+            setSaving(true);
+            await onApprove(problem._id, form);
+            setSaving(false);
+            onClose();
+          }}
         >
           ✓ Approve & Initiate Project
         </SABtn>
@@ -154,35 +132,22 @@ const RejectModal = ({ problem, onClose, onReject }) => {
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const handleReject = async () => {
-    setSaving(true);
-    await onReject(problem._id, reason);
-    setSaving(false);
-    onClose();
-  };
-
   return (
     <SAModal title="Reject Problem Statement" onClose={onClose}>
       <div
-        style={{
-          background: "#0c0f18",
-          border: "1px solid #1e2330",
-          borderRadius: 10,
-          padding: "14px 16px",
-          marginBottom: 20,
-        }}
+        className="rounded-xl p-3.5 mb-5"
+        style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
       >
         <div
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: 14,
-            fontWeight: 700,
-            color: "#f0f4ff",
-          }}
+          className="font-display text-sm font-bold"
+          style={{ color: "#f0f4ff" }}
         >
           {problem.title}
         </div>
-        <div style={{ fontSize: 12, color: "#6b7a99", marginTop: 4 }}>
+        <div
+          className="font-mono text-[12px] mt-1"
+          style={{ color: "#6b7a99" }}
+        >
           {problem.ownerName} · {problem.organization}
         </div>
       </div>
@@ -194,23 +159,29 @@ const RejectModal = ({ problem, onClose, onReject }) => {
         placeholder="Provide feedback to the problem owner…"
       />
       <div
+        className="rounded-lg p-3 font-mono text-[12px] mb-5"
         style={{
           background: "#3a1a1a",
           border: "1px solid #f8717130",
-          borderRadius: 8,
-          padding: "10px 14px",
-          fontSize: 12,
           color: "#f87171",
-          marginBottom: 20,
         }}
       >
         ✕ The problem owner will be notified via email.
       </div>
-      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+      <div className="flex gap-2.5 justify-end">
         <SABtn variant="secondary" onClick={onClose}>
           Cancel
         </SABtn>
-        <SABtn variant="danger" onClick={handleReject} loading={saving}>
+        <SABtn
+          variant="danger"
+          loading={saving}
+          onClick={async () => {
+            setSaving(true);
+            await onReject(problem._id, reason);
+            setSaving(false);
+            onClose();
+          }}
+        >
           ✕ Reject
         </SABtn>
       </div>
@@ -221,14 +192,7 @@ const RejectModal = ({ problem, onClose, onReject }) => {
 // ─── Detail Panel ──────────────────────────────────────────────────────────────
 const ProblemDetail = ({ problem, onClose }) => (
   <SAModal title={problem.problemID} onClose={onClose}>
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 12,
-        marginBottom: 16,
-      }}
-    >
+    <div className="grid grid-cols-2 gap-3 mb-4">
       {[
         ["Title", problem.title, "#f0f4ff"],
         ["Category", problem.category, "#3a9de8"],
@@ -241,31 +205,18 @@ const ProblemDetail = ({ problem, onClose }) => (
       ].map(([k, v, c]) => (
         <div
           key={k}
-          style={{
-            background: "#060810",
-            border: "1px solid #1e2330",
-            borderRadius: 8,
-            padding: "10px 14px",
-          }}
+          className="rounded-lg p-2.5"
+          style={{ background: "#060810", border: "1px solid #1e2330" }}
         >
           <div
-            style={{
-              fontSize: 9,
-              color: "#6b7a99",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
+            className="font-mono text-[9px] uppercase tracking-widest"
+            style={{ color: "#6b7a99" }}
           >
             {k}
           </div>
           <div
-            style={{
-              fontSize: 12,
-              color: c,
-              fontFamily: "'DM Mono', monospace",
-              marginTop: 4,
-              fontWeight: 600,
-            }}
+            className="font-mono text-[12px] font-semibold mt-1"
+            style={{ color: c }}
           >
             {v}
           </div>
@@ -273,38 +224,24 @@ const ProblemDetail = ({ problem, onClose }) => (
       ))}
     </div>
     <div
-      style={{
-        background: "#060810",
-        border: "1px solid #1e2330",
-        borderRadius: 10,
-        padding: "14px 16px",
-        marginBottom: 16,
-      }}
+      className="rounded-xl p-4 mb-4"
+      style={{ background: "#060810", border: "1px solid #1e2330" }}
     >
       <div
-        style={{
-          fontSize: 9,
-          color: "#6b7a99",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          marginBottom: 8,
-        }}
+        className="font-mono text-[9px] uppercase tracking-widest mb-2"
+        style={{ color: "#6b7a99" }}
       >
         Description
       </div>
       <p
-        style={{
-          fontSize: 12,
-          color: "#c4cedf",
-          fontFamily: "'DM Mono', monospace",
-          lineHeight: 1.7,
-        }}
+        className="font-mono text-[12px] leading-relaxed"
+        style={{ color: "#c4cedf" }}
       >
         {problem.description}
       </p>
     </div>
     {problem.tags?.length > 0 && (
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      <div className="flex gap-1.5 flex-wrap mb-4">
         {problem.tags.map((t) => (
           <Badge key={t} color="#3a9de8">
             {t}
@@ -314,39 +251,26 @@ const ProblemDetail = ({ problem, onClose }) => (
     )}
     {problem.project && (
       <div
-        style={{
-          marginTop: 16,
-          background: "#1a2a1a",
-          border: "1px solid #4ade8030",
-          borderRadius: 10,
-          padding: "14px 16px",
-        }}
+        className="rounded-xl p-4 mt-4"
+        style={{ background: "#1a2a1a", border: "1px solid #4ade8030" }}
       >
         <div
-          style={{
-            fontSize: 10,
-            color: "#4ade80",
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            marginBottom: 8,
-          }}
+          className="font-mono text-[10px] uppercase tracking-widest mb-2"
+          style={{ color: "#4ade80" }}
         >
           ◆ Initiated Project
         </div>
         <div
-          style={{
-            fontSize: 13,
-            color: "#f0f4ff",
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 700,
-          }}
+          className="font-display text-[13px] font-bold"
+          style={{ color: "#f0f4ff" }}
         >
           {problem.project.projectID}
         </div>
         {problem.project.coordinators?.map((c) => (
           <div
             key={c._id}
-            style={{ fontSize: 12, color: "#6b7a99", marginTop: 4 }}
+            className="font-mono text-[12px] mt-1"
+            style={{ color: "#6b7a99" }}
           >
             Coordinator: {c.name} · {c.email}
           </div>
@@ -362,9 +286,8 @@ const ProblemManagement = () => {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
-  const [filter, setFilter] = useState("all"); // all | pending | approved | rejected
+  const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
-
   const [approvingProblem, setApprovingProblem] = useState(null);
   const [rejectingProblem, setRejectingProblem] = useState(null);
   const [detailProblem, setDetailProblem] = useState(null);
@@ -422,23 +345,27 @@ const ProblemManagement = () => {
     }
   };
 
+  const statusType = (p) => {
+    if (p.project || p.is_published) return "approved";
+    const last = p.actions?.[p.actions.length - 1]?.actionType;
+    if (last === "rejected") return "rejected";
+    return "pending";
+  };
+
   const filtered = problems.filter((p) => {
-    const matchSearch =
+    const m =
       p.title.toLowerCase().includes(search.toLowerCase()) ||
       p.organization?.toLowerCase().includes(search.toLowerCase());
-    if (filter === "approved") return p.is_published && matchSearch;
-    if (filter === "pending")
-      return !p.is_published && !p.project && matchSearch;
-    if (filter === "initiated") return p.project && matchSearch;
-    return matchSearch;
+    if (filter === "approved") return p.is_published && m;
+    if (filter === "pending") return !p.is_published && !p.project && m;
+    if (filter === "initiated") return p.project && m;
+    return m;
   });
 
-  const statusType = (p) => {
-    if (p.project) return "approved";
-    if (p.is_published) return "approved";
-    const lastAction = p.actions?.[p.actions.length - 1]?.actionType;
-    if (lastAction === "rejected") return "rejected";
-    return "pending";
+  const borderColor = {
+    approved: "#4ade80",
+    rejected: "#f87171",
+    pending: "#fbbf24",
   };
 
   return (
@@ -447,48 +374,31 @@ const ProblemManagement = () => {
       subtitle="Approve, reject & assign coordinators"
     >
       {/* Controls */}
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          alignItems: "center",
-          marginBottom: 20,
-          flexWrap: "wrap",
-        }}
-      >
+      <div className="flex gap-3 items-center mb-5 flex-wrap">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search problems…"
+          className="rounded-xl font-mono text-[12px] outline-none"
           style={{
             background: "#0c0f18",
             border: "1px solid #1e2330",
-            borderRadius: 9,
             padding: "9px 14px",
             color: "#f0f4ff",
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 12,
-            outline: "none",
             width: 260,
           }}
         />
-        <div style={{ display: "flex", gap: 6 }}>
+        <div className="flex gap-1.5">
           {["all", "pending", "approved", "initiated"].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
+              className="rounded-lg font-mono text-[11px] font-bold cursor-pointer capitalize tracking-wide"
               style={{
                 padding: "7px 14px",
-                borderRadius: 8,
                 border: `1px solid ${filter === f ? `${SA_ACCENT}60` : "#1e2330"}`,
                 background: filter === f ? `${SA_ACCENT}18` : "#0c0f18",
                 color: filter === f ? SA_ACCENT : "#6b7a99",
-                fontSize: 11,
-                fontWeight: 700,
-                fontFamily: "'DM Mono', monospace",
-                cursor: "pointer",
-                textTransform: "capitalize",
-                letterSpacing: "0.04em",
               }}
             >
               {f}
@@ -497,16 +407,12 @@ const ProblemManagement = () => {
         </div>
         <button
           onClick={fetchData}
+          className="ml-auto rounded-lg font-mono text-[12px] cursor-pointer"
           style={{
-            marginLeft: "auto",
             padding: "7px 14px",
-            borderRadius: 8,
             border: "1px solid #1e2330",
             background: "#0c0f18",
             color: "#6b7a99",
-            fontSize: 12,
-            fontFamily: "'DM Mono', monospace",
-            cursor: "pointer",
           }}
         >
           ↻ Refresh
@@ -514,33 +420,21 @@ const ProblemManagement = () => {
       </div>
 
       {loading ? (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "50vh",
-            flexDirection: "column",
-            gap: 16,
-          }}
-        >
+        <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
           <Spinner size={32} />
-          <p style={{ color: "#6b7a99", fontSize: 12 }}>Loading problems…</p>
+          <p className="font-mono text-[12px]" style={{ color: "#6b7a99" }}>
+            Loading problems…
+          </p>
         </div>
       ) : filtered.length === 0 ? (
         <div
-          style={{
-            textAlign: "center",
-            color: "#4a5568",
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 13,
-            marginTop: 60,
-          }}
+          className="text-center font-mono text-[13px] mt-16"
+          style={{ color: "#4a5568" }}
         >
           No problems found.
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div className="flex flex-col gap-3">
           {filtered.map((p, i) => {
             const st = statusType(p);
             return (
@@ -549,37 +443,19 @@ const ProblemManagement = () => {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
+                className="rounded-xl p-5"
                 style={{
                   background: "#0c0f18",
-                  border: `1px solid ${st === "approved" ? "#4ade8025" : st === "rejected" ? "#f8717125" : "#1e2330"}`,
-                  borderRadius: 12,
-                  padding: "18px 20px",
-                  borderLeft: `3px solid ${st === "approved" ? "#4ade80" : st === "rejected" ? "#f87171" : "#fbbf24"}`,
+                  border: `1px solid ${borderColor[st]}25`,
+                  borderLeft: `3px solid ${borderColor[st]}`,
                 }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    gap: 12,
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        marginBottom: 8,
-                      }}
-                    >
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2.5 mb-2">
                       <span
-                        style={{
-                          fontFamily: "'DM Mono', monospace",
-                          fontSize: 11,
-                          color: SA_ACCENT,
-                        }}
+                        className="font-mono text-[11px]"
+                        style={{ color: SA_ACCENT }}
                       >
                         {p.problemID}
                       </span>
@@ -592,26 +468,18 @@ const ProblemManagement = () => {
                       </Pill>
                     </div>
                     <div
-                      style={{
-                        fontFamily: "'Syne', sans-serif",
-                        fontSize: 15,
-                        fontWeight: 700,
-                        color: "#f0f4ff",
-                        marginBottom: 6,
-                      }}
+                      className="font-display text-[15px] font-bold mb-1.5"
+                      style={{ color: "#f0f4ff" }}
                     >
                       {p.title}
                     </div>
                     <div
-                      style={{
-                        fontSize: 12,
-                        color: "#6b7a99",
-                        marginBottom: 10,
-                      }}
+                      className="font-mono text-[12px] mb-2.5"
+                      style={{ color: "#6b7a99" }}
                     >
                       {p.ownerName} · {p.organization} · {fmtDate(p.createdAt)}
                     </div>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <div className="flex gap-1.5 flex-wrap">
                       <Badge color="#3a9de8">{p.category}</Badge>
                       <Badge color="#9c3ae8">{p.theme}</Badge>
                       {p.tags?.map((t) => (
@@ -621,17 +489,7 @@ const ProblemManagement = () => {
                       ))}
                     </div>
                   </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 8,
-                      flexShrink: 0,
-                      alignItems: "flex-start",
-                      flexWrap: "wrap",
-                      maxWidth: 220,
-                    }}
-                  >
+                  <div className="flex gap-2 flex-shrink-0 flex-wrap max-w-[220px] items-start">
                     <SABtn
                       small
                       variant="ghost"
@@ -659,14 +517,11 @@ const ProblemManagement = () => {
                     )}
                     {p.project && (
                       <div
+                        className="font-mono text-[11px] px-2.5 py-1 rounded-lg"
                         style={{
-                          fontSize: 11,
-                          color: "#4ade80",
-                          fontFamily: "'DM Mono', monospace",
-                          padding: "5px 10px",
                           background: "#1a3a2a",
-                          borderRadius: 6,
                           border: "1px solid #4ade8030",
+                          color: "#4ade80",
                         }}
                       >
                         {p.project.projectID}
@@ -680,7 +535,6 @@ const ProblemManagement = () => {
         </div>
       )}
 
-      {/* Modals */}
       {approvingProblem && (
         <ApproveModal
           problem={approvingProblem}
@@ -702,7 +556,6 @@ const ProblemManagement = () => {
           onClose={() => setDetailProblem(null)}
         />
       )}
-
       {toast && (
         <SAToast
           message={toast.msg}

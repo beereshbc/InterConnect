@@ -15,62 +15,30 @@ const PROGRAMS = [
   "Other",
 ];
 
-// ─── Tiny atoms ───────────────────────────────────────────────────────────────
-const Label = ({ children, required }) => (
-  <label
-    style={{
-      display: "block",
-      fontSize: 10,
-      fontWeight: 700,
-      color: "#6b7a99",
-      marginBottom: 6,
-      fontFamily: "'DM Mono', monospace",
-      letterSpacing: "0.1em",
-      textTransform: "uppercase",
-    }}
-  >
-    {children} {required && <span style={{ color: "#e85d3a" }}>*</span>}
-  </label>
-);
-
-const inputStyle = (focused) => ({
-  width: "100%",
-  background: "#080c14",
-  border: `1px solid ${focused ? "#e85d3a60" : "#1e2330"}`,
-  borderRadius: 10,
-  padding: "11px 14px 11px 40px",
-  color: "#f0f4ff",
-  fontFamily: "'DM Mono', monospace",
-  fontSize: 13,
-  outline: "none",
-  boxSizing: "border-box",
-  transition: "border-color 0.2s",
-  boxShadow: focused ? "0 0 0 3px #e85d3a10" : "none",
-});
-
-const IconWrap = ({ children }) => (
+const TabSwitch = ({ isLogin, onChange }) => (
   <div
-    style={{
-      position: "absolute",
-      left: 12,
-      top: "50%",
-      transform: "translateY(-50%)",
-      fontSize: 14,
-      color: "#4a5568",
-      pointerEvents: "none",
-    }}
+    className="flex rounded-xl p-1 mb-8"
+    style={{ background: "#080c14", border: "1px solid #1e2330" }}
   >
-    {children}
-  </div>
-);
-
-const FormField = ({ icon, label, required, children }) => (
-  <div>
-    {label && <Label required={required}>{label}</Label>}
-    <div style={{ position: "relative" }}>
-      <IconWrap>{icon}</IconWrap>
-      {children}
-    </div>
+    {[
+      { key: false, label: "Register" },
+      { key: true, label: "Login" },
+    ].map((t) => (
+      <button
+        key={String(t.key)}
+        type="button"
+        onClick={() => onChange(t.key)}
+        className="flex-1 py-2.5 rounded-xl font-display text-[12px] font-bold tracking-wide cursor-pointer transition-all duration-200"
+        style={{
+          background: isLogin === t.key ? "#e85d3a" : "transparent",
+          color: isLogin === t.key ? "#fff" : "#6b7a99",
+          border: "none",
+          boxShadow: isLogin === t.key ? "0 2px 12px #e85d3a30" : "none",
+        }}
+      >
+        {t.label}
+      </button>
+    ))}
   </div>
 );
 
@@ -85,134 +53,52 @@ const FocusInput = ({
   placeholder,
   autoComplete,
   maxLength,
-  style: extraStyle,
+  extraStyle,
 }) => {
   const [focused, setFocused] = useState(false);
   return (
-    <FormField icon={icon} label={label} required={required}>
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        maxLength={maxLength}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        style={{ ...inputStyle(focused), ...extraStyle }}
-      />
-    </FormField>
-  );
-};
-
-const Btn = ({
-  children,
-  loading,
-  type = "button",
-  onClick,
-  variant = "primary",
-}) => {
-  const map = {
-    primary: {
-      bg: "#e85d3a",
-      color: "#fff",
-      border: "none",
-      shadow: "0 4px 20px #e85d3a30",
-    },
-    ghost: {
-      bg: "#0c0f18",
-      color: "#e85d3a",
-      border: "1px solid #e85d3a30",
-      shadow: "none",
-    },
-  };
-  const s = map[variant];
-  return (
-    <motion.button
-      whileTap={{ scale: 0.97 }}
-      type={type}
-      onClick={onClick}
-      disabled={loading}
-      style={{
-        width: "100%",
-        background: s.bg,
-        color: s.color,
-        border: s.border,
-        borderRadius: 12,
-        padding: "13px 20px",
-        fontSize: 13,
-        fontWeight: 700,
-        cursor: loading ? "not-allowed" : "pointer",
-        fontFamily: "'Syne', sans-serif",
-        letterSpacing: "0.04em",
-        opacity: loading ? 0.65 : 1,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-        boxShadow: s.shadow,
-        transition: "all 0.2s",
-      }}
-    >
-      {loading ? (
-        <span
-          style={{
-            display: "inline-block",
-            animation: "spin 0.7s linear infinite",
-          }}
+    <div>
+      {label && (
+        <label
+          className="block font-mono text-[10px] font-bold uppercase tracking-widest mb-1.5"
+          style={{ color: "#6b7a99" }}
         >
-          ◌
-        </span>
-      ) : (
-        children
+          {label} {required && <span style={{ color: "#e85d3a" }}>*</span>}
+        </label>
       )}
-    </motion.button>
+      <div className="relative">
+        <span
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none"
+          style={{ color: "#4a5568" }}
+        >
+          {icon}
+        </span>
+        <input
+          type={type}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          maxLength={maxLength}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          className="w-full rounded-xl font-mono text-[13px] outline-none transition-all"
+          style={{
+            background: "#080c14",
+            border: `1px solid ${focused ? "#e85d3a60" : "#1e2330"}`,
+            padding: "11px 14px 11px 40px",
+            color: "#f0f4ff",
+            boxShadow: focused ? "0 0 0 3px #e85d3a10" : "none",
+            boxSizing: "border-box",
+            ...extraStyle,
+          }}
+        />
+      </div>
+    </div>
   );
 };
 
-const TabSwitch = ({ isLogin, onChange }) => (
-  <div
-    style={{
-      display: "flex",
-      background: "#080c14",
-      border: "1px solid #1e2330",
-      borderRadius: 12,
-      padding: 4,
-      marginBottom: 32,
-    }}
-  >
-    {[
-      { key: false, label: "Register" },
-      { key: true, label: "Login" },
-    ].map((t) => (
-      <button
-        key={String(t.key)}
-        type="button"
-        onClick={() => onChange(t.key)}
-        style={{
-          flex: 1,
-          padding: "10px",
-          borderRadius: 9,
-          fontSize: 12,
-          fontWeight: 700,
-          cursor: "pointer",
-          fontFamily: "'Syne', sans-serif",
-          letterSpacing: "0.06em",
-          transition: "all 0.2s",
-          background: isLogin === t.key ? "#e85d3a" : "transparent",
-          color: isLogin === t.key ? "#fff" : "#6b7a99",
-          border: "none",
-          boxShadow: isLogin === t.key ? "0 2px 12px #e85d3a30" : "none",
-        }}
-      >
-        {t.label}
-      </button>
-    ))}
-  </div>
-);
-
-// ─── Main ─────────────────────────────────────────────────────────────────────
 const AdminRegister = () => {
   const navigate = useNavigate();
   const { axios, setAdminToken } = useAppContext();
@@ -222,6 +108,7 @@ const AdminRegister = () => {
   const [showPass, setShowPass] = useState(false);
   const [isForgot, setIsForgot] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [passF, setPassF] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -244,7 +131,6 @@ const AdminRegister = () => {
   const handleForgot = (e) =>
     setForgotForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  // ── Submit (login / register) ────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -318,109 +204,57 @@ const AdminRegister = () => {
     }
   };
 
-  const [passF, setPassF] = useState(false);
-
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
+        .font-display { font-family: 'Syne', sans-serif !important; }
+        .font-mono    { font-family: 'DM Mono', monospace !important; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #1e2330; border-radius: 2px; }
         select option { background: #0c0f18; color: #f0f4ff; }
       `}</style>
 
       <div
-        style={{
-          minHeight: "100vh",
-          background: "#080c14",
-          display: "flex",
-          alignItems: "stretch",
-          fontFamily: "'DM Mono', monospace",
-        }}
+        className="min-h-screen flex items-stretch font-mono"
+        style={{ background: "#080c14" }}
       >
-        {/* ── Left panel (branding) ── */}
+        {/* Left branding */}
         <div
-          style={{
-            flex: 1,
-            display: "none",
-            position: "relative",
-            overflow: "hidden",
-            borderRight: "1px solid #1e2330",
-            padding: "60px 52px",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            background: "#0c0f18",
-          }}
-          className="left-panel"
+          className="flex-1 hidden lg:flex flex-col justify-between relative overflow-hidden p-16"
+          style={{ borderRight: "1px solid #1e2330", background: "#0c0f18" }}
         >
-          <style>{`@media(min-width:1024px){.left-panel{display:flex !important;}}`}</style>
-
-          {/* BG effects */}
           <div
+            className="absolute -top-24 -left-24 w-96 h-96 rounded-full pointer-events-none"
             style={{
-              position: "absolute",
-              top: -100,
-              left: -100,
-              width: 400,
-              height: 400,
-              borderRadius: "50%",
               background:
-                "radial-gradient(circle, #e85d3a06 0%, transparent 70%)",
-              pointerEvents: "none",
+                "radial-gradient(circle,#e85d3a06 0%,transparent 70%)",
             }}
           />
           <div
+            className="absolute -bottom-24 -right-16 w-72 h-72 rounded-full pointer-events-none"
             style={{
-              position: "absolute",
-              bottom: -100,
-              right: -60,
-              width: 300,
-              height: 300,
-              borderRadius: "50%",
               background:
-                "radial-gradient(circle, #3a9de808 0%, transparent 70%)",
-              pointerEvents: "none",
+                "radial-gradient(circle,#3a9de808 0%,transparent 70%)",
             }}
           />
-          {/* Decorative grid lines */}
           <div
+            className="absolute inset-0 opacity-[0.03] pointer-events-none"
             style={{
-              position: "absolute",
-              inset: 0,
-              opacity: 0.03,
               backgroundImage:
                 "linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)",
               backgroundSize: "40px 40px",
-              pointerEvents: "none",
             }}
           />
 
-          <div style={{ position: "relative", zIndex: 1 }}>
-            {/* Logo */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                marginBottom: 52,
-              }}
-            >
+          <div className="relative z-10">
+            <div className="flex items-center gap-2.5 mb-14">
               <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center font-display font-extrabold text-lg text-white"
                 style={{
-                  width: 40,
-                  height: 40,
                   background: "#e85d3a",
-                  borderRadius: 11,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontFamily: "'Syne', sans-serif",
-                  fontWeight: 800,
-                  fontSize: 18,
-                  color: "#fff",
                   boxShadow: "0 0 20px #e85d3a40",
                 }}
               >
@@ -428,38 +262,25 @@ const AdminRegister = () => {
               </div>
               <div>
                 <div
-                  style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontSize: 18,
-                    fontWeight: 800,
-                    color: "#f0f4ff",
-                    letterSpacing: "-0.02em",
-                  }}
+                  className="font-display text-lg font-extrabold"
+                  style={{ color: "#f0f4ff", letterSpacing: "-0.02em" }}
                 >
                   InteConnect
                 </div>
                 <div
-                  style={{
-                    fontSize: 9,
-                    color: "#6b7a99",
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                  }}
+                  className="font-mono text-[9px] uppercase tracking-widest"
+                  style={{ color: "#6b7a99" }}
                 >
                   Admin Portal
                 </div>
               </div>
             </div>
-
             <h2
+              className="font-display font-extrabold leading-tight mb-5"
               style={{
-                fontFamily: "'Syne', sans-serif",
                 fontSize: 36,
-                fontWeight: 800,
                 color: "#f0f4ff",
-                lineHeight: 1.1,
                 letterSpacing: "-0.02em",
-                marginBottom: 20,
               }}
             >
               {isForgot
@@ -468,23 +289,15 @@ const AdminRegister = () => {
                   ? "Authorize\nAccess."
                   : "Initialize\nCoordinator."}
             </h2>
-
             <p
-              style={{
-                fontSize: 13,
-                color: "#6b7a99",
-                lineHeight: 1.85,
-                maxWidth: 320,
-                marginBottom: 44,
-              }}
+              className="font-mono text-[13px] leading-relaxed max-w-xs mb-11"
+              style={{ color: "#6b7a99" }}
             >
               {isLogin
-                ? "Access the control panel, manage problem statements, and oversee student progress across InteConnect."
-                : "Create an admin node to issue challenges, assign tasks, and coordinate network activities in real-time."}
+                ? "Access the control panel, manage problem statements, and oversee student progress."
+                : "Create an admin node to issue challenges and coordinate network activities."}
             </p>
-
-            {/* Feature list */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="flex flex-col gap-4">
               {[
                 {
                   icon: "◈",
@@ -507,98 +320,55 @@ const AdminRegister = () => {
                   initial={{ opacity: 0, x: -16 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 + 0.3 }}
-                  style={{ display: "flex", alignItems: "center", gap: 12 }}
+                  className="flex items-center gap-3"
                 >
                   <div
+                    className="w-[34px] h-[34px] rounded-xl flex items-center justify-center text-sm flex-shrink-0"
                     style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: 9,
                       background: `${f.accent}14`,
                       border: `1px solid ${f.accent}25`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 14,
-                      flexShrink: 0,
                     }}
                   >
                     {f.icon}
                   </div>
-                  <span style={{ fontSize: 12, color: "#8892a4" }}>
+                  <span
+                    className="font-mono text-[12px]"
+                    style={{ color: "#8892a4" }}
+                  >
                     {f.label}
                   </span>
                 </motion.div>
               ))}
             </div>
           </div>
-
           <div
-            style={{
-              fontSize: 11,
-              color: "#4a5568",
-              fontFamily: "'DM Mono', monospace",
-            }}
+            className="font-mono text-[11px] relative z-10"
+            style={{ color: "#4a5568" }}
           >
             © {new Date().getFullYear()} GMIT · Team-Falcon
           </div>
         </div>
 
-        {/* ── Right panel (form) ── */}
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "40px 24px",
-            overflowY: "auto",
-          }}
-        >
-          <div style={{ width: "100%", maxWidth: 480 }}>
+        {/* Right: form */}
+        <div className="flex-1 flex items-center justify-center p-10 overflow-y-auto">
+          <div className="w-full max-w-[480px]">
             {/* Mobile logo */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                marginBottom: 36,
-                justifyContent: "center",
-              }}
-              className="mobile-logo"
-            >
-              <style>{`@media(min-width:1024px){.mobile-logo{display:none !important;}}`}</style>
+            <div className="flex lg:hidden items-center justify-center gap-2.5 mb-9">
               <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  background: "#e85d3a",
-                  borderRadius: 9,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontFamily: "'Syne', sans-serif",
-                  fontWeight: 800,
-                  fontSize: 15,
-                  color: "#fff",
-                }}
+                className="w-9 h-9 rounded-xl flex items-center justify-center font-display font-extrabold text-base text-white"
+                style={{ background: "#e85d3a" }}
               >
                 I
               </div>
               <span
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: 16,
-                  fontWeight: 800,
-                  color: "#f0f4ff",
-                }}
+                className="font-display text-base font-extrabold"
+                style={{ color: "#f0f4ff" }}
               >
                 InteConnect
               </span>
             </div>
 
             <AnimatePresence mode="wait">
-              {/* ── Forgot Password ── */}
               {isForgot ? (
                 <motion.div
                   key="forgot"
@@ -612,49 +382,33 @@ const AdminRegister = () => {
                       setIsForgot(false);
                       setOtpSent(false);
                     }}
+                    className="flex items-center gap-1.5 font-mono text-[12px] mb-7 cursor-pointer"
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      fontSize: 12,
-                      color: "#6b7a99",
                       background: "none",
                       border: "none",
-                      cursor: "pointer",
-                      fontFamily: "'DM Mono', monospace",
-                      marginBottom: 28,
+                      color: "#6b7a99",
                     }}
                   >
                     ← Back
                   </button>
-
                   <h2
-                    style={{
-                      fontFamily: "'Syne', sans-serif",
-                      fontSize: 26,
-                      fontWeight: 800,
-                      color: "#f0f4ff",
-                      marginBottom: 8,
-                    }}
+                    className="font-display text-2xl font-extrabold mb-2"
+                    style={{ color: "#f0f4ff" }}
                   >
                     Reset Protocol
                   </h2>
                   <p
-                    style={{ fontSize: 12, color: "#6b7a99", marginBottom: 32 }}
+                    className="font-mono text-[12px] mb-8"
+                    style={{ color: "#6b7a99" }}
                   >
                     {otpSent
-                      ? "Enter the OTP sent to your admin email and set a new password."
+                      ? "Enter the OTP and set a new password."
                       : "Enter your admin email to receive an override OTP."}
                   </p>
-
                   {!otpSent ? (
                     <form
                       onSubmit={handleSendOtp}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 18,
-                      }}
+                      className="flex flex-col gap-4"
                     >
                       <FocusInput
                         icon="✉"
@@ -666,18 +420,34 @@ const AdminRegister = () => {
                         placeholder="admin@inteconnect.io"
                         required
                       />
-                      <Btn type="submit" loading={isLoading}>
-                        Send Override OTP →
-                      </Btn>
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full rounded-xl font-display font-bold text-[13px] tracking-wide flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                        style={{
+                          background: "#e85d3a",
+                          color: "#fff",
+                          border: "none",
+                          padding: "13px 20px",
+                          boxShadow: "0 4px 20px #e85d3a30",
+                        }}
+                      >
+                        {isLoading && (
+                          <span
+                            className="inline-block"
+                            style={{ animation: "spin 0.7s linear infinite" }}
+                          >
+                            ◌
+                          </span>
+                        )}
+                        {isLoading ? "Sending…" : "Send Override OTP →"}
+                      </motion.button>
                     </form>
                   ) : (
                     <form
                       onSubmit={handleResetPassword}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 18,
-                      }}
+                      className="flex flex-col gap-4"
                     >
                       <FocusInput
                         icon="⬡"
@@ -700,14 +470,37 @@ const AdminRegister = () => {
                         placeholder="New authorization key"
                         required
                       />
-                      <Btn type="submit" loading={isLoading}>
-                        Confirm New Authorization →
-                      </Btn>
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full rounded-xl font-display font-bold text-[13px] tracking-wide flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                        style={{
+                          background: "#e85d3a",
+                          color: "#fff",
+                          border: "none",
+                          padding: "13px 20px",
+                          boxShadow: "0 4px 20px #e85d3a30",
+                        }}
+                      >
+                        {isLoading && (
+                          <span
+                            style={{
+                              animation: "spin 0.7s linear infinite",
+                              display: "inline-block",
+                            }}
+                          >
+                            ◌
+                          </span>
+                        )}
+                        {isLoading
+                          ? "Resetting…"
+                          : "Confirm New Authorization →"}
+                      </motion.button>
                     </form>
                   )}
                 </motion.div>
               ) : (
-                /* ── Login / Register ── */
                 <motion.div
                   key="auth"
                   initial={{ opacity: 0, x: -20 }}
@@ -716,35 +509,22 @@ const AdminRegister = () => {
                   transition={{ duration: 0.28 }}
                 >
                   <TabSwitch isLogin={isLogin} onChange={setIsLogin} />
-
                   <h2
-                    style={{
-                      fontFamily: "'Syne', sans-serif",
-                      fontSize: 26,
-                      fontWeight: 800,
-                      color: "#f0f4ff",
-                      marginBottom: 6,
-                    }}
+                    className="font-display text-2xl font-extrabold mb-1.5"
+                    style={{ color: "#f0f4ff" }}
                   >
                     {isLogin ? "Admin Authorization" : "Coordinator Setup"}
                   </h2>
                   <p
-                    style={{ fontSize: 12, color: "#6b7a99", marginBottom: 28 }}
+                    className="font-mono text-[12px] mb-7"
+                    style={{ color: "#6b7a99" }}
                   >
                     {isLogin
                       ? "Enter your credentials to access the control panel."
                       : "Fill in the details to establish your admin account."}
                   </p>
 
-                  <form
-                    onSubmit={handleSubmit}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 16,
-                    }}
-                  >
-                    {/* Register-only fields */}
+                  <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     <AnimatePresence>
                       {!isLogin && (
                         <motion.div
@@ -753,20 +533,9 @@ const AdminRegister = () => {
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.3 }}
-                          style={{
-                            overflow: "hidden",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 16,
-                          }}
+                          className="overflow-hidden flex flex-col gap-4"
                         >
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns: "1fr 1fr",
-                              gap: 14,
-                            }}
-                          >
+                          <div className="grid grid-cols-2 gap-3.5">
                             <FocusInput
                               icon="◉"
                               label="Full Name"
@@ -787,13 +556,7 @@ const AdminRegister = () => {
                               required
                             />
                           </div>
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns: "1fr 1fr",
-                              gap: 14,
-                            }}
-                          >
+                          <div className="grid grid-cols-2 gap-3.5">
                             <FocusInput
                               icon="◈"
                               label="Organization"
@@ -813,28 +576,32 @@ const AdminRegister = () => {
                               required
                             />
                           </div>
-
-                          {/* Program select */}
                           <div>
-                            <Label required>Program / Role</Label>
-                            <div style={{ position: "relative" }}>
-                              <IconWrap>◎</IconWrap>
+                            <label
+                              className="block font-mono text-[10px] font-bold uppercase tracking-widest mb-1.5"
+                              style={{ color: "#6b7a99" }}
+                            >
+                              Program / Role{" "}
+                              <span style={{ color: "#e85d3a" }}>*</span>
+                            </label>
+                            <div className="relative">
+                              <span
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none"
+                                style={{ color: "#4a5568" }}
+                              >
+                                ◎
+                              </span>
                               <select
                                 name="program"
                                 value={form.program}
                                 onChange={handle}
                                 required
+                                className="w-full rounded-xl font-mono text-[13px] outline-none appearance-none"
                                 style={{
-                                  width: "100%",
                                   background: "#080c14",
                                   border: "1px solid #1e2330",
-                                  borderRadius: 10,
                                   padding: "11px 14px 11px 40px",
                                   color: form.program ? "#f0f4ff" : "#4a5568",
-                                  fontFamily: "'DM Mono', monospace",
-                                  fontSize: 13,
-                                  outline: "none",
-                                  appearance: "none",
                                   boxSizing: "border-box",
                                 }}
                               >
@@ -849,7 +616,6 @@ const AdminRegister = () => {
                               </select>
                             </div>
                           </div>
-
                           <FocusInput
                             icon="⌥"
                             label="GitHub / Portfolio URL"
@@ -864,7 +630,6 @@ const AdminRegister = () => {
                       )}
                     </AnimatePresence>
 
-                    {/* Always-visible */}
                     <FocusInput
                       icon="✉"
                       label="Admin Email"
@@ -879,9 +644,19 @@ const AdminRegister = () => {
 
                     {/* Password with toggle */}
                     <div>
-                      <Label required>Password</Label>
-                      <div style={{ position: "relative" }}>
-                        <IconWrap>◉</IconWrap>
+                      <label
+                        className="block font-mono text-[10px] font-bold uppercase tracking-widest mb-1.5"
+                        style={{ color: "#6b7a99" }}
+                      >
+                        Password <span style={{ color: "#e85d3a" }}>*</span>
+                      </label>
+                      <div className="relative">
+                        <span
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none"
+                          style={{ color: "#4a5568" }}
+                        >
+                          ◉
+                        </span>
                         <input
                           type={showPass ? "text" : "password"}
                           name="password"
@@ -890,22 +665,24 @@ const AdminRegister = () => {
                           placeholder="Security key"
                           onFocus={() => setPassF(true)}
                           onBlur={() => setPassF(false)}
-                          style={{ ...inputStyle(passF), paddingRight: 44 }}
+                          className="w-full rounded-xl font-mono text-[13px] outline-none transition-all"
+                          style={{
+                            background: "#080c14",
+                            border: `1px solid ${passF ? "#e85d3a60" : "#1e2330"}`,
+                            padding: "11px 44px 11px 40px",
+                            color: "#f0f4ff",
+                            boxShadow: passF ? "0 0 0 3px #e85d3a10" : "none",
+                            boxSizing: "border-box",
+                          }}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPass((s) => !s)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-sm cursor-pointer p-1"
                           style={{
-                            position: "absolute",
-                            right: 12,
-                            top: "50%",
-                            transform: "translateY(-50%)",
                             background: "none",
                             border: "none",
-                            cursor: "pointer",
                             color: "#4a5568",
-                            fontSize: 14,
-                            padding: 4,
                           }}
                         >
                           {showPass ? "⊘" : "◉"}
@@ -913,21 +690,16 @@ const AdminRegister = () => {
                       </div>
                     </div>
 
-                    {/* Forgot password link */}
                     {isLogin && (
-                      <div
-                        style={{ display: "flex", justifyContent: "flex-end" }}
-                      >
+                      <div className="flex justify-end">
                         <button
                           type="button"
                           onClick={() => setIsForgot(true)}
+                          className="font-mono text-[12px] cursor-pointer"
                           style={{
                             background: "none",
                             border: "none",
-                            cursor: "pointer",
-                            fontSize: 12,
                             color: "#e85d3a",
-                            fontFamily: "'DM Mono', monospace",
                           }}
                         >
                           Override Sequence?
@@ -935,36 +707,53 @@ const AdminRegister = () => {
                       </div>
                     )}
 
-                    <div style={{ marginTop: 4 }}>
-                      <Btn type="submit" loading={isLoading}>
-                        {isLogin
-                          ? "Authenticate Node →"
-                          : "Initialize Coordinator →"}
-                      </Btn>
+                    <div className="mt-1">
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full rounded-xl font-display font-bold text-[13px] tracking-wide flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                        style={{
+                          background: "#e85d3a",
+                          color: "#fff",
+                          border: "none",
+                          padding: "13px 20px",
+                          boxShadow: "0 4px 20px #e85d3a30",
+                        }}
+                      >
+                        {isLoading && (
+                          <span
+                            style={{
+                              animation: "spin 0.7s linear infinite",
+                              display: "inline-block",
+                            }}
+                          >
+                            ◌
+                          </span>
+                        )}
+                        {isLoading
+                          ? "Processing…"
+                          : isLogin
+                            ? "Authenticate Node →"
+                            : "Initialize Coordinator →"}
+                      </motion.button>
                     </div>
                   </form>
 
-                  {/* Toggle mode link */}
                   <p
-                    style={{
-                      textAlign: "center",
-                      fontSize: 12,
-                      color: "#6b7a99",
-                      marginTop: 24,
-                      fontFamily: "'DM Mono', monospace",
-                    }}
+                    className="text-center font-mono text-[12px] mt-6"
+                    style={{ color: "#6b7a99" }}
                   >
                     {isLogin ? "Need an account? " : "Already registered? "}
                     <button
                       onClick={() => setIsLogin((v) => !v)}
+                      className="font-bold cursor-pointer"
                       style={{
                         background: "none",
                         border: "none",
-                        cursor: "pointer",
                         color: "#e85d3a",
-                        fontWeight: 700,
                         fontSize: 12,
-                        fontFamily: "'DM Mono', monospace",
+                        fontFamily: "inherit",
                       }}
                     >
                       {isLogin ? "Initialize Node" : "Login here"}

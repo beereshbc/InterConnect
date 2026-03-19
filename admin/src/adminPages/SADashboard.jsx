@@ -8,7 +8,6 @@ import {
   Badge,
   Spinner,
   fmtDate,
-  avatarColor,
   Avatar,
 } from "./SALayout";
 
@@ -23,70 +22,41 @@ const StatCard = ({ icon, label, stats, accent, delay }) => (
     initial={{ opacity: 0, y: 16 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+    className="relative rounded-2xl overflow-hidden"
     style={{
       background: "#0c0f18",
       border: `1px solid ${accent}20`,
-      borderRadius: 14,
       padding: "20px 22px",
-      position: "relative",
-      overflow: "hidden",
     }}
   >
+    {/* Glow */}
     <div
-      style={{
-        position: "absolute",
-        top: -30,
-        right: -30,
-        width: 100,
-        height: 100,
-        borderRadius: "50%",
-        background: `${accent}0a`,
-        filter: "blur(20px)",
-      }}
+      className="absolute -top-8 -right-8 w-24 h-24 rounded-full pointer-events-none"
+      style={{ background: `${accent}0a`, filter: "blur(20px)" }}
     />
-    <div style={{ position: "relative", zIndex: 1 }}>
+    <div className="relative z-10">
       <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center text-base mb-3.5"
         style={{
-          width: 40,
-          height: 40,
-          borderRadius: 10,
           background: `${accent}14`,
           border: `1px solid ${accent}25`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 16,
-          marginBottom: 14,
           color: accent,
         }}
       >
         {icon}
       </div>
       <div
-        style={{
-          fontSize: 10,
-          color: "#6b7a99",
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          marginBottom: 12,
-        }}
+        className="font-mono text-[10px] uppercase tracking-widest mb-3"
+        style={{ color: "#6b7a99" }}
       >
         {label}
       </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3,1fr)",
-          gap: 10,
-        }}
-      >
+      <div className="grid grid-cols-3 gap-2.5">
         {Object.entries(stats).map(([k, v]) => (
           <div key={k}>
             <div
+              className="font-display text-[22px] font-extrabold leading-none"
               style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: 22,
-                fontWeight: 800,
                 color:
                   k === "total"
                     ? "#f0f4ff"
@@ -98,13 +68,8 @@ const StatCard = ({ icon, label, stats, accent, delay }) => (
               {v}
             </div>
             <div
-              style={{
-                fontSize: 10,
-                color: "#6b7a99",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                marginTop: 2,
-              }}
+              className="font-mono text-[10px] uppercase tracking-wide mt-0.5"
+              style={{ color: "#6b7a99" }}
             >
               {k}
             </div>
@@ -136,18 +101,9 @@ const SADashboard = () => {
   if (loading)
     return (
       <SALayout title="SA Dashboard" subtitle="Platform-wide statistics">
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "60vh",
-            flexDirection: "column",
-            gap: 16,
-          }}
-        >
+        <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
           <Spinner size={36} />
-          <p style={{ color: "#6b7a99", fontSize: 12 }}>
+          <p className="font-mono text-[12px]" style={{ color: "#6b7a99" }}>
             Loading platform data…
           </p>
         </div>
@@ -157,13 +113,7 @@ const SADashboard = () => {
   if (error)
     return (
       <SALayout title="SA Dashboard">
-        <div
-          style={{
-            color: "#f87171",
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 13,
-          }}
-        >
+        <div className="font-mono text-[13px]" style={{ color: "#f87171" }}>
           ✕ {error}
         </div>
       </SALayout>
@@ -213,85 +163,54 @@ const SADashboard = () => {
     <SALayout title="SA Dashboard" subtitle="Real-time platform overview">
       {/* Stats */}
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-          gap: 14,
-          marginBottom: 32,
-        }}
+        className="grid gap-3.5 mb-8"
+        style={{ gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))" }}
       >
         {STAT_CARDS.map((c) => (
           <StatCard key={c.label} {...c} />
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <div className="grid grid-cols-2 gap-5">
         {/* Recent Problems */}
         <div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              marginBottom: 16,
-            }}
-          >
+          <div className="flex items-center gap-2.5 mb-4">
             <div
-              style={{
-                width: 4,
-                height: 20,
-                background: SA_ACCENT,
-                borderRadius: 2,
-              }}
+              className="w-1 h-5 rounded-sm"
+              style={{ background: SA_ACCENT }}
             />
             <h3
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: 14,
-                fontWeight: 800,
-                color: "#f0f4ff",
-              }}
+              className="font-display text-sm font-extrabold m-0"
+              style={{ color: "#f0f4ff" }}
             >
               Recent Problems
             </h3>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="flex flex-col gap-2.5">
             {recentProblems.length === 0 ? (
-              <p style={{ color: "#4a5568", fontSize: 12 }}>No problems yet.</p>
+              <p className="font-mono text-[12px]" style={{ color: "#4a5568" }}>
+                No problems yet.
+              </p>
             ) : (
               recentProblems.map((p) => (
                 <motion.div
                   key={p._id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  style={{
-                    background: "#0c0f18",
-                    border: "1px solid #1e2330",
-                    borderRadius: 10,
-                    padding: "12px 16px",
-                  }}
+                  className="rounded-xl p-3.5"
+                  style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      gap: 8,
-                    }}
-                  >
+                  <div className="flex justify-between items-start gap-2">
                     <div>
                       <div
-                        style={{
-                          fontFamily: "'Syne', sans-serif",
-                          fontSize: 13,
-                          fontWeight: 700,
-                          color: "#f0f4ff",
-                        }}
+                        className="font-display text-[13px] font-bold"
+                        style={{ color: "#f0f4ff" }}
                       >
                         {p.title}
                       </div>
                       <div
-                        style={{ fontSize: 11, color: "#6b7a99", marginTop: 3 }}
+                        className="font-mono text-[11px] mt-0.5"
+                        style={{ color: "#6b7a99" }}
                       >
                         {p.organization} · {fmtDate(p.createdAt)}
                       </div>
@@ -300,7 +219,7 @@ const SADashboard = () => {
                       {p.is_published ? "Published" : "Pending"}
                     </Pill>
                   </div>
-                  <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                  <div className="flex gap-1.5 mt-2">
                     <Badge color="#3a9de8">{p.category}</Badge>
                     <Badge color="#9c3ae8">{p.theme}</Badge>
                   </div>
@@ -312,36 +231,20 @@ const SADashboard = () => {
 
         {/* Top Students */}
         <div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              marginBottom: 16,
-            }}
-          >
-            <div
-              style={{
-                width: 4,
-                height: 20,
-                background: "#3a9de8",
-                borderRadius: 2,
-              }}
-            />
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-1 h-5 rounded-sm bg-[#3a9de8]" />
             <h3
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: 14,
-                fontWeight: 800,
-                color: "#f0f4ff",
-              }}
+              className="font-display text-sm font-extrabold m-0"
+              style={{ color: "#f0f4ff" }}
             >
               Recent Students
             </h3>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="flex flex-col gap-2.5">
             {topStudents.length === 0 ? (
-              <p style={{ color: "#4a5568", fontSize: 12 }}>No students yet.</p>
+              <p className="font-mono text-[12px]" style={{ color: "#4a5568" }}>
+                No students yet.
+              </p>
             ) : (
               topStudents.map((s) => {
                 const totalScore =
@@ -354,55 +257,37 @@ const SADashboard = () => {
                     key={s._id}
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-3 rounded-xl p-3.5"
                     style={{
                       background: "#0c0f18",
                       border: "1px solid #1e2330",
-                      borderRadius: 10,
-                      padding: "12px 16px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
                     }}
                   >
                     <Avatar name={s.name} size={36} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="flex-1 min-w-0">
                       <div
-                        style={{
-                          fontFamily: "'Syne', sans-serif",
-                          fontSize: 13,
-                          fontWeight: 700,
-                          color: "#f0f4ff",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
+                        className="font-display text-[13px] font-bold truncate"
+                        style={{ color: "#f0f4ff" }}
                       >
                         {s.name}
                       </div>
                       <div
-                        style={{ fontSize: 11, color: "#6b7a99", marginTop: 2 }}
+                        className="font-mono text-[11px] mt-0.5"
+                        style={{ color: "#6b7a99" }}
                       >
                         {s.department} · {s.college}
                       </div>
                     </div>
-                    <div style={{ textAlign: "right" }}>
+                    <div className="text-right">
                       <div
-                        style={{
-                          fontFamily: "'Syne', sans-serif",
-                          fontSize: 16,
-                          fontWeight: 800,
-                          color: "#fbbf24",
-                        }}
+                        className="font-display text-base font-extrabold"
+                        style={{ color: "#fbbf24" }}
                       >
                         {totalScore}
                       </div>
                       <div
-                        style={{
-                          fontSize: 9,
-                          color: "#6b7a99",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.08em",
-                        }}
+                        className="font-mono text-[9px] uppercase tracking-widest"
+                        style={{ color: "#6b7a99" }}
                       >
                         pts
                       </div>

@@ -36,132 +36,79 @@ const SAAuth = () => {
     }
   };
 
-  const inputBase = (focused) => ({
-    width: "100%",
-    background: "#060810",
-    border: `1px solid ${focused ? "#9c3ae860" : "#1e2330"}`,
-    borderRadius: 10,
-    padding: "12px 14px 12px 42px",
-    color: "#f0f4ff",
-    fontFamily: "'DM Mono', monospace",
-    fontSize: 13,
-    outline: "none",
-    boxSizing: "border-box",
-    transition: "border-color 0.2s",
-    boxShadow: focused ? "0 0 0 3px #9c3ae810" : "none",
-  });
-
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
+        .font-display { font-family: 'Syne', sans-serif !important; }
+        .font-mono    { font-family: 'DM Mono', monospace !important; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.94)} }
-        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+        @keyframes spin     { to { transform: rotate(360deg); } }
         @keyframes scanline { 0%{top:-8px} 100%{top:100%} }
+        @keyframes float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+        .sa-input-focused { border-color: #9c3ae860 !important; box-shadow: 0 0 0 3px #9c3ae810 !important; }
       `}</style>
 
       <div
-        style={{
-          minHeight: "100vh",
-          background: "#06080f",
-          display: "flex",
-          fontFamily: "'DM Mono', monospace",
-          position: "relative",
-          overflow: "hidden",
-        }}
+        className="min-h-screen flex font-mono relative overflow-hidden"
+        style={{ background: "#06080f" }}
       >
-        {/* ── Deep purple ambient ── */}
-        <div style={{ position: "fixed", inset: 0, pointerEvents: "none" }}>
+        {/* BG */}
+        <div className="fixed inset-0 pointer-events-none">
           <div
+            className="absolute"
             style={{
-              position: "absolute",
               top: "-20%",
               left: "-10%",
               width: "60%",
               height: "60%",
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, #9c3ae812 0%, transparent 65%)",
+                "radial-gradient(circle,#9c3ae812 0%,transparent 65%)",
             }}
           />
           <div
+            className="absolute"
             style={{
-              position: "absolute",
               bottom: "-15%",
               right: "-5%",
               width: "50%",
               height: "50%",
               borderRadius: "50%",
               background:
-                "radial-gradient(circle, #3a9de808 0%, transparent 65%)",
+                "radial-gradient(circle,#3a9de808 0%,transparent 65%)",
             }}
           />
-          {/* Grid */}
           <div
+            className="absolute inset-0"
             style={{
-              position: "absolute",
-              inset: 0,
               opacity: 0.03,
               backgroundImage:
                 "linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)",
               backgroundSize: "48px 48px",
             }}
           />
-          {/* Scanline effect */}
           <div
+            className="absolute left-0 right-0 h-0.5"
             style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              height: 2,
-              background:
-                "linear-gradient(transparent, #9c3ae820, transparent)",
+              background: "linear-gradient(transparent,#9c3ae820,transparent)",
               animation: "scanline 4s linear infinite",
-              pointerEvents: "none",
             }}
           />
         </div>
 
-        {/* ── Left brand panel ── */}
+        {/* Left brand panel */}
         <div
-          style={{
-            width: "45%",
-            display: "none",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            padding: "60px 52px",
-            borderRight: "1px solid #1e2330",
-            position: "relative",
-          }}
-          className="brand-panel"
+          className="w-[45%] hidden lg:flex flex-col justify-between relative"
+          style={{ padding: "60px 52px", borderRight: "1px solid #1e2330" }}
         >
-          <style>{`@media(min-width:1024px){.brand-panel{display:flex !important;}}`}</style>
-
-          <div style={{ position: "relative", zIndex: 1 }}>
+          <div className="relative z-10">
             {/* Logo */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                marginBottom: 56,
-              }}
-            >
+            <div className="flex items-center gap-3 mb-14">
               <div
+                className="w-11 h-11 rounded-2xl flex items-center justify-center font-display font-extrabold text-lg text-white"
                 style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 13,
-                  background: "linear-gradient(135deg, #9c3ae8, #7c2abf)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontFamily: "'Syne', sans-serif",
-                  fontWeight: 800,
-                  fontSize: 18,
-                  color: "#fff",
+                  background: "linear-gradient(135deg,#9c3ae8,#7c2abf)",
                   boxShadow: "0 0 24px #9c3ae840",
                 }}
               >
@@ -169,45 +116,32 @@ const SAAuth = () => {
               </div>
               <div>
                 <div
-                  style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontSize: 17,
-                    fontWeight: 800,
-                    color: "#f0f4ff",
-                    letterSpacing: "-0.02em",
-                  }}
+                  className="font-display text-[17px] font-extrabold"
+                  style={{ color: "#f0f4ff", letterSpacing: "-0.02em" }}
                 >
                   Super Admin
                 </div>
                 <div
-                  style={{
-                    fontSize: 9,
-                    color: "#6b7a99",
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                  }}
+                  className="font-mono text-[9px] uppercase tracking-widest"
+                  style={{ color: "#6b7a99" }}
                 >
                   InteConnect Control
                 </div>
               </div>
             </div>
-
             <h2
+              className="font-display font-extrabold leading-tight mb-5"
               style={{
-                fontFamily: "'Syne', sans-serif",
                 fontSize: 40,
-                fontWeight: 800,
                 color: "#f0f4ff",
-                lineHeight: 1.08,
                 letterSpacing: "-0.025em",
-                marginBottom: 20,
               }}
             >
               Elevated
               <br />
               <span
                 style={{
-                  background: "linear-gradient(135deg, #9c3ae8, #b65aff)",
+                  background: "linear-gradient(135deg,#9c3ae8,#b65aff)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                 }}
@@ -215,21 +149,13 @@ const SAAuth = () => {
                 Access Level
               </span>
             </h2>
-
             <p
-              style={{
-                fontSize: 13,
-                color: "#6b7a99",
-                lineHeight: 1.85,
-                maxWidth: 340,
-                marginBottom: 48,
-              }}
+              className="font-mono text-[13px] leading-relaxed mb-12 max-w-sm"
+              style={{ color: "#6b7a99" }}
             >
               This portal is restricted to authorized Super Administrators only.
               All sessions are logged and monitored.
             </p>
-
-            {/* Capability list */}
             {[
               {
                 icon: "⬡",
@@ -257,126 +183,67 @@ const SAAuth = () => {
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.1 + 0.2 }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  marginBottom: 16,
-                }}
+                className="flex items-center gap-3 mb-4"
               >
                 <div
+                  className="w-[34px] h-[34px] rounded-xl flex items-center justify-center text-sm flex-shrink-0"
                   style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 9,
                     background: `${f.color}14`,
                     border: `1px solid ${f.color}25`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 14,
-                    flexShrink: 0,
                     color: f.color,
                   }}
                 >
                   {f.icon}
                 </div>
-                <span style={{ fontSize: 12, color: "#8892a4" }}>
+                <span
+                  className="font-mono text-[12px]"
+                  style={{ color: "#8892a4" }}
+                >
                   {f.label}
                 </span>
               </motion.div>
             ))}
           </div>
-
-          {/* Floating SA badge */}
           <motion.div
             animate={{ y: [0, -10, 0] }}
             transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
-            style={{
-              alignSelf: "flex-start",
-              background: "#9c3ae814",
-              border: "1px solid #9c3ae830",
-              borderRadius: 12,
-              padding: "14px 20px",
-              marginBottom: 32,
-            }}
+            className="rounded-xl p-4 mb-8 self-start"
+            style={{ background: "#9c3ae814", border: "1px solid #9c3ae830" }}
           >
             <div
-              style={{
-                fontSize: 10,
-                color: "#9c3ae8",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                marginBottom: 4,
-              }}
+              className="font-mono text-[10px] font-bold uppercase tracking-widest mb-1"
+              style={{ color: "#9c3ae8" }}
             >
               Clearance Level
             </div>
             <div
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: 22,
-                fontWeight: 800,
-                color: "#f0f4ff",
-              }}
+              className="font-display text-[22px] font-extrabold"
+              style={{ color: "#f0f4ff" }}
             >
               ALPHA
             </div>
           </motion.div>
-
-          <div style={{ fontSize: 11, color: "#4a5568" }}>
+          <div className="font-mono text-[11px]" style={{ color: "#4a5568" }}>
             © {new Date().getFullYear()} GMIT · Team-Falcon
           </div>
         </div>
 
-        {/* ── Right: form ── */}
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "40px 24px",
-          }}
-        >
-          <div style={{ width: "100%", maxWidth: 420 }}>
+        {/* Right: form */}
+        <div className="flex-1 flex items-center justify-center p-10">
+          <div className="w-full max-w-[420px]">
             {/* Mobile logo */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 10,
-                marginBottom: 36,
-              }}
-              className="mobile-logo"
-            >
-              <style>{`@media(min-width:1024px){.mobile-logo{display:none !important;}}`}</style>
+            <div className="flex lg:hidden items-center justify-center gap-2.5 mb-9">
               <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center font-display font-extrabold text-base text-white"
                 style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
-                  background: "linear-gradient(135deg, #9c3ae8, #7c2abf)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontFamily: "'Syne', sans-serif",
-                  fontWeight: 800,
-                  fontSize: 15,
-                  color: "#fff",
+                  background: "linear-gradient(135deg,#9c3ae8,#7c2abf)",
                 }}
               >
                 SA
               </div>
               <span
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: 17,
-                  fontWeight: 800,
-                  color: "#f0f4ff",
-                }}
+                className="font-display text-[17px] font-extrabold"
+                style={{ color: "#f0f4ff" }}
               >
                 Super Admin
               </span>
@@ -387,121 +254,80 @@ const SAAuth = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             >
-              {/* Card */}
               <div
+                className="rounded-2xl"
                 style={{
                   background: "#0c0f18",
                   border: "1px solid #2a1a4a",
-                  borderRadius: 18,
-                  padding: "36px 36px",
-                  boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px #9c3ae810",
+                  padding: "36px",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.5),0 0 0 1px #9c3ae810",
                 }}
               >
                 {/* Header */}
-                <div style={{ marginBottom: 28 }}>
+                <div className="mb-7">
                   <div
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg mb-4"
                     style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 7,
-                      padding: "5px 12px",
                       background: "#9c3ae814",
                       border: "1px solid #9c3ae830",
-                      borderRadius: 8,
-                      marginBottom: 16,
                     }}
                   >
                     <span
+                      className="w-1.5 h-1.5 rounded-full inline-block"
                       style={{
-                        fontSize: 9,
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
                         background: "#9c3ae8",
-                        display: "inline-block",
                         boxShadow: "0 0 6px #9c3ae8",
                       }}
                     />
                     <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: "#9c3ae8",
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                      }}
+                      className="font-mono text-[10px] font-bold uppercase tracking-widest"
+                      style={{ color: "#9c3ae8" }}
                     >
                       Restricted Access
                     </span>
                   </div>
                   <h2
-                    style={{
-                      fontFamily: "'Syne', sans-serif",
-                      fontSize: 24,
-                      fontWeight: 800,
-                      color: "#f0f4ff",
-                      marginBottom: 6,
-                    }}
+                    className="font-display text-2xl font-extrabold mb-1.5"
+                    style={{ color: "#f0f4ff" }}
                   >
                     Super Admin Login
                   </h2>
-                  <p style={{ fontSize: 12, color: "#6b7a99" }}>
+                  <p
+                    className="font-mono text-[12px]"
+                    style={{ color: "#6b7a99" }}
+                  >
                     Enter your elevated credentials to proceed.
                   </p>
                 </div>
 
-                {/* Error */}
                 {error && (
                   <motion.div
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 rounded-lg px-3.5 py-2.5 mb-5 font-mono text-[12px]"
                     style={{
                       background: "#3a1a1a",
                       border: "1px solid #f8717140",
-                      borderRadius: 8,
-                      padding: "10px 14px",
-                      marginBottom: 20,
-                      fontSize: 12,
                       color: "#f87171",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
                     }}
                   >
                     ✕ {error}
                   </motion.div>
                 )}
 
-                <form
-                  onSubmit={handleSubmit}
-                  style={{ display: "flex", flexDirection: "column", gap: 16 }}
-                >
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                   {/* Email */}
                   <div>
                     <label
-                      style={{
-                        display: "block",
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: "#6b7a99",
-                        marginBottom: 6,
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                      }}
+                      className="block font-mono text-[10px] font-bold uppercase tracking-widest mb-1.5"
+                      style={{ color: "#6b7a99" }}
                     >
                       SA Email <span style={{ color: "#9c3ae8" }}>*</span>
                     </label>
-                    <div style={{ position: "relative" }}>
+                    <div className="relative">
                       <span
-                        style={{
-                          position: "absolute",
-                          left: 13,
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          fontSize: 13,
-                          color: "#4a5568",
-                          pointerEvents: "none",
-                        }}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] pointer-events-none"
+                        style={{ color: "#4a5568" }}
                       >
                         ✉
                       </span>
@@ -514,7 +340,15 @@ const SAAuth = () => {
                         required
                         onFocus={() => setEmailF(true)}
                         onBlur={() => setEmailF(false)}
-                        style={inputBase(emailF)}
+                        className="w-full rounded-xl font-mono text-[13px] outline-none transition-all pl-10"
+                        style={{
+                          background: "#060810",
+                          border: `1px solid ${emailF ? "#9c3ae860" : "#1e2330"}`,
+                          padding: "12px 14px 12px 42px",
+                          color: "#f0f4ff",
+                          boxShadow: emailF ? "0 0 0 3px #9c3ae810" : "none",
+                          boxSizing: "border-box",
+                        }}
                       />
                     </div>
                   </div>
@@ -522,29 +356,15 @@ const SAAuth = () => {
                   {/* Password */}
                   <div>
                     <label
-                      style={{
-                        display: "block",
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: "#6b7a99",
-                        marginBottom: 6,
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                      }}
+                      className="block font-mono text-[10px] font-bold uppercase tracking-widest mb-1.5"
+                      style={{ color: "#6b7a99" }}
                     >
                       SA Password <span style={{ color: "#9c3ae8" }}>*</span>
                     </label>
-                    <div style={{ position: "relative" }}>
+                    <div className="relative">
                       <span
-                        style={{
-                          position: "absolute",
-                          left: 13,
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          fontSize: 13,
-                          color: "#4a5568",
-                          pointerEvents: "none",
-                        }}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] pointer-events-none"
+                        style={{ color: "#4a5568" }}
                       >
                         ◉
                       </span>
@@ -557,21 +377,24 @@ const SAAuth = () => {
                         required
                         onFocus={() => setPassF(true)}
                         onBlur={() => setPassF(false)}
-                        style={{ ...inputBase(passF), paddingRight: 44 }}
+                        className="w-full rounded-xl font-mono text-[13px] outline-none transition-all"
+                        style={{
+                          background: "#060810",
+                          border: `1px solid ${passF ? "#9c3ae860" : "#1e2330"}`,
+                          padding: "12px 44px 12px 42px",
+                          color: "#f0f4ff",
+                          boxShadow: passF ? "0 0 0 3px #9c3ae810" : "none",
+                          boxSizing: "border-box",
+                        }}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPass((s) => !s)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-sm cursor-pointer"
                         style={{
-                          position: "absolute",
-                          right: 12,
-                          top: "50%",
-                          transform: "translateY(-50%)",
                           background: "none",
                           border: "none",
-                          cursor: "pointer",
                           color: "#4a5568",
-                          fontSize: 14,
                         }}
                       >
                         {showPass ? "⊘" : "◉"}
@@ -579,71 +402,52 @@ const SAAuth = () => {
                     </div>
                   </div>
 
-                  {/* Warning notice */}
                   <div
+                    className="rounded-lg px-3.5 py-2.5 font-mono text-[11px]"
                     style={{
                       background: "#1a1428",
                       border: "1px solid #9c3ae830",
-                      borderRadius: 8,
-                      padding: "10px 14px",
-                      fontSize: 11,
                       color: "#8892a4",
                     }}
                   >
                     ⚠ All Super Admin sessions are logged for security purposes.
                   </div>
 
-                  {/* Submit */}
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     type="submit"
                     disabled={loading}
+                    className="w-full rounded-xl font-display font-bold text-[13px] tracking-wide flex items-center justify-center gap-2 mt-1 cursor-pointer disabled:cursor-not-allowed"
                     style={{
-                      width: "100%",
                       background: loading
                         ? "#2a1a4a"
-                        : "linear-gradient(135deg, #9c3ae8, #7c2abf)",
+                        : "linear-gradient(135deg,#9c3ae8,#7c2abf)",
                       color: "#fff",
                       border: "none",
-                      borderRadius: 12,
                       padding: "13px 20px",
-                      fontSize: 13,
-                      fontWeight: 700,
-                      cursor: loading ? "not-allowed" : "pointer",
-                      fontFamily: "'Syne', sans-serif",
-                      letterSpacing: "0.04em",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 8,
                       boxShadow: loading ? "none" : "0 4px 20px #9c3ae830",
-                      marginTop: 4,
                     }}
                   >
-                    {loading ? (
+                    {loading && (
                       <span
-                        style={{
-                          display: "inline-block",
-                          animation: "spin 0.7s linear infinite",
-                        }}
+                        className="inline-block"
+                        style={{ animation: "spin 0.7s linear infinite" }}
                       >
                         ◌
                       </span>
-                    ) : null}
+                    )}
                     {loading ? "Authenticating…" : "Authenticate Super Admin →"}
                   </motion.button>
                 </form>
 
-                <div style={{ marginTop: 20, textAlign: "center" }}>
+                <div className="mt-5 text-center">
                   <button
                     onClick={() => navigate("/login")}
+                    className="font-mono text-[12px] cursor-pointer"
                     style={{
                       background: "none",
                       border: "none",
-                      cursor: "pointer",
-                      fontSize: 12,
                       color: "#6b7a99",
-                      fontFamily: "'DM Mono', monospace",
                     }}
                   >
                     ← Back to Admin Login

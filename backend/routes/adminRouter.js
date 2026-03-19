@@ -1,22 +1,24 @@
 import express from "express";
 import {
-  // Auth
   registerAdmin,
   loginAdmin,
   sendOtp,
   resetPassword,
   getAdminProfile,
-  // Projects
   getAssignedProjects,
   getProjectById,
   updateProject,
   toggleProjectBlock,
-  // Logs
   createLog,
+  togglePublishLog,
+  updateLog,
   closeLog,
-  // Students (admin view)
+  terminateLog,
+  reopenLog,
+  checkAndTerminateExpiredLogs,
+  getOpenLogs,
+  selfAssignLog,
   getStudentDetail,
-  // ── Super Admin ──────────────────────────────────────
   saLogin,
   getSADashboard,
   saGetAllProblems,
@@ -32,70 +34,92 @@ import {
 } from "../controllers/adminController.js";
 import adminAuth from "../middlewares/adminAuth.js";
 import superAdminAuth from "../middlewares/superAdminAuth.js";
+
 const adminRouter = express.Router();
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PUBLIC
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Public ───────────────────────────────────────────────────────────────────
 adminRouter.post("/register", registerAdmin);
 adminRouter.post("/login", loginAdmin);
 adminRouter.post("/forgot-password/send-otp", sendOtp);
 adminRouter.post("/forgot-password/reset", resetPassword);
-
-// ─── Super Admin login (public, no token needed) ─────────────────────────────
 adminRouter.post("/sa/login", saLogin);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PROTECTED — regular admin
-// ─────────────────────────────────────────────────────────────────────────────
-adminRouter.use("/profile", adminAuth);
-adminRouter.use("/projects", adminAuth);
-adminRouter.use("/logs", adminAuth);
-
-adminRouter.get("/profile", getAdminProfile);
+// ─── Admin auth required ──────────────────────────────────────────────────────
+adminRouter.get("/profile", adminAuth, getAdminProfile);
 
 // Projects
-adminRouter.get("/projects", getAssignedProjects);
-adminRouter.get("/projects/:projectId", getProjectById);
-adminRouter.put("/projects/:projectId", updateProject);
-adminRouter.patch("/projects/:projectId/toggle-block", toggleProjectBlock);
+adminRouter.get("/projects", adminAuth, getAssignedProjects);
+adminRouter.get("/projects/:projectId", adminAuth, getProjectById);
+adminRouter.put("/projects/:projectId", adminAuth, updateProject);
+adminRouter.patch(
+  "/projects/:projectId/toggle-block",
+  adminAuth,
+  toggleProjectBlock,
+);
 
-// Logs
-adminRouter.post("/projects/:projectId/logs", createLog);
-adminRouter.put("/logs/:logId/close", closeLog);
+// Logs — lifecycle
+adminRouter.post("/projects/:projectId/logs", adminAuth, createLog);
+adminRouter.patch(
+  "/projects/:projectId/logs/:logId/publish",
+  adminAuth,
+  togglePublishLog,
+);
+adminRouter.patch("/logs/:logId/update", adminAuth, updateLog);
+adminRouter.put("/logs/:logId/close", adminAuth, closeLog);
+adminRouter.patch("/logs/:logId/terminate", adminAuth, terminateLog);
+adminRouter.patch("/logs/:logId/reopen", adminAuth, reopenLog);
+// ⚠ IMPORTANT: /logs/check-deadlines MUST come before /logs/:logId/... routes
+adminRouter.patch(
+  "/logs/check-deadlines",
+  adminAuth,
+  checkAndTerminateExpiredLogs,
+);
 
-// Student detail inside a project
+// Contributor-facing (no adminAuth — called from student panel too)
+adminRouter.get("/projects/:projectId/open-logs", getOpenLogs);
+adminRouter.patch("/logs/:logId/self-assign", selfAssignLog);
+
+// Student detail inside project
 adminRouter.get(
   "/projects/:projectId/students/:studentId",
   adminAuth,
   getStudentDetail,
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PROTECTED — super admin   (all /sa/* except /sa/login)
-// ─────────────────────────────────────────────────────────────────────────────
-adminRouter.use("/sa", superAdminAuth);
+// ─── Super Admin ──────────────────────────────────────────────────────────────
+adminRouter.get("/sa/dashboard", superAdminAuth, getSADashboard);
 
-// Dashboard
-adminRouter.get("/sa/dashboard", getSADashboard);
-
-// Problem Management
-adminRouter.get("/sa/problems", saGetAllProblems);
-adminRouter.put("/sa/problems/:problemId/approve", saApproveProblem);
-adminRouter.put("/sa/problems/:problemId/reject", saRejectProblem);
+adminRouter.get("/sa/problems", superAdminAuth, saGetAllProblems);
+adminRouter.put(
+  "/sa/problems/:problemId/approve",
+  superAdminAuth,
+  saApproveProblem,
+);
+adminRouter.put(
+  "/sa/problems/:problemId/reject",
+  superAdminAuth,
+  saRejectProblem,
+);
 adminRouter.patch(
   "/sa/problems/:problemId/assign-coordinator",
+  superAdminAuth,
   saAssignCoordinator,
 );
 
-// Admin Management
-adminRouter.get("/sa/admins", saGetAllAdmins);
-adminRouter.patch("/sa/admins/:adminId/toggle-block", saToggleBlockAdmin);
-adminRouter.delete("/sa/admins/:adminId", saDeleteAdmin);
+adminRouter.get("/sa/admins", superAdminAuth, saGetAllAdmins);
+adminRouter.patch(
+  "/sa/admins/:adminId/toggle-block",
+  superAdminAuth,
+  saToggleBlockAdmin,
+);
+adminRouter.delete("/sa/admins/:adminId", superAdminAuth, saDeleteAdmin);
 
-// Student Management
-adminRouter.get("/sa/students", saGetAllStudents);
-adminRouter.get("/sa/students/:studentId", saGetStudentDetail);
-adminRouter.patch("/sa/students/:studentId/toggle-block", saToggleBlockStudent);
+adminRouter.get("/sa/students", superAdminAuth, saGetAllStudents);
+adminRouter.get("/sa/students/:studentId", superAdminAuth, saGetStudentDetail);
+adminRouter.patch(
+  "/sa/students/:studentId/toggle-block",
+  superAdminAuth,
+  saToggleBlockStudent,
+);
 
 export default adminRouter;

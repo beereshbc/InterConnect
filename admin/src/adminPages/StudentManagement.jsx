@@ -28,30 +28,22 @@ const StudentDetailModal = ({ student, onClose }) => {
     ) ?? 0;
   return (
     <SAModal title={`Student · ${student.name}`} onClose={onClose}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-          marginBottom: 20,
-        }}
-      >
+      <div className="flex items-center gap-3.5 mb-5">
         <Avatar name={student.name} size={52} />
         <div>
           <div
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontSize: 17,
-              fontWeight: 800,
-              color: "#f0f4ff",
-            }}
+            className="font-display text-[17px] font-extrabold"
+            style={{ color: "#f0f4ff" }}
           >
             {student.name}
           </div>
-          <div style={{ fontSize: 12, color: "#6b7a99", marginTop: 2 }}>
+          <div
+            className="font-mono text-[12px] mt-0.5"
+            style={{ color: "#6b7a99" }}
+          >
             {student.email}
           </div>
-          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+          <div className="flex gap-1.5 mt-2">
             <Pill type={student.isBlocked ? "blocked" : "active"}>
               {student.isBlocked ? "Blocked" : "Active"}
             </Pill>
@@ -60,14 +52,7 @@ const StudentDetailModal = ({ student, onClose }) => {
         </div>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
-          gap: 10,
-          marginBottom: 16,
-        }}
-      >
+      <div className="grid grid-cols-3 gap-2.5 mb-4">
         {[
           { label: "Total Score", value: totalScore, color: "#e85d3a" },
           {
@@ -79,32 +64,18 @@ const StudentDetailModal = ({ student, onClose }) => {
         ].map((s) => (
           <div
             key={s.label}
-            style={{
-              background: "#060810",
-              border: "1px solid #1e2330",
-              borderRadius: 10,
-              padding: "12px 14px",
-              textAlign: "center",
-            }}
+            className="text-center rounded-xl p-3"
+            style={{ background: "#060810", border: "1px solid #1e2330" }}
           >
             <div
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: 22,
-                fontWeight: 800,
-                color: s.color,
-              }}
+              className="font-display text-[22px] font-extrabold"
+              style={{ color: s.color }}
             >
               {s.value}
             </div>
             <div
-              style={{
-                fontSize: 10,
-                color: "#6b7a99",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                marginTop: 4,
-              }}
+              className="font-mono text-[10px] uppercase tracking-widest mt-1"
+              style={{ color: "#6b7a99" }}
             >
               {s.label}
             </div>
@@ -112,14 +83,7 @@ const StudentDetailModal = ({ student, onClose }) => {
         ))}
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 10,
-          marginBottom: 16,
-        }}
-      >
+      <div className="grid grid-cols-2 gap-2.5 mb-4">
         {[
           ["Phone", student.phone || "—"],
           ["Department", student.department || "—"],
@@ -130,30 +94,18 @@ const StudentDetailModal = ({ student, onClose }) => {
         ].map(([k, v]) => (
           <div
             key={k}
-            style={{
-              background: "#060810",
-              border: "1px solid #1e2330",
-              borderRadius: 8,
-              padding: "10px 14px",
-            }}
+            className="rounded-lg p-2.5"
+            style={{ background: "#060810", border: "1px solid #1e2330" }}
           >
             <div
-              style={{
-                fontSize: 9,
-                color: "#6b7a99",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-              }}
+              className="font-mono text-[9px] uppercase tracking-widest"
+              style={{ color: "#6b7a99" }}
             >
               {k}
             </div>
             <div
-              style={{
-                fontSize: 12,
-                color: "#c4cedf",
-                fontFamily: "'DM Mono', monospace",
-                marginTop: 4,
-              }}
+              className="font-mono text-[12px] mt-1"
+              style={{ color: "#c4cedf" }}
             >
               {v}
             </div>
@@ -166,16 +118,8 @@ const StudentDetailModal = ({ student, onClose }) => {
           href={student.githubLink}
           target="_blank"
           rel="noreferrer"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            color: "#3a9de8",
-            fontSize: 12,
-            fontFamily: "'DM Mono', monospace",
-            textDecoration: "none",
-            marginBottom: 16,
-          }}
+          className="inline-flex items-center gap-1.5 font-mono text-[12px] no-underline mb-4 hover:opacity-80 transition-opacity"
+          style={{ color: "#3a9de8" }}
         >
           ⌥ GitHub Profile ↗
         </a>
@@ -184,61 +128,41 @@ const StudentDetailModal = ({ student, onClose }) => {
       {student.projectWiseContribution?.length > 0 && (
         <>
           <div
-            style={{
-              fontSize: 10,
-              color: "#e85d3a",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              fontWeight: 700,
-              marginBottom: 10,
-            }}
+            className="font-mono text-[10px] uppercase tracking-widest font-bold mb-2.5"
+            style={{ color: "#e85d3a" }}
           >
             ◆ Project Contributions
           </div>
           {student.projectWiseContribution.map((c, i) => (
             <div
               key={i}
-              style={{
-                background: "#060810",
-                border: "1px solid #1e2330",
-                borderRadius: 8,
-                padding: "10px 14px",
-                marginBottom: 8,
-                display: "flex",
-                justifyContent: "space-between",
-              }}
+              className="flex justify-between rounded-lg p-2.5 mb-2"
+              style={{ background: "#060810", border: "1px solid #1e2330" }}
             >
               <div>
                 <div
-                  style={{
-                    fontSize: 12,
-                    color: "#f0f4ff",
-                    fontFamily: "'DM Mono', monospace",
-                  }}
+                  className="font-mono text-[12px]"
+                  style={{ color: "#f0f4ff" }}
                 >
                   {c.role || "Contributor"}
                 </div>
-                <div style={{ fontSize: 11, color: "#6b7a99", marginTop: 2 }}>
+                <div
+                  className="font-mono text-[11px] mt-0.5"
+                  style={{ color: "#6b7a99" }}
+                >
                   {c.description || "—"}
                 </div>
               </div>
-              <div style={{ textAlign: "right" }}>
+              <div className="text-right">
                 <div
-                  style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontSize: 16,
-                    fontWeight: 800,
-                    color: "#fbbf24",
-                  }}
+                  className="font-display text-base font-extrabold"
+                  style={{ color: "#fbbf24" }}
                 >
                   {c.contributionScore}
                 </div>
                 <div
-                  style={{
-                    fontSize: 9,
-                    color: "#6b7a99",
-                    textTransform: "uppercase",
-                  }}
+                  className="font-mono text-[9px] uppercase"
+                  style={{ color: "#6b7a99" }}
                 >
                   pts
                 </div>
@@ -299,14 +223,14 @@ const StudentManagement = () => {
   };
 
   const filtered = students.filter((s) => {
-    const matchSearch =
+    const m =
       s.name.toLowerCase().includes(search.toLowerCase()) ||
       s.email.toLowerCase().includes(search.toLowerCase()) ||
       s.college?.toLowerCase().includes(search.toLowerCase()) ||
       s.department?.toLowerCase().includes(search.toLowerCase());
-    if (filter === "active") return !s.isBlocked && matchSearch;
-    if (filter === "blocked") return s.isBlocked && matchSearch;
-    return matchSearch;
+    if (filter === "active") return !s.isBlocked && m;
+    if (filter === "blocked") return s.isBlocked && m;
+    return m;
   });
 
   return (
@@ -315,47 +239,31 @@ const StudentManagement = () => {
       subtitle="View, block & track all student accounts"
     >
       {/* Controls */}
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          alignItems: "center",
-          marginBottom: 20,
-          flexWrap: "wrap",
-        }}
-      >
+      <div className="flex gap-3 items-center mb-5 flex-wrap">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search students…"
+          className="rounded-xl font-mono text-[12px] outline-none"
           style={{
             background: "#0c0f18",
             border: "1px solid #1e2330",
-            borderRadius: 9,
             padding: "9px 14px",
             color: "#f0f4ff",
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 12,
-            outline: "none",
             width: 280,
           }}
         />
-        <div style={{ display: "flex", gap: 6 }}>
+        <div className="flex gap-1.5">
           {["all", "active", "blocked"].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
+              className="rounded-lg font-mono text-[11px] font-bold cursor-pointer capitalize tracking-wide"
               style={{
                 padding: "7px 14px",
-                borderRadius: 8,
                 border: `1px solid ${filter === f ? `${SA_ACCENT}60` : "#1e2330"}`,
                 background: filter === f ? `${SA_ACCENT}18` : "#0c0f18",
                 color: filter === f ? SA_ACCENT : "#6b7a99",
-                fontSize: 11,
-                fontWeight: 700,
-                fontFamily: "'DM Mono', monospace",
-                cursor: "pointer",
-                textTransform: "capitalize",
               }}
             >
               {f}{" "}
@@ -365,49 +273,31 @@ const StudentManagement = () => {
           ))}
         </div>
         <div
-          style={{
-            marginLeft: "auto",
-            fontSize: 12,
-            color: "#6b7a99",
-            fontFamily: "'DM Mono', monospace",
-          }}
+          className="ml-auto font-mono text-[12px]"
+          style={{ color: "#6b7a99" }}
         >
           {filtered.length} student{filtered.length !== 1 ? "s" : ""}
         </div>
       </div>
 
       {loading ? (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "50vh",
-            flexDirection: "column",
-            gap: 16,
-          }}
-        >
+        <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
           <Spinner size={32} />
-          <p style={{ color: "#6b7a99", fontSize: 12 }}>Loading students…</p>
+          <p className="font-mono text-[12px]" style={{ color: "#6b7a99" }}>
+            Loading students…
+          </p>
         </div>
       ) : filtered.length === 0 ? (
         <div
-          style={{
-            textAlign: "center",
-            color: "#4a5568",
-            fontSize: 13,
-            marginTop: 60,
-          }}
+          className="text-center font-mono text-[13px] mt-16"
+          style={{ color: "#4a5568" }}
         >
           No students found.
         </div>
       ) : (
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-            gap: 14,
-          }}
+          className="grid gap-3.5"
+          style={{ gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))" }}
         >
           {filtered.map((student, i) => {
             const totalScore =
@@ -421,46 +311,25 @@ const StudentManagement = () => {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
+                className="rounded-2xl p-5"
                 style={{
                   background: "#0c0f18",
                   border: `1px solid ${student.isBlocked ? "#f8717120" : "#1e2330"}`,
-                  borderRadius: 13,
-                  padding: "18px 20px",
                   borderLeft: `3px solid ${student.isBlocked ? "#f87171" : "#4ade80"}`,
                 }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 12,
-                    marginBottom: 14,
-                  }}
-                >
+                <div className="flex items-start gap-3 mb-3.5">
                   <Avatar name={student.name} size={42} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="flex-1 min-w-0">
                     <div
-                      style={{
-                        fontFamily: "'Syne', sans-serif",
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: "#f0f4ff",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
+                      className="font-display text-sm font-bold truncate"
+                      style={{ color: "#f0f4ff" }}
                     >
                       {student.name}
                     </div>
                     <div
-                      style={{
-                        fontSize: 11,
-                        color: "#6b7a99",
-                        marginTop: 2,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
+                      className="font-mono text-[11px] mt-0.5 truncate"
+                      style={{ color: "#6b7a99" }}
                     >
                       {student.email}
                     </div>
@@ -470,14 +339,7 @@ const StudentManagement = () => {
                   </Pill>
                 </div>
 
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr",
-                    gap: 8,
-                    marginBottom: 14,
-                  }}
-                >
+                <div className="grid grid-cols-3 gap-2 mb-3.5">
                   {[
                     ["Score", totalScore, "#e85d3a"],
                     ["Projects", student.projects?.length ?? 0, "#3a9de8"],
@@ -485,29 +347,18 @@ const StudentManagement = () => {
                   ].map(([l, v, c]) => (
                     <div
                       key={l}
-                      style={{
-                        textAlign: "center",
-                        background: "#131825",
-                        borderRadius: 6,
-                        padding: "8px 4px",
-                      }}
+                      className="text-center rounded-lg py-2"
+                      style={{ background: "#131825" }}
                     >
                       <div
-                        style={{
-                          fontFamily: "'Syne', sans-serif",
-                          fontSize: 16,
-                          fontWeight: 800,
-                          color: c,
-                        }}
+                        className="font-display text-base font-extrabold"
+                        style={{ color: c }}
                       >
                         {v}
                       </div>
                       <div
-                        style={{
-                          fontSize: 9,
-                          color: "#6b7a99",
-                          textTransform: "uppercase",
-                        }}
+                        className="font-mono text-[9px] uppercase"
+                        style={{ color: "#6b7a99" }}
                       >
                         {l}
                       </div>
@@ -515,14 +366,7 @@ const StudentManagement = () => {
                   ))}
                 </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 6,
-                    flexWrap: "wrap",
-                    marginBottom: 12,
-                  }}
-                >
+                <div className="flex gap-1.5 flex-wrap mb-3">
                   {student.branch && (
                     <Badge color="#3a9de8">{student.branch}</Badge>
                   )}
@@ -531,18 +375,15 @@ const StudentManagement = () => {
                   )}
                   {student.college && (
                     <span
-                      style={{
-                        fontSize: 10,
-                        color: "#6b7a99",
-                        fontFamily: "'DM Mono', monospace",
-                      }}
+                      className="font-mono text-[10px]"
+                      style={{ color: "#6b7a99" }}
                     >
                       {student.college}
                     </span>
                   )}
                 </div>
 
-                <div style={{ display: "flex", gap: 8 }}>
+                <div className="flex gap-2">
                   <SABtn
                     small
                     variant="ghost"

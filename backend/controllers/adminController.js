@@ -1,78 +1,94 @@
+import Admin from "../models/Admin.js";
+import Student from "../models/Student.js";
 import Project from "../models/Project.js";
 import Problem from "../models/Problem.js";
-import Student from "../models/Student.js";
-import Logs from "../models/Logs.js";
-import Admin from "../models/Admin.js";
-import nodemailer from "nodemailer";
-import bcrypt from "bcrypt";
+import Log from "../models/Logs.js";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const generateToken = (id) =>
+const genToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-
-const generateSAToken = (id) =>
-  jwt.sign({ id, role: "superadmin" }, process.env.JWT_SECRET, {
+const genSAToken = () =>
+  jwt.sign({ role: "superadmin" }, process.env.JWT_SECRET, {
     expiresIn: "12h",
   });
 
+const mailer = nodemailer.createTransport({
+  service: "gmail",
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+});
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
-    await transporter.sendMail({
-      from: `"InteConnect Platform" <${process.env.SMTP_USER}>`,
+    await mailer.sendMail({
+      from: `"InteConnect" <${process.env.SMTP_USER}>`,
       to,
       subject,
       html,
     });
-  } catch (err) {
-    console.error("[EMAIL ERROR]", err.message);
+  } catch (e) {
+    console.error("[EMAIL]", e.message);
   }
 };
 
-// ═════════════════════════════════════════════════════════════════════════════
+/**
+ * syncProjectStats — recalculates project-level counters from real log data.
+ * Called after EVERY log status change so numbers are always accurate.
+ */
+const syncProjectStats = async (projectId) => {
+  const project = await Project.findById(projectId).select("logs");
+  if (!project) return;
+  const logs = await Log.find({ _id: { $in: project.logs } }).select(
+    "task_status assignedTaskPoints",
+  );
+  const total = logs.length;
+  const completed = logs.filter((l) => l.task_status === "completed").length;
+  const pts = logs
+    .filter((l) => l.task_status === "completed")
+    .reduce((a, l) => a + (l.assignedTaskPoints || 0), 0);
+  await Project.findByIdAndUpdate(projectId, {
+    projectProgressRate: total > 0 ? Math.round((completed / total) * 100) : 0,
+    totalTasksCreated: total,
+    totalTasksCompleted: completed,
+    totalPointsDistributed: pts,
+  });
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // ADMIN AUTH
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export const registerAdmin = async (req, res) => {
   try {
     const {
       name,
       email,
+      password,
       phone,
       college,
-      branch,
       program,
+      branch,
       githubLink,
-      password,
     } = req.body;
-    const existingAdmin = await Admin.findOne({ email });
-    if (existingAdmin)
-      return res.status(400).json({
-        success: false,
-        message: "Admin with this email already exists.",
-      });
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    const admin = new Admin({
+    if (await Admin.findOne({ email }))
+      return res
+        .status(400)
+        .json({ success: false, message: "Email already registered." });
+    const admin = await Admin.create({
       name,
       email,
+      password: await bcrypt.hash(password, 10),
       phone,
       college,
-      branch,
       program,
+      branch,
       githubLink,
-      password: hashedPassword,
     });
-    await admin.save();
-    const token = generateToken(admin._id);
     res.status(201).json({
       success: true,
-      message: "Admin Profile initialized! Welcome to the network.",
-      token,
+      message: "Admin registered.",
+      token: genToken(admin._id),
       admin: {
         _id: admin._id,
         name: admin.name,
@@ -80,8 +96,8 @@ export const registerAdmin = async (req, res) => {
         role: admin.role,
       },
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
@@ -92,22 +108,19 @@ export const loginAdmin = async (req, res) => {
     if (!admin)
       return res
         .status(404)
-        .json({ success: false, message: "Admin account not found." });
+        .json({ success: false, message: "Admin not found." });
     if (admin.isBlocked)
-      return res.status(403).json({
-        success: false,
-        message: "This admin account has been blocked.",
-      });
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch)
+      return res
+        .status(403)
+        .json({ success: false, message: "Account blocked." });
+    if (!(await bcrypt.compare(password, admin.password)))
       return res
         .status(400)
         .json({ success: false, message: "Invalid credentials." });
-    const token = generateToken(admin._id);
-    res.status(200).json({
+    res.json({
       success: true,
-      message: "Admin Authorization Granted!",
-      token,
+      message: "Login successful.",
+      token: genToken(admin._id),
       admin: {
         _id: admin._id,
         name: admin.name,
@@ -115,30 +128,26 @@ export const loginAdmin = async (req, res) => {
         role: admin.role,
       },
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
 export const sendOtp = async (req, res) => {
   try {
-    const { email } = req.body;
-    const admin = await Admin.findOne({ email });
+    const admin = await Admin.findOne({ email: req.body.email });
     if (!admin)
       return res
         .status(404)
-        .json({ success: false, message: "No admin found with this email." });
+        .json({ success: false, message: "Admin not found." });
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    admin.resetPasswordOtp = otp;
+    admin.resetPasswordOtp = await bcrypt.hash(otp, 10);
     admin.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
     await admin.save();
-    console.log(`[DEV] OTP for ${email} → ${otp}`);
-    res.status(200).json({
-      success: true,
-      message: "An override OTP has been sent to your email.",
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.log(`[DEV OTP] ${admin.email} → ${otp}`);
+    res.json({ success: true, message: "OTP sent." });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
@@ -147,47 +156,37 @@ export const resetPassword = async (req, res) => {
     const { email, otp, newPassword } = req.body;
     const admin = await Admin.findOne({ email });
     if (!admin)
-      return res
-        .status(404)
-        .json({ success: false, message: "Admin not found." });
-    if (admin.resetPasswordOtp !== otp)
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid OTP sequence." });
+      return res.status(404).json({ success: false, message: "Not found." });
     if (admin.resetPasswordExpires < Date.now())
-      return res
-        .status(400)
-        .json({ success: false, message: "OTP has expired." });
-    const salt = await bcrypt.genSalt(10);
-    admin.password = await bcrypt.hash(newPassword, salt);
+      return res.status(400).json({ success: false, message: "OTP expired." });
+    if (!(await bcrypt.compare(otp, admin.resetPasswordOtp)))
+      return res.status(400).json({ success: false, message: "Invalid OTP." });
+    admin.password = await bcrypt.hash(newPassword, 10);
     admin.resetPasswordOtp = undefined;
     admin.resetPasswordExpires = undefined;
     await admin.save();
-    res.status(200).json({
-      success: true,
-      message: "Authorization sequence updated successfully.",
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.json({ success: true, message: "Password reset successfully." });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
 export const getAdminProfile = async (req, res) => {
   try {
-    const admin = await Admin.findById(req.adminId).select("-password");
+    const admin = await Admin.findById(req.adminId).select(
+      "-password -resetPasswordOtp -resetPasswordExpires",
+    );
     if (!admin)
-      return res
-        .status(404)
-        .json({ success: false, message: "Admin not found." });
-    res.status(200).json({ success: true, admin });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+      return res.status(404).json({ success: false, message: "Not found." });
+    res.json({ success: true, admin });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
-// ═════════════════════════════════════════════════════════════════════════════
-// ADMIN PROJECTS
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROJECTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export const getAssignedProjects = async (req, res) => {
   try {
@@ -195,23 +194,27 @@ export const getAssignedProjects = async (req, res) => {
       .populate({
         path: "problem",
         select:
-          "problemID title category description theme tags ownerName organization department contactInfo problem_coordinator is_published",
+          "problemID title category description theme tags ownerName organization department contactInfo problem_coordinator is_published assignedStudents",
       })
       .populate({
         path: "contributors",
         select:
-          "name email phone department program branch college githubLink isBlocked projectWiseContribution",
+          "name email phone department program branch college githubLink isBlocked projectWiseContribution totalScore",
       })
       .populate({
         path: "logs",
         select:
-          "taskTitle description problemId githubIssueLink assignedTaskPoints contributorID task_coordinator_id task_contributor task_status isPublished createdAt updatedAt",
+          "taskTitle description requirements githubIssueLink githubPrLink closureNote assignedTaskPoints contributorID task_contributor task_status isPublished deadlineDays deadlineAt assignedAt closedAt reopenCount createdAt",
       })
-      .populate({ path: "topContributors", select: "name email department" })
+      .populate({
+        path: "topContributors",
+        select: "name email department totalScore",
+      })
+      .populate({ path: "coordinators", select: "name email" })
       .sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: projects.length, projects });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.json({ success: true, count: projects.length, projects });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
@@ -229,21 +232,25 @@ export const getProjectById = async (req, res) => {
       .populate({
         path: "contributors",
         select:
-          "name email phone department program branch college githubLink isBlocked projectWiseContribution",
+          "name email phone department program branch college githubLink isBlocked projectWiseContribution totalScore",
       })
       .populate({
         path: "logs",
         select:
-          "taskTitle description problemId githubIssueLink assignedTaskPoints contributorID task_coordinator_id task_contributor task_status isPublished createdAt updatedAt",
+          "taskTitle description requirements githubIssueLink githubPrLink closureNote assignedTaskPoints contributorID task_contributor task_status isPublished deadlineDays deadlineAt assignedAt closedAt reopenCount actions createdAt",
+      })
+      .populate({
+        path: "topContributors",
+        select: "name email department totalScore",
       });
     if (!project)
       return res.status(404).json({
         success: false,
         message: "Project not found or access denied.",
       });
-    res.status(200).json({ success: true, project });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.json({ success: true, project });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
@@ -258,11 +265,13 @@ export const updateProject = async (req, res) => {
         success: false,
         message: "Project not found or access denied.",
       });
+
     const {
       projectDescription,
       githubRepoLink,
       liveHostedLink,
-      projectProgressRate,
+      resourcesLink,
+      communityLink,
       is_blocked,
       title,
       category,
@@ -274,50 +283,46 @@ export const updateProject = async (req, res) => {
       contactInfo,
       problem_coordinator,
     } = req.body;
+
     if (projectDescription !== undefined)
       project.projectDescription = projectDescription;
     if (githubRepoLink !== undefined) project.githubRepoLink = githubRepoLink;
     if (liveHostedLink !== undefined) project.liveHostedLink = liveHostedLink;
-    if (projectProgressRate !== undefined)
-      project.projectProgressRate = Math.min(
-        100,
-        Math.max(0, Number(projectProgressRate)),
-      );
+    if (resourcesLink !== undefined) project.resourcesLink = resourcesLink;
+    if (communityLink !== undefined) project.communityLink = communityLink;
     if (is_blocked !== undefined) project.is_blocked = Boolean(is_blocked);
     await project.save();
-    const problemUpdates = {};
-    if (title !== undefined) problemUpdates.title = title;
-    if (category !== undefined) problemUpdates.category = category;
-    if (theme !== undefined) problemUpdates.theme = theme;
-    if (description !== undefined) problemUpdates.description = description;
-    if (ownerName !== undefined) problemUpdates.ownerName = ownerName;
-    if (organization !== undefined) problemUpdates.organization = organization;
-    if (department !== undefined) problemUpdates.department = department;
-    if (contactInfo !== undefined) problemUpdates.contactInfo = contactInfo;
+
+    const pu = {};
+    if (title !== undefined) pu.title = title;
+    if (category !== undefined) pu.category = category;
+    if (theme !== undefined) pu.theme = theme;
+    if (description !== undefined) pu.description = description;
+    if (ownerName !== undefined) pu.ownerName = ownerName;
+    if (organization !== undefined) pu.organization = organization;
+    if (department !== undefined) pu.department = department;
+    if (contactInfo !== undefined) pu.contactInfo = contactInfo;
     if (problem_coordinator !== undefined)
-      problemUpdates.problem_coordinator = problem_coordinator;
-    if (Object.keys(problemUpdates).length > 0)
+      pu.problem_coordinator = problem_coordinator;
+    if (Object.keys(pu).length)
       await Problem.findByIdAndUpdate(
         project.problem,
-        { $set: problemUpdates },
-        { new: true, runValidators: true },
+        { $set: pu },
+        { runValidators: true },
       );
-    const updatedProject = await Project.findById(project._id)
+
+    const updated = await Project.findById(project._id)
       .populate("problem")
       .populate({
         path: "contributors",
         select:
-          "name email phone department program branch college githubLink isBlocked projectWiseContribution",
+          "name email department branch totalScore projectWiseContribution",
       })
       .populate("logs")
-      .populate({ path: "topContributors", select: "name email department" });
-    res.status(200).json({
-      success: true,
-      message: "Project updated successfully.",
-      project: updatedProject,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+      .populate({ path: "topContributors", select: "name email" });
+    res.json({ success: true, message: "Project updated.", project: updated });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
@@ -328,25 +333,22 @@ export const toggleProjectBlock = async (req, res) => {
       coordinators: req.adminId,
     });
     if (!project)
-      return res.status(404).json({
-        success: false,
-        message: "Project not found or access denied.",
-      });
+      return res.status(404).json({ success: false, message: "Not found." });
     project.is_blocked = !project.is_blocked;
     await project.save();
-    res.status(200).json({
+    res.json({
       success: true,
-      message: `Project ${project.is_blocked ? "blocked" : "unblocked"} successfully.`,
+      message: `Project ${project.is_blocked ? "blocked" : "unblocked"}.`,
       is_blocked: project.is_blocked,
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
-// ═════════════════════════════════════════════════════════════════════════════
-// ADMIN LOGS
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOGS — full lifecycle
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export const createLog = async (req, res) => {
   try {
@@ -359,104 +361,478 @@ export const createLog = async (req, res) => {
         success: false,
         message: "Project not found or access denied.",
       });
+
     const {
       taskTitle,
       description,
+      requirements,
       githubIssueLink,
       assignedTaskPoints,
-      contributorID,
-      task_contributor,
+      deadlineDays,
     } = req.body;
-    const contributorExists = project.contributors.some(
-      (id) => id.toString() === contributorID,
-    );
-    if (!contributorExists)
+    if (!taskTitle || !description || !githubIssueLink)
       return res.status(400).json({
         success: false,
-        message: "Contributor is not assigned to this project.",
+        message: "taskTitle, description, and githubIssueLink are required.",
       });
-    const newLog = await Logs.create({
+
+    const pts = Number(assignedTaskPoints) || 10;
+    const log = await Log.create({
       taskTitle,
       description,
+      requirements: requirements || "",
       problemId: project.problem,
+      projectId: project._id,
       githubIssueLink,
-      assignedTaskPoints: Number(assignedTaskPoints) || 0,
-      contributorID,
+      assignedTaskPoints: pts,
+      deadlineDays: Number(deadlineDays) || 7,
       task_coordinator_id: req.adminId,
-      task_contributor,
-      task_status: "pending",
+      task_status: "open",
       isPublished: false,
+      actions: [
+        {
+          actionType: "opened",
+          note: "Log created as draft.",
+          by: req.adminId.toString(),
+        },
+      ],
     });
-    project.logs.push(newLog._id);
-    await project.save();
-    await Student.findByIdAndUpdate(contributorID, {
-      $push: { logs: newLog._id },
+    await Project.findByIdAndUpdate(project._id, { $push: { logs: log._id } });
+    await Admin.findByIdAndUpdate(req.adminId, {
+      $inc: { totalTaskCreated: 1, totalPointsAllocated: pts },
     });
+    await syncProjectStats(project._id);
+
     res.status(201).json({
       success: true,
-      message: "Task log opened successfully.",
-      log: newLog,
+      message:
+        "Log created as draft. Publish to make it visible to contributors.",
+      log,
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
-export const closeLog = async (req, res) => {
+export const togglePublishLog = async (req, res) => {
   try {
-    const log = await Logs.findById(req.params.logId);
+    const project = await Project.findOne({
+      _id: req.params.projectId,
+      coordinators: req.adminId,
+    });
+    if (!project)
+      return res.status(404).json({
+        success: false,
+        message: "Project not found or access denied.",
+      });
+    const log = await Log.findOne({
+      _id: req.params.logId,
+      projectId: project._id,
+    });
+    if (!log)
+      return res
+        .status(404)
+        .json({ success: false, message: "Log not found." });
+    if (["completed", "terminated"].includes(log.task_status))
+      return res.status(400).json({
+        success: false,
+        message: "Cannot toggle publish state of a closed log.",
+      });
+    log.isPublished = !log.isPublished;
+    log.actions.push({
+      actionType: log.isPublished ? "published" : "unpublished",
+      note: log.isPublished
+        ? "Published — visible to contributors."
+        : "Unpublished — hidden from contributors.",
+      by: req.adminId.toString(),
+    });
+    await log.save();
+    res.json({
+      success: true,
+      message: `Log ${log.isPublished ? "published" : "unpublished"}.`,
+      log,
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+export const updateLog = async (req, res) => {
+  try {
+    const log = await Log.findById(req.params.logId);
     if (!log)
       return res
         .status(404)
         .json({ success: false, message: "Log not found." });
     const project = await Project.findOne({
-      logs: req.params.logId,
+      logs: log._id,
       coordinators: req.adminId,
+    });
+    if (!project)
+      return res
+        .status(403)
+        .json({ success: false, message: "Access denied." });
+    if (log.task_status === "assigned")
+      return res
+        .status(400)
+        .json({ success: false, message: "Cannot edit an assigned log." });
+    if (["completed", "terminated"].includes(log.task_status))
+      return res
+        .status(400)
+        .json({ success: false, message: "Cannot edit a closed log." });
+
+    const {
+      taskTitle,
+      description,
+      requirements,
+      githubIssueLink,
+      assignedTaskPoints,
+      deadlineDays,
+    } = req.body;
+    const oldPts = log.assignedTaskPoints;
+    if (taskTitle !== undefined) log.taskTitle = taskTitle;
+    if (description !== undefined) log.description = description;
+    if (requirements !== undefined) log.requirements = requirements;
+    if (githubIssueLink !== undefined) log.githubIssueLink = githubIssueLink;
+    if (assignedTaskPoints !== undefined)
+      log.assignedTaskPoints = Number(assignedTaskPoints);
+    if (deadlineDays !== undefined) log.deadlineDays = Number(deadlineDays);
+    log.actions.push({
+      actionType: "updated",
+      note: "Log updated by admin.",
+      by: req.adminId.toString(),
+    });
+    await log.save();
+    if (
+      assignedTaskPoints !== undefined &&
+      Number(assignedTaskPoints) !== oldPts
+    )
+      await Admin.findByIdAndUpdate(req.adminId, {
+        $inc: { totalPointsAllocated: Number(assignedTaskPoints) - oldPts },
+      });
+    res.json({ success: true, message: "Log updated.", log });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+export const closeLog = async (req, res) => {
+  try {
+    const log = await Log.findById(req.params.logId);
+    if (!log)
+      return res
+        .status(404)
+        .json({ success: false, message: "Log not found." });
+
+    const project = await Project.findOne({
+      logs: log._id,
+      coordinators: req.adminId,
+    });
+    if (!project)
+      return res
+        .status(403)
+        .json({ success: false, message: "Access denied." });
+
+    if (log.task_status === "completed")
+      return res
+        .status(400)
+        .json({ success: false, message: "Log is already completed." });
+    if (log.task_status !== "assigned")
+      return res.status(400).json({
+        success: false,
+        message: "Only assigned logs can be completed.",
+      });
+    if (!log.contributorID)
+      return res
+        .status(400)
+        .json({ success: false, message: "No contributor on this log." });
+
+    const { githubPrLink, contributionScore, closureNote } = req.body;
+    if (!githubPrLink)
+      return res.status(400).json({
+        success: false,
+        message: "githubPrLink is required to close a log.",
+      });
+
+    const pts = Number(contributionScore) || log.assignedTaskPoints;
+    const studentId = log.contributorID.toString();
+    const projectId = project._id.toString();
+
+    log.task_status = "completed";
+    log.isPublished = true;
+    log.githubPrLink = githubPrLink;
+    log.closureNote = closureNote || "";
+    log.assignedTaskPoints = pts;
+    log.closedAt = new Date();
+    log.actions.push({
+      actionType: "completed",
+      note: `Closed. PR: ${githubPrLink}. Points: ${pts}.`,
+      by: req.adminId.toString(),
+    });
+    await log.save();
+
+    const student = await Student.findById(studentId);
+    let studentName = log.task_contributor || "contributor";
+    if (student) {
+      studentName = student.name;
+      const ci = student.projectWiseContribution.findIndex(
+        (c) => c.project?.toString() === projectId,
+      );
+      if (ci >= 0) {
+        student.projectWiseContribution[ci].contributionScore += pts;
+        student.projectWiseContribution[ci].tasksCompleted += 1;
+      } else {
+        student.projectWiseContribution.push({
+          project: projectId,
+          contributionScore: pts,
+          tasksCompleted: 1,
+          role: "Contributor",
+        });
+      }
+      student.totalScore = (student.totalScore || 0) + pts;
+      student.totalTasksCompleted = (student.totalTasksCompleted || 0) + 1;
+      await student.save();
+    }
+
+    await syncProjectStats(projectId);
+
+    const allContribs = await Student.find({ projects: projectId })
+      .select("_id projectWiseContribution")
+      .lean();
+    const topRanked = allContribs
+      .map((s) => {
+        const c = s.projectWiseContribution?.find(
+          (x) => x.project?.toString() === projectId,
+        );
+        return { id: s._id, score: c?.contributionScore || 0 };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map((x) => x.id);
+    await Project.findByIdAndUpdate(projectId, { topContributors: topRanked });
+
+    await Admin.findByIdAndUpdate(req.adminId, { $inc: { totalPoints: pts } });
+
+    res.json({
+      success: true,
+      message: `Task completed! ${pts} points awarded to ${studentName}.`,
+      log,
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+export const terminateLog = async (req, res) => {
+  try {
+    const log = await Log.findById(req.params.logId);
+    if (!log)
+      return res
+        .status(404)
+        .json({ success: false, message: "Log not found." });
+    const project = await Project.findOne({
+      logs: log._id,
+      coordinators: req.adminId,
+    });
+    if (!project)
+      return res
+        .status(403)
+        .json({ success: false, message: "Access denied." });
+    if (log.task_status === "completed")
+      return res
+        .status(400)
+        .json({ success: false, message: "Cannot terminate a completed log." });
+    if (log.task_status === "terminated")
+      return res
+        .status(400)
+        .json({ success: false, message: "Log is already terminated." });
+
+    log.task_status = "terminated";
+    log.isPublished = false;
+    log.closureNote = req.body.closureNote || "Terminated by admin.";
+    log.closedAt = new Date();
+    log.actions.push({
+      actionType: "terminated",
+      note: log.closureNote,
+      by: req.adminId.toString(),
+    });
+    await log.save();
+    await syncProjectStats(project._id);
+    res.json({
+      success: true,
+      message: "Log terminated. You can reopen it anytime.",
+      log,
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+export const reopenLog = async (req, res) => {
+  try {
+    const log = await Log.findById(req.params.logId);
+    if (!log)
+      return res
+        .status(404)
+        .json({ success: false, message: "Log not found." });
+    const project = await Project.findOne({
+      logs: log._id,
+      coordinators: req.adminId,
+    });
+    if (!project)
+      return res
+        .status(403)
+        .json({ success: false, message: "Access denied." });
+    if (log.task_status !== "terminated")
+      return res.status(400).json({
+        success: false,
+        message: "Only terminated logs can be reopened.",
+      });
+
+    const { deadlineDays } = req.body;
+    log.task_status = "open";
+    log.isPublished = true;
+    log.contributorID = null;
+    log.task_contributor = "";
+    log.assignedAt = null;
+    log.deadlineAt = null;
+    log.closedAt = null;
+    log.closureNote = "";
+    log.githubPrLink = "";
+    if (deadlineDays) log.deadlineDays = Number(deadlineDays);
+    log.reopenCount += 1;
+    log.actions.push({
+      actionType: "reopened",
+      note: `Reopened. New window: ${log.deadlineDays}d.`,
+      by: req.adminId.toString(),
+    });
+    await log.save();
+    await syncProjectStats(project._id);
+    res.json({
+      success: true,
+      message: "Log reopened and published. Contributors can now self-assign.",
+      log,
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+export const checkAndTerminateExpiredLogs = async (req, res) => {
+  try {
+    const expired = await Log.find({
+      task_status: "assigned",
+      deadlineAt: { $lte: new Date() },
+    });
+    let count = 0;
+    for (const log of expired) {
+      log.task_status = "terminated";
+      log.isPublished = false;
+      log.closureNote =
+        "Auto-terminated: deadline exceeded without completion.";
+      log.closedAt = new Date();
+      log.actions.push({
+        actionType: "terminated",
+        note: "Auto-terminated (deadline passed).",
+        by: "system",
+      });
+      await log.save();
+      await syncProjectStats(log.projectId.toString());
+      count++;
+    }
+    res.json({
+      success: true,
+      message: `${count} log(s) auto-terminated.`,
+      count,
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+export const getOpenLogs = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId).select(
+      "_id is_blocked",
+    );
+    if (!project)
+      return res
+        .status(404)
+        .json({ success: false, message: "Project not found." });
+    if (project.is_blocked)
+      return res
+        .status(403)
+        .json({ success: false, message: "Project is blocked." });
+    const logs = await Log.find({
+      projectId: project._id,
+      isPublished: true,
+      task_status: "open",
+    }).select(
+      "taskTitle description requirements githubIssueLink assignedTaskPoints deadlineDays createdAt projectId",
+    );
+    res.json({ success: true, count: logs.length, logs });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+// ─── ADMIN FORCES ASSIGNMENT TO A STUDENT ───
+export const selfAssignLog = async (req, res) => {
+  try {
+    const log = await Log.findById(req.params.logId);
+    if (!log)
+      return res
+        .status(404)
+        .json({ success: false, message: "Log not found." });
+    if (!log.isPublished)
+      return res
+        .status(400)
+        .json({ success: false, message: "Task not published." });
+    if (log.task_status !== "open")
+      return res
+        .status(400)
+        .json({ success: false, message: "Task no longer available." });
+
+    const { contributorID, contributorName } = req.body;
+    if (!contributorID)
+      return res
+        .status(400)
+        .json({ success: false, message: "Please select a contributor." });
+
+    const project = await Project.findOne({
+      _id: log.projectId,
+      contributors: contributorID,
     });
     if (!project)
       return res.status(403).json({
         success: false,
-        message: "You are not authorized to close this log.",
+        message: "This student is not a contributor on this project.",
       });
-    if (log.task_status === "completed")
-      return res.status(400).json({
-        success: false,
-        message: "This log is already marked as completed.",
-      });
-    const { githubPrLink, contributionScore, note } = req.body;
-    log.task_status = "completed";
-    log.isPublished = true;
-    if (githubPrLink) log.githubIssueLink = githubPrLink;
-    if (note) {
-      log.actions = log.actions || [];
-      log.actions.push({ actionType: "closed", note });
-    }
+
+    const now = new Date();
+    const deadlineAt = new Date(now.getTime() + log.deadlineDays * 86400000);
+    log.contributorID = contributorID;
+    log.task_contributor = contributorName || "Contributor";
+    log.task_status = "assigned";
+    log.assignedAt = now;
+    log.deadlineAt = deadlineAt;
+    log.actions.push({
+      actionType: "self_assigned",
+      note: `Task assigned to ${log.task_contributor} by Admin. Deadline: ${deadlineAt.toISOString()}`,
+      by: req.adminId.toString(),
+    });
     await log.save();
-    const awardedPoints = Number(contributionScore) || log.assignedTaskPoints;
-    await Student.findOneAndUpdate(
-      {
-        _id: log.contributorID,
-        "projectWiseContribution.project": project._id,
-      },
-      {
-        $inc: { "projectWiseContribution.$.contributionScore": awardedPoints },
-      },
-    );
-    await Problem.findByIdAndUpdate(project.problem, {
-      $push: {
-        actions: {
-          actionType: "log_closed",
-          note: `Log "${log.taskTitle}" closed. ${awardedPoints} pts to ${log.task_contributor}.`,
-        },
-      },
+    await Student.findByIdAndUpdate(contributorID, {
+      $addToSet: { logs: log._id },
     });
-    res.status(200).json({
+    res.json({
       success: true,
-      message: `Log closed. ${awardedPoints} points awarded to ${log.task_contributor}.`,
+      message: `Task manually assigned to ${log.task_contributor}!`,
       log,
+      deadlineAt,
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
@@ -468,9 +844,7 @@ export const getStudentDetail = async (req, res) => {
       contributors: req.params.studentId,
     });
     if (!project)
-      return res
-        .status(404)
-        .json({ success: false, message: "Project or student not found." });
+      return res.status(404).json({ success: false, message: "Not found." });
     const student = await Student.findById(req.params.studentId).select(
       "-password -resetPasswordOtp -resetPasswordExpires",
     );
@@ -478,57 +852,42 @@ export const getStudentDetail = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "Student not found." });
-    const studentLogs = await Logs.find({
+    const logs = await Log.find({
       contributorID: req.params.studentId,
-      problemId: project.problem,
+      projectId: project._id,
     }).sort({ createdAt: -1 });
-    res.status(200).json({ success: true, student, logs: studentLogs });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.json({ success: true, student, logs });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
-// ═════════════════════════════════════════════════════════════════════════════
-// SUPER ADMIN — AUTH
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUPER ADMIN
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// @route  POST /api/admin/sa/login  (public)
 export const saLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!process.env.SA_MAIL || !process.env.SA_PASSWORD) {
-      return res.status(500).json({
-        success: false,
-        message: "Super Admin credentials not configured.",
-      });
-    }
-    if (email !== process.env.SA_MAIL || password !== process.env.SA_PASSWORD) {
+    if (!process.env.SA_MAIL || !process.env.SA_PASSWORD)
+      return res
+        .status(500)
+        .json({ success: false, message: "SA credentials not configured." });
+    if (email !== process.env.SA_MAIL || password !== process.env.SA_PASSWORD)
       return res
         .status(401)
-        .json({ success: false, message: "Invalid Super Admin credentials." });
-    }
-    const saId = Buffer.from(process.env.SA_MAIL).toString("base64");
-    const token = generateSAToken(saId);
-    res.status(200).json({
+        .json({ success: false, message: "Invalid SA credentials." });
+    res.json({
       success: true,
       message: "Super Admin access granted.",
-      token,
-      superAdmin: {
-        id: saId,
-        email: process.env.SA_MAIL,
-        role: "superadmin",
-      },
+      token: genSAToken(),
+      superAdmin: { email: process.env.SA_MAIL, role: "superadmin" },
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
-// ═════════════════════════════════════════════════════════════════════════════
-// SUPER ADMIN — DASHBOARD
-// ═════════════════════════════════════════════════════════════════════════════
-
-// @route  GET /api/admin/sa/dashboard
 export const getSADashboard = async (req, res) => {
   try {
     const [
@@ -551,8 +910,12 @@ export const getSADashboard = async (req, res) => {
       Problem.countDocuments({ is_published: true }),
       Project.countDocuments(),
       Project.countDocuments({ is_blocked: true }),
-      Logs.countDocuments(),
-      Logs.countDocuments({ task_status: "completed" }),
+      Log.countDocuments(),
+      Log.countDocuments({ task_status: "completed" }),
+    ]);
+    const ptAgg = await Log.aggregate([
+      { $match: { task_status: "completed" } },
+      { $group: { _id: null, total: { $sum: "$assignedTaskPoints" } } },
     ]);
     const recentProblems = await Problem.find()
       .sort({ createdAt: -1 })
@@ -561,10 +924,10 @@ export const getSADashboard = async (req, res) => {
         "problemID title category theme is_published ownerName organization createdAt",
       );
     const topStudents = await Student.find()
-      .sort({ createdAt: -1 })
+      .sort({ totalScore: -1 })
       .limit(5)
-      .select("name email department college projectWiseContribution");
-    res.status(200).json({
+      .select("name email department college totalScore totalTasksCompleted");
+    res.json({
       success: true,
       stats: {
         admins: {
@@ -592,45 +955,41 @@ export const getSADashboard = async (req, res) => {
           completed: completedLogs,
           pending: totalLogs - completedLogs,
         },
+        totalPointsDistributed: ptAgg[0]?.total || 0,
       },
       recentProblems,
       topStudents,
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
-// ═════════════════════════════════════════════════════════════════════════════
-// SUPER ADMIN — PROBLEM MANAGEMENT
-// ═════════════════════════════════════════════════════════════════════════════
-
-// @route  GET /api/admin/sa/problems
 export const saGetAllProblems = async (req, res) => {
   try {
     const problems = await Problem.find().sort({ createdAt: -1 }).lean();
-    const problemIds = problems.map((p) => p._id);
-    const projects = await Project.find({ problem: { $in: problemIds } })
+    const projects = await Project.find({
+      problem: { $in: problems.map((p) => p._id) },
+    })
       .populate({ path: "coordinators", select: "name email" })
       .select("problem coordinators projectID is_blocked createdAt");
-    const projectMap = {};
-    projects.forEach((proj) => {
-      projectMap[proj.problem.toString()] = proj;
+    const projMap = {};
+    projects.forEach((p) => {
+      projMap[p.problem.toString()] = p;
     });
-    const enriched = problems.map((p) => ({
-      ...p,
-      project: projectMap[p._id.toString()] || null,
-    }));
-    res
-      .status(200)
-      .json({ success: true, count: enriched.length, problems: enriched });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.json({
+      success: true,
+      count: problems.length,
+      problems: problems.map((p) => ({
+        ...p,
+        project: projMap[p._id.toString()] || null,
+      })),
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
-// @route  PUT /api/admin/sa/problems/:problemId/approve
-// Body: { coordinatorId, githubRepoLink, projectDescription }
 export const saApproveProblem = async (req, res) => {
   try {
     const problem = await Problem.findById(req.params.problemId);
@@ -640,61 +999,53 @@ export const saApproveProblem = async (req, res) => {
         .json({ success: false, message: "Problem not found." });
     const { coordinatorId, githubRepoLink, projectDescription } = req.body;
     if (!coordinatorId)
-      return res.status(400).json({
-        success: false,
-        message: "Please assign a coordinator admin.",
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: "Assign a coordinator." });
     const coordinator = await Admin.findById(coordinatorId);
     if (!coordinator)
       return res
         .status(404)
-        .json({ success: false, message: "Coordinator admin not found." });
-    const existingProject = await Project.findOne({ problem: problem._id });
-    if (existingProject)
+        .json({ success: false, message: "Admin not found." });
+    if (await Project.findOne({ problem: problem._id }))
       return res.status(400).json({
         success: false,
-        message: "A project for this problem already exists.",
+        message: "Project already exists for this problem.",
       });
 
     problem.is_published = true;
     problem.actions.push({
       actionType: "approved",
-      note: `Approved by Super Admin. Coordinator: ${coordinator.name}`,
+      note: `Approved. Coordinator: ${coordinator.name}`,
     });
     await problem.save();
 
-    const newProject = await Project.create({
+    const project = await Project.create({
       problem: problem._id,
       coordinators: [coordinatorId],
       contributors: [],
       logs: [],
       githubRepoLink: githubRepoLink || "https://github.com/placeholder",
       projectDescription: projectDescription || problem.description,
-      projectProgressRate: 0,
-      is_blocked: false,
     });
     await Admin.findByIdAndUpdate(coordinatorId, {
-      $push: { managedProjects: newProject._id },
+      $push: { managedProjects: project._id },
     });
-
     await sendEmail({
       to: problem.contactInfo,
-      subject: `✅ Problem Statement Approved — InteConnect 26.0`,
-      html: `<div style="font-family:monospace;background:#080c14;color:#f0f4ff;padding:32px;border-radius:12px;max-width:600px"><h2 style="color:#4ade80">Problem Approved ✓</h2><p style="color:#8892a4">Your problem statement has been approved.</p><div style="background:#0c0f18;border:1px solid #1e2330;border-radius:8px;padding:16px;margin:16px 0"><div style="font-size:11px;color:#6b7a99;text-transform:uppercase">Problem</div><div style="font-size:16px;font-weight:700;color:#f0f4ff;margin-top:4px">${problem.title}</div></div><div style="background:#1a3a2a;border:1px solid #4ade8030;border-radius:8px;padding:16px;margin-bottom:16px"><div style="font-size:11px;color:#4ade80;text-transform:uppercase">Assigned Coordinator</div><div style="color:#f0f4ff;margin-top:4px">${coordinator.name} — ${coordinator.email}</div></div><p style="font-size:11px;color:#4a5568">Project ID: ${newProject.projectID}</p><hr style="border-color:#1e2330;margin:20px 0"><p style="font-size:10px;color:#4a5568">© InteConnect 26.0 · GMIT</p></div>`,
+      subject: "✅ Problem Approved — InteConnect 26.0",
+      html: `<div style="font-family:monospace;background:#080c14;color:#f0f4ff;padding:32px;border-radius:12px;max-width:600px"><h2 style="color:#4ade80">Problem Approved ✓</h2><p>Your problem <strong>${problem.title}</strong> has been approved.</p><p>Project ID: ${project.projectID}<br>Coordinator: ${coordinator.name} (${coordinator.email})</p></div>`,
     });
-
     res.status(201).json({
       success: true,
-      message: `Problem approved. Project ${newProject.projectID} initiated.`,
-      project: newProject,
+      message: `Problem approved. Project ${project.projectID} initiated.`,
+      project,
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
-// @route  PUT /api/admin/sa/problems/:problemId/reject
-// Body: { reason }
 export const saRejectProblem = async (req, res) => {
   try {
     const problem = await Problem.findById(req.params.problemId);
@@ -709,107 +1060,83 @@ export const saRejectProblem = async (req, res) => {
       note: reason || "Rejected by Super Admin.",
     });
     await problem.save();
-
     await sendEmail({
       to: problem.contactInfo,
-      subject: `❌ Problem Statement Update — InteConnect 26.0`,
-      html: `<div style="font-family:monospace;background:#080c14;color:#f0f4ff;padding:32px;border-radius:12px;max-width:600px"><h2 style="color:#f87171">Problem Not Selected</h2><p style="color:#8892a4">Your problem statement was reviewed but could not be approved.</p><div style="background:#0c0f18;border:1px solid #1e2330;border-radius:8px;padding:16px;margin:16px 0"><div style="font-size:11px;color:#6b7a99;text-transform:uppercase">Problem</div><div style="font-size:16px;font-weight:700;color:#f0f4ff;margin-top:4px">${problem.title}</div></div>${reason ? `<div style="background:#3a1a1a;border:1px solid #f8717130;border-radius:8px;padding:16px;margin-bottom:16px"><div style="font-size:11px;color:#f87171;text-transform:uppercase">Reason</div><div style="color:#c4cedf;margin-top:4px">${reason}</div></div>` : ""}<hr style="border-color:#1e2330;margin:20px 0"><p style="font-size:10px;color:#4a5568">© InteConnect 26.0 · GMIT</p></div>`,
+      subject: "❌ Problem Update — InteConnect 26.0",
+      html: `<div style="font-family:monospace;background:#080c14;color:#f0f4ff;padding:32px;border-radius:12px;max-width:600px"><h2 style="color:#f87171">Problem Not Selected</h2><p>Your problem <strong>${problem.title}</strong> could not be approved.${reason ? `<br><br>Reason: ${reason}` : ""}</p></div>`,
     });
-
-    res
-      .status(200)
-      .json({ success: true, message: "Problem rejected and owner notified." });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.json({ success: true, message: "Problem rejected." });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
-// @route  PATCH /api/admin/sa/problems/:problemId/assign-coordinator
 export const saAssignCoordinator = async (req, res) => {
   try {
-    const { coordinatorId } = req.body;
-    const coordinator = await Admin.findById(coordinatorId);
+    const coordinator = await Admin.findById(req.body.coordinatorId);
     if (!coordinator)
       return res
         .status(404)
         .json({ success: false, message: "Admin not found." });
     const project = await Project.findOne({ problem: req.params.problemId });
     if (!project)
-      return res.status(404).json({
-        success: false,
-        message: "No project initiated for this problem yet.",
-      });
-    if (!project.coordinators.map(String).includes(coordinatorId)) {
-      project.coordinators.push(coordinatorId);
+      return res
+        .status(404)
+        .json({ success: false, message: "No project for this problem." });
+    if (
+      !project.coordinators
+        .map(String)
+        .includes(req.body.coordinatorId.toString())
+    ) {
+      project.coordinators.push(req.body.coordinatorId);
       await project.save();
-      await Admin.findByIdAndUpdate(coordinatorId, {
+      await Admin.findByIdAndUpdate(req.body.coordinatorId, {
         $addToSet: { managedProjects: project._id },
       });
     }
-    res.status(200).json({
+    res.json({
       success: true,
       message: `${coordinator.name} assigned as coordinator.`,
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
 
-// ═════════════════════════════════════════════════════════════════════════════
-// SUPER ADMIN — ADMIN MANAGEMENT
-// ═════════════════════════════════════════════════════════════════════════════
-
-// @route  GET /api/admin/sa/admins
 export const saGetAllAdmins = async (req, res) => {
   try {
     const admins = await Admin.find()
       .select("-password -resetPasswordOtp -resetPasswordExpires")
       .sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: admins.length, admins });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.json({ success: true, count: admins.length, admins });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
-
-// @route  PATCH /api/admin/sa/admins/:adminId/toggle-block
 export const saToggleBlockAdmin = async (req, res) => {
   try {
     const admin = await Admin.findById(req.params.adminId);
     if (!admin)
-      return res
-        .status(404)
-        .json({ success: false, message: "Admin not found." });
+      return res.status(404).json({ success: false, message: "Not found." });
     admin.isBlocked = !admin.isBlocked;
     await admin.save();
-    res.status(200).json({
+    res.json({
       success: true,
       message: `Admin ${admin.isBlocked ? "blocked" : "unblocked"}.`,
       isBlocked: admin.isBlocked,
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
-
-// @route  DELETE /api/admin/sa/admins/:adminId
 export const saDeleteAdmin = async (req, res) => {
   try {
-    const admin = await Admin.findByIdAndDelete(req.params.adminId);
-    if (!admin)
-      return res
-        .status(404)
-        .json({ success: false, message: "Admin not found." });
-    res.status(200).json({ success: true, message: "Admin account removed." });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    await Admin.findByIdAndDelete(req.params.adminId);
+    res.json({ success: true, message: "Admin removed." });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
-
-// ═════════════════════════════════════════════════════════════════════════════
-// SUPER ADMIN — STUDENT MANAGEMENT
-// ═════════════════════════════════════════════════════════════════════════════
-
-// @route  GET /api/admin/sa/students
 export const saGetAllStudents = async (req, res) => {
   try {
     const students = await Student.find()
@@ -818,34 +1145,28 @@ export const saGetAllStudents = async (req, res) => {
         path: "projects",
         select: "projectID problem projectProgressRate",
       })
-      .sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: students.length, students });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+      .sort({ totalScore: -1 });
+    res.json({ success: true, count: students.length, students });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
-
-// @route  PATCH /api/admin/sa/students/:studentId/toggle-block
 export const saToggleBlockStudent = async (req, res) => {
   try {
     const student = await Student.findById(req.params.studentId);
     if (!student)
-      return res
-        .status(404)
-        .json({ success: false, message: "Student not found." });
+      return res.status(404).json({ success: false, message: "Not found." });
     student.isBlocked = !student.isBlocked;
     await student.save();
-    res.status(200).json({
+    res.json({
       success: true,
       message: `Student ${student.isBlocked ? "blocked" : "unblocked"}.`,
       isBlocked: student.isBlocked,
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };
-
-// @route  GET /api/admin/sa/students/:studentId
 export const saGetStudentDetail = async (req, res) => {
   try {
     const student = await Student.findById(req.params.studentId)
@@ -857,14 +1178,11 @@ export const saGetStudentDetail = async (req, res) => {
       .populate({
         path: "logs",
         select: "taskTitle task_status assignedTaskPoints createdAt",
-        options: { sort: { createdAt: -1 }, limit: 20 },
       });
     if (!student)
-      return res
-        .status(404)
-        .json({ success: false, message: "Student not found." });
-    res.status(200).json({ success: true, student });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+      return res.status(404).json({ success: false, message: "Not found." });
+    res.json({ success: true, student });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };

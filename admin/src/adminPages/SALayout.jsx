@@ -1,6 +1,4 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// SALayout.jsx  — shared sidebar layout for all SA pages
-// ─────────────────────────────────────────────────────────────────────────────
+// SALayout.jsx — shared sidebar layout for all SA pages — Tailwind CSS
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -28,68 +26,44 @@ export function SALayout({ children, title, subtitle }) {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        @keyframes spin  { to { transform: rotate(360deg); } }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .font-display { font-family: 'Syne', sans-serif !important; }
+        .font-mono    { font-family: 'DM Mono', monospace !important; }
+        @keyframes spin    { to { transform: rotate(360deg); } }
+        @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:0.4} }
         @keyframes slideIn { from{transform:translateY(12px);opacity:0} to{transform:translateY(0);opacity:1} }
         ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: #0c0f18; }
-        ::-webkit-scrollbar-thumb { background: #2a1a4a; border-radius: 3px; }
+        ::-webkit-scrollbar-track  { background: #0c0f18; }
+        ::-webkit-scrollbar-thumb  { background: #2a1a4a; border-radius: 3px; }
         input[type=range] { -webkit-appearance:none; height:4px; border-radius:2px; background:#1e2330; outline:none; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; cursor:pointer; border:2px solid #0c0f18; background: ${SA_ACCENT}; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; cursor:pointer; border:2px solid #0c0f18; background:#9c3ae8; }
       `}</style>
 
       <div
-        style={{
-          minHeight: "100vh",
-          background: "#06080f",
-          display: "flex",
-          fontFamily: "'DM Mono', monospace",
-          color: "#f0f4ff",
-        }}
+        className="min-h-screen flex font-mono"
+        style={{ background: "#06080f", color: "#f0f4ff" }}
       >
         {/* ── Sidebar ── */}
         <div
+          className="flex flex-col flex-shrink-0 sticky top-0 h-screen overflow-hidden transition-all duration-200"
           style={{
             width: collapsed ? 64 : 230,
             background: "#0c0f18",
             borderRight: "1px solid #1e2330",
-            display: "flex",
-            flexDirection: "column",
-            transition: "width 0.2s",
-            flexShrink: 0,
-            position: "sticky",
-            top: 0,
-            height: "100vh",
-            overflow: "hidden",
           }}
         >
           {/* Logo */}
           <div
+            className="flex items-center gap-2.5 cursor-pointer overflow-hidden"
             style={{
               padding: collapsed ? "20px 14px" : "20px 20px",
               borderBottom: "1px solid #1e2330",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              cursor: "pointer",
             }}
             onClick={() => navigate("/super-admin")}
           >
             <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center font-display font-extrabold text-xs text-white flex-shrink-0"
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 9,
-                background: "linear-gradient(135deg, #9c3ae8, #7c2abf)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: 12,
-                color: "#fff",
-                flexShrink: 0,
+                background: "linear-gradient(135deg,#9c3ae8,#7c2abf)",
                 boxShadow: "0 0 12px #9c3ae840",
               }}
             >
@@ -98,25 +72,14 @@ export function SALayout({ children, title, subtitle }) {
             {!collapsed && (
               <div>
                 <div
-                  style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontSize: 14,
-                    fontWeight: 800,
-                    color: "#f0f4ff",
-                    letterSpacing: "-0.01em",
-                    lineHeight: 1,
-                  }}
+                  className="font-display text-sm font-extrabold leading-none"
+                  style={{ color: "#f0f4ff", letterSpacing: "-0.01em" }}
                 >
                   Super Admin
                 </div>
                 <div
-                  style={{
-                    fontSize: 8,
-                    color: "#9c3ae8",
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    marginTop: 2,
-                  }}
+                  className="font-mono text-[8px] uppercase tracking-widest mt-0.5"
+                  style={{ color: "#9c3ae8" }}
                 >
                   InteConnect
                 </div>
@@ -125,40 +88,27 @@ export function SALayout({ children, title, subtitle }) {
           </div>
 
           {/* Nav */}
-          <nav style={{ flex: 1, padding: "16px 10px", overflowY: "auto" }}>
+          <nav className="flex-1 overflow-y-auto p-2.5 space-y-1.5">
             {NAV_ITEMS.map((item) => {
               const active = location.pathname === item.path;
               return (
                 <button
                   key={item.path}
                   onClick={() => navigate(item.path)}
+                  className="w-full flex items-center gap-2.5 rounded-lg font-mono text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap overflow-hidden"
                   style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    padding: collapsed ? "10px 14px" : "10px 14px",
-                    borderRadius: 9,
+                    padding: "10px 14px",
                     background: active ? "#9c3ae820" : "transparent",
                     border: active
                       ? "1px solid #9c3ae840"
                       : "1px solid transparent",
                     borderLeft: active
-                      ? `3px solid ${SA_ACCENT}`
+                      ? "3px solid #9c3ae8"
                       : "3px solid transparent",
-                    color: active ? SA_ACCENT : "#8892a4",
-                    cursor: "pointer",
-                    marginBottom: 6,
-                    transition: "all 0.15s",
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: 12,
-                    fontWeight: active ? 700 : 500,
-                    whiteSpace: "nowrap",
+                    color: active ? "#9c3ae8" : "#8892a4",
                   }}
                 >
-                  <span style={{ fontSize: 14, flexShrink: 0 }}>
-                    {item.icon}
-                  </span>
+                  <span className="text-sm flex-shrink-0">{item.icon}</span>
                   {!collapsed && item.label}
                 </button>
               );
@@ -166,39 +116,28 @@ export function SALayout({ children, title, subtitle }) {
           </nav>
 
           {/* Bottom */}
-          <div style={{ padding: "12px 10px", borderTop: "1px solid #1e2330" }}>
+          <div
+            className="p-2.5 space-y-2"
+            style={{ borderTop: "1px solid #1e2330" }}
+          >
             <button
               onClick={() => setCollapsed((c) => !c)}
+              className="w-full py-2.5 px-3.5 rounded-lg font-mono text-[11px] cursor-pointer transition-colors overflow-hidden"
               style={{
-                width: "100%",
-                padding: "9px 14px",
-                borderRadius: 9,
                 background: "transparent",
                 border: "1px solid #1e2330",
                 color: "#6b7a99",
-                cursor: "pointer",
-                fontSize: 13,
-                fontFamily: "'DM Mono', monospace",
-                marginBottom: 8,
               }}
             >
               {collapsed ? "→" : "← Collapse"}
             </button>
             <button
               onClick={handleLogout}
+              className="w-full py-2.5 px-3.5 rounded-lg font-mono text-[11px] font-bold cursor-pointer whitespace-nowrap overflow-hidden"
               style={{
-                width: "100%",
-                padding: "9px 14px",
-                borderRadius: 9,
                 background: "#3a1a1a",
                 border: "1px solid #f8717140",
                 color: "#f87171",
-                cursor: "pointer",
-                fontSize: 11,
-                fontFamily: "'DM Mono', monospace",
-                fontWeight: 700,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
               }}
             >
               {collapsed ? "⊗" : "⊗ Logout"}
@@ -207,74 +146,39 @@ export function SALayout({ children, title, subtitle }) {
         </div>
 
         {/* ── Main ── */}
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            minHeight: "100vh",
-            overflow: "hidden",
-          }}
-        >
+        <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
           {/* Top bar */}
           <div
-            style={{
-              height: 60,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "0 32px",
-              borderBottom: "1px solid #1e2330",
-              background: "#0c0f18",
-              flexShrink: 0,
-            }}
+            className="h-[60px] flex items-center justify-between px-8 flex-shrink-0"
+            style={{ borderBottom: "1px solid #1e2330", background: "#0c0f18" }}
           >
             <div>
               <div
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: 16,
-                  fontWeight: 800,
-                  color: "#f0f4ff",
-                }}
+                className="font-display text-base font-extrabold"
+                style={{ color: "#f0f4ff" }}
               >
                 {title}
               </div>
               {subtitle && (
-                <div style={{ fontSize: 11, color: "#6b7a99", marginTop: 2 }}>
+                <div
+                  className="font-mono text-[11px] mt-0.5"
+                  style={{ color: "#6b7a99" }}
+                >
                   {subtitle}
                 </div>
               )}
             </div>
             <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "5px 12px",
-                background: "#9c3ae814",
-                border: "1px solid #9c3ae830",
-                borderRadius: 8,
-              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+              style={{ background: "#9c3ae814", border: "1px solid #9c3ae830" }}
             >
               <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "#4ade80",
-                  display: "inline-block",
-                  boxShadow: "0 0 6px #4ade80",
-                }}
+                className="w-1.5 h-1.5 rounded-full inline-block"
+                style={{ background: "#4ade80", boxShadow: "0 0 6px #4ade80" }}
               />
               <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: "#4ade80",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                }}
+                className="font-mono text-[10px] font-bold uppercase tracking-widest"
+                style={{ color: "#4ade80" }}
               >
                 Live
               </span>
@@ -282,9 +186,7 @@ export function SALayout({ children, title, subtitle }) {
           </div>
 
           {/* Content */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "28px 32px" }}>
-            {children}
-          </div>
+          <div className="flex-1 overflow-y-auto p-8">{children}</div>
         </div>
       </div>
     </>
@@ -304,17 +206,11 @@ export const Pill = ({ children, type = "default" }) => {
   const s = map[type] || map.default;
   return (
     <span
+      className="inline-block px-2.5 py-0.5 rounded-full font-mono text-[11px] font-semibold tracking-wide whitespace-nowrap"
       style={{
-        padding: "3px 10px",
-        borderRadius: 20,
-        fontSize: 11,
-        fontWeight: 600,
-        color: s.color,
         background: s.bg,
+        color: s.color,
         border: `1px solid ${s.border}`,
-        fontFamily: "'DM Mono', monospace",
-        letterSpacing: "0.04em",
-        whiteSpace: "nowrap",
       }}
     >
       {children}
@@ -324,18 +220,8 @@ export const Pill = ({ children, type = "default" }) => {
 
 export const Badge = ({ children, color = "#3a9de8" }) => (
   <span
-    style={{
-      padding: "2px 10px",
-      borderRadius: 4,
-      fontSize: 10,
-      fontWeight: 700,
-      letterSpacing: "0.06em",
-      textTransform: "uppercase",
-      color,
-      background: `${color}18`,
-      border: `1px solid ${color}40`,
-      fontFamily: "'DM Mono', monospace",
-    }}
+    className="inline-block px-2.5 py-px rounded font-mono text-[10px] font-bold tracking-widest uppercase"
+    style={{ color, background: `${color}18`, border: `1px solid ${color}40` }}
   >
     {children}
   </span>
@@ -386,32 +272,20 @@ export const SABtn = ({
     <button
       onClick={onClick}
       disabled={disabled || loading}
+      className="inline-flex items-center gap-1.5 rounded-lg font-display font-bold tracking-wide transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
       style={{
         background: s.bg,
         color: s.color,
         border: s.border,
-        borderRadius: 8,
+        boxShadow: s.shadow,
         padding: small ? "6px 14px" : "9px 20px",
         fontSize: small ? 11 : 13,
-        fontWeight: 700,
-        cursor: disabled || loading ? "not-allowed" : "pointer",
-        fontFamily: "'Syne', sans-serif",
-        letterSpacing: "0.04em",
-        opacity: disabled || loading ? 0.55 : 1,
-        transition: "all 0.2s",
-        whiteSpace: "nowrap",
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        boxShadow: s.shadow,
       }}
     >
       {loading && (
         <span
-          style={{
-            animation: "spin 0.6s linear infinite",
-            display: "inline-block",
-          }}
+          className="inline-block"
+          style={{ animation: "spin 0.6s linear infinite" }}
         >
           ◌
         </span>
@@ -424,66 +298,36 @@ export const SABtn = ({
 export const SAModal = ({ title, onClose, children }) => (
   <div
     onClick={onClose}
-    style={{
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.8)",
-      backdropFilter: "blur(6px)",
-      zIndex: 1000,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: 20,
-    }}
+    className="fixed inset-0 z-[1000] flex items-center justify-center p-5"
+    style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(6px)" }}
   >
     <div
       onClick={(e) => e.stopPropagation()}
+      className="w-full rounded-2xl overflow-y-auto"
       style={{
         background: "#0c0f18",
         border: "1px solid #2a1a4a",
-        borderRadius: 16,
         padding: "28px 32px",
-        width: "100%",
         maxWidth: 560,
         maxHeight: "85vh",
-        overflowY: "auto",
         boxShadow: "0 30px 80px rgba(0,0,0,0.8), 0 0 0 1px #9c3ae810",
         animation: "slideIn 0.25s ease",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
+      <div className="flex items-center justify-between mb-6">
         <h2
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: 18,
-            fontWeight: 800,
-            color: "#f0f4ff",
-            margin: 0,
-          }}
+          className="font-display text-lg font-extrabold m-0"
+          style={{ color: "#f0f4ff" }}
         >
           {title}
         </h2>
         <button
           onClick={onClose}
+          className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-sm cursor-pointer"
           style={{
             background: "#1e2330",
             border: "1px solid #2a3045",
             color: "#8892a4",
-            width: 30,
-            height: 30,
-            borderRadius: 7,
-            cursor: "pointer",
-            fontSize: 14,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
           }}
         >
           ✕
@@ -503,17 +347,10 @@ export const SAField = ({
   placeholder,
   rows,
 }) => (
-  <div style={{ marginBottom: 16 }}>
+  <div className="mb-4">
     <label
-      style={{
-        display: "block",
-        fontSize: 10,
-        fontWeight: 700,
-        color: "#6b7a99",
-        marginBottom: 5,
-        letterSpacing: "0.08em",
-        textTransform: "uppercase",
-      }}
+      className="block font-mono text-[10px] font-bold uppercase tracking-widest mb-1.5"
+      style={{ color: "#6b7a99" }}
     >
       {label} {required && <span style={{ color: SA_ACCENT }}>*</span>}
     </label>
@@ -523,17 +360,12 @@ export const SAField = ({
         onChange={onChange}
         placeholder={placeholder}
         rows={rows || 3}
+        className="w-full rounded-lg font-mono text-[13px] outline-none resize-vertical"
         style={{
-          width: "100%",
           background: "#060810",
           border: "1px solid #1e2330",
-          borderRadius: 8,
           padding: "10px 14px",
           color: "#f0f4ff",
-          fontFamily: "'DM Mono', monospace",
-          fontSize: 13,
-          resize: "vertical",
-          outline: "none",
           boxSizing: "border-box",
         }}
       />
@@ -543,16 +375,12 @@ export const SAField = ({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        className="w-full rounded-lg font-mono text-[13px] outline-none"
         style={{
-          width: "100%",
           background: "#060810",
           border: "1px solid #1e2330",
-          borderRadius: 8,
           padding: "10px 14px",
           color: "#f0f4ff",
-          fontFamily: "'DM Mono', monospace",
-          fontSize: 13,
-          outline: "none",
           boxSizing: "border-box",
         }}
       />
@@ -569,24 +397,17 @@ export const SAToast = ({ message, type = "success", onDone }) => {
     type === "error" ? "#f87171" : type === "warn" ? "#fbbf24" : "#4ade80";
   return (
     <div
+      className="fixed bottom-7 right-7 z-[9999] font-mono text-[13px] rounded-xl px-5 py-3"
       style={{
-        position: "fixed",
-        bottom: 28,
-        right: 28,
-        zIndex: 9999,
         background: "#0c0f18",
         border: `1px solid ${color}40`,
         borderLeft: `3px solid ${color}`,
-        borderRadius: 10,
-        padding: "12px 20px",
-        fontFamily: "'DM Mono', monospace",
-        fontSize: 13,
         color: "#f0f4ff",
         boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
         animation: "slideIn 0.25s ease",
       }}
     >
-      <span style={{ color, marginRight: 8 }}>
+      <span className="mr-2" style={{ color }}>
         {type === "error" ? "✕" : type === "warn" ? "⚠" : "✓"}
       </span>
       {message}
@@ -596,10 +417,10 @@ export const SAToast = ({ message, type = "success", onDone }) => {
 
 export const Spinner = ({ size = 24, color = SA_ACCENT }) => (
   <div
+    className="rounded-full flex-shrink-0"
     style={{
       width: size,
       height: size,
-      borderRadius: "50%",
       border: `2px solid ${color}30`,
       borderTopColor: color,
       animation: "spin 0.7s linear infinite",
@@ -630,19 +451,12 @@ export const avatarColor = (name = "") => {
 
 export const Avatar = ({ name = "", size = 32 }) => (
   <div
+    className="rounded-full flex items-center justify-center font-mono font-bold text-white flex-shrink-0"
     style={{
       width: size,
       height: size,
-      borderRadius: "50%",
       background: avatarColor(name),
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
       fontSize: size * 0.34,
-      fontWeight: 700,
-      color: "#fff",
-      fontFamily: "'DM Mono', monospace",
-      flexShrink: 0,
     }}
   >
     {name
