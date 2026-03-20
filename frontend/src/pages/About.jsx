@@ -1,11 +1,11 @@
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 
-import yashwanth from "../assets/user.png";
-import beeresh from "../assets/user.png";
+import yashwanth from "../assets/pic.png";
+import beeresh from "../assets/pic.png";
 import ranjitha from "../assets/ranjitha.png";
 import shiv from "../assets/shivanagowda.png";
-
+frontend / src / assets / user.png;
 /* ─── animation variants ─── */
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
