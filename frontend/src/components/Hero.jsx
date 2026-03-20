@@ -6,7 +6,12 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  AnimatePresence,
+} from "framer-motion";
 import {
   ArrowRight,
   ChevronDown,
@@ -20,7 +25,12 @@ import {
   ExternalLink,
   Sparkles,
   Globe,
+  LayoutDashboard,
+  GitMerge,
+  Code2,
+  Gift,
 } from "lucide-react";
+
 import { Link } from "react-router-dom";
 
 /* ─── tiny animated counter ─── */
@@ -64,58 +74,20 @@ const Stat = ({ icon: Icon, value, suffix = "", label, delay }) => (
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
     transition={{ duration: 0.5, delay }}
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      padding: "12px 18px",
-      background: "rgba(255,255,255,0.03)",
-      border: "1px solid rgba(255,255,255,0.07)",
-      borderRadius: 10,
-      flex: "1 1 160px",
-      minWidth: 0,
-    }}
+    className="flex items-center gap-3 p-3 md:p-4 bg-white/5 border border-white/10 rounded-xl flex-1 min-w-[130px] sm:min-w-[140px] md:min-w-[160px]"
   >
-    <div
-      style={{
-        width: 32,
-        height: 32,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "rgba(59,91,219,0.12)",
-        border: "1px solid rgba(59,91,219,0.2)",
-        borderRadius: 7,
-        flexShrink: 0,
-      }}
-    >
-      <Icon size={15} color="#6080f5" strokeWidth={1.8} />
+    <div className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-[#3b5bdb1f] border border-[#3b5bdb33] rounded-lg shrink-0">
+      <Icon
+        className="w-4 h-4 md:w-5 md:h-5 text-[#6080f5]"
+        strokeWidth={1.8}
+      />
     </div>
-    <div style={{ minWidth: 0 }}>
-      <p
-        style={{
-          margin: 0,
-          fontSize: 18,
-          fontWeight: 700,
-          color: "#e2e8f0",
-          lineHeight: 1.1,
-          fontFamily: "'DM Mono', monospace",
-        }}
-      >
+    <div className="min-w-0">
+      <p className="m-0 text-base md:text-lg font-bold text-[#e2e8f0] leading-tight font-mono">
         <Counter end={value} />
         {suffix}
       </p>
-      <p
-        style={{
-          margin: "2px 0 0",
-          fontSize: 11,
-          color: "#4e5e7a",
-          fontWeight: 500,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
-      >
+      <p className="m-0 mt-0.5 text-[9px] sm:text-[10px] md:text-xs text-[#4e5e7a] font-medium whitespace-nowrap overflow-hidden text-ellipsis">
         {label}
       </p>
     </div>
@@ -128,10 +100,33 @@ const Hero = () => {
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 500], [0, 90]);
   const opacity = useTransform(scrollY, [0, 320], [1, 0]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  /* Page Loader Logic */
+  useEffect(() => {
+    const handleLoad = () => {
+      // Adding a tiny artificial delay ensures smooth transition
+      // even if the page loads instantly.
+      setTimeout(() => setIsLoading(false), 800);
+    };
+
+    if (document.readyState === "complete") {
+      handleLoad();
+    } else {
+      window.addEventListener("load", handleLoad);
+      // Fallback incase 'load' event is missed
+      const fallback = setTimeout(handleLoad, 3000);
+      return () => {
+        window.removeEventListener("load", handleLoad);
+        clearTimeout(fallback);
+      };
+    }
+  }, []);
 
   /* grid dots canvas */
   const canvasRef = useRef(null);
   useEffect(() => {
+    if (isLoading) return; // Don't draw until loader is gone
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -173,417 +168,563 @@ const Hero = () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
     };
-  }, []);
+  }, [isLoading]);
 
   return (
-    <div className=" min-h-screen text-[#f0f4ff] font-sans selection:bg-[#3a9de8] selection:text-white">
+    <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
         .font-display { font-family: 'Syne', sans-serif; }
         .font-mono    { font-family: 'DM Mono', monospace; }
 
-        .ic-hero * { box-sizing: border-box; }
-        .ic-hero { position: relative; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 80px 24px 60px; overflow: hidden; }
+        /* Hero base styles */
+        .ic-hero { position: relative; min-height: 100dvh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 80px 16px 60px; overflow: hidden; }
 
-        .ic-badge { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; background: rgba(59,91,219,0.08); border: 1px solid rgba(59,91,219,0.18); border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 10.5px; font-weight: 500; color: #6080f5; letter-spacing: 0.08em; text-transform: uppercase; }
-        .ic-badge__dot { width: 5px; height: 5px; border-radius: 50%; background: #6080f5; animation: ic-pulse 2s ease-in-out infinite; }
+        .ic-badge { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; background: rgba(59,91,219,0.08); border: 1px solid rgba(59,91,219,0.18); border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: #6080f5; letter-spacing: 0.08em; text-transform: uppercase; }
+        .ic-badge__dot { width: 6px; height: 6px; border-radius: 50%; background: #6080f5; animation: ic-pulse 2s ease-in-out infinite; }
         @keyframes ic-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(0.7)} }
 
-        .ic-title { font-family: 'Syne', sans-serif; font-size: clamp(38px, 7.5vw, 84px); font-weight: 800; color: #e8edf5; line-height: 1.06; letter-spacing: -0.03em; margin: 0; text-align: center; }
+        .ic-title { font-family: 'Syne', sans-serif; font-size: clamp(30px, 6vw, 84px); font-weight: 800; color: #e8edf5; line-height: 1.05; letter-spacing: -0.03em; margin: 0; text-align: center; }
         .ic-title__year { color: #3b5bdb; position: relative; }
-        .ic-title__year::after { content: ''; position: absolute; bottom: 4px; left: 0; right: 0; height: 2px; background: #3b5bdb; border-radius: 2px; opacity: 0.5; }
+        .ic-title__year::after { content: ''; position: absolute; bottom: 4px; left: 0; right: 0; height: 3px; background: #3b5bdb; border-radius: 2px; opacity: 0.5; }
 
-        .ic-rule { width: 40px; height: 1px; background: rgba(59,91,219,0.35); border-radius: 1px; }
+        .ic-rule { width: 60px; height: 2px; background: rgba(59,91,219,0.4); border-radius: 2px; margin: 20px auto; }
 
-        .ic-subtitle { font-family: 'DM Sans', sans-serif; font-size: clamp(14px, 2vw, 16px); color: #8892a4; font-weight: 400; text-align: center; max-width: 480px; line-height: 1.7; margin: 0; }
-
-        .ic-institution { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: #4e5a72; text-transform: uppercase; text-align: center; }
-
-        .ic-cta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        .ic-btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 11px 24px; background: #1a2d7a; border: 1px solid #2d4399; border-radius: 8px; color: #a5b8f8; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.18s; text-decoration: none; }
-        .ic-btn-primary:hover { background: #203291; border-color: #3b5bdb; color: #c5d0fb; transform: translateY(-1px); }
-        .ic-btn-ghost { display: inline-flex; align-items: center; gap: 8px; padding: 11px 24px; background: transparent; border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; color: #6b7a99; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.18s; text-decoration: none; }
-        .ic-btn-ghost:hover { border-color: rgba(255,255,255,0.14); color: #8a9ab8; background: rgba(255,255,255,0.02); }
-
-        .ic-stats { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; max-width: 720px; }
-
-        .ic-divider { width: 100%; max-width: 720px; height: 1px; background: linear-gradient(90deg, transparent, rgba(59,91,219,0.15) 30%, rgba(59,91,219,0.15) 70%, transparent); }
+        .ic-subtitle { font-family: 'DM Sans', sans-serif; font-size: clamp(14px, 2vw, 18px); color: #8892a4; font-weight: 400; text-align: center; max-width: 540px; line-height: 1.6; margin: 0 auto; }
 
         .ic-scroll { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .ic-scroll__label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; color: #4e5a72; text-transform: uppercase; }
         .ic-scroll__icon { animation: ic-scroll-bounce 2s ease-in-out infinite; }
         @keyframes ic-scroll-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(5px)} }
 
-        .ic-line-h { position: absolute; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(59,91,219,0.08) 20%, rgba(59,91,219,0.08) 80%, transparent); pointer-events: none; }
-        .ic-line-v { position: absolute; top: 0; bottom: 0; width: 1px; background: linear-gradient(180deg, transparent, rgba(59,91,219,0.06) 20%, rgba(59,91,219,0.06) 80%, transparent); pointer-events: none; }
+        /* Loader CSS Standardized */
+        .loader-wrapper { background-color: #121418; display: grid; place-items: center; min-height: 100vh; position: fixed; inset: 0; z-index: 9999; }
+        .thing { width: 25vw; max-width: 120px; aspect-ratio: 1/1; position: relative; perspective: 2000px; transform-style: preserve-3d; transform: rotateY(0deg) rotateX(0deg); animation: box 10s infinite linear; }
+        .ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 100%; border: clamp(3px, 1vw, 6px) solid #fff; border-radius: 50%; border-bottom-color: transparent; border-left-width: 0px; animation: spin 1s infinite linear; }
+        .ring--1 { --r: rotateY(0deg); transform: translate(-50%, -50%) rotateZ(0deg); }
+        .ring--2 { --r: rotateY(-90deg); transform: translate(-50%, -50%) rotateY(-90deg); animation-delay: 0.75s; }
+        .ring--3 { --r: rotateX(-90deg); transform: translate(-50%, -50%) rotateX(-90deg); animation-delay: 0.5s; }
+        
+        @keyframes spin { to { transform: translate(-50%, -50%) var(--r) rotateZ(360deg); } }
+        @keyframes box { to { transform: rotateX(360deg) rotateY(360deg); } }
 
-        /* Responsive */
-        @media (max-width: 640px) {
-          .ic-hero { padding: 100px 16px 80px; }
-          .ic-stats { gap: 8px; }
+        @media (min-width: 768px) {
+          .ic-rule { margin: 24px auto; }
         }
       `}</style>
 
-      {/* ─── 1. HERO SECTION ─── */}
-      <section className="ic-hero" ref={containerRef}>
-        <canvas
-          ref={canvasRef}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            pointerEvents: "none",
-          }}
-        />
+      {/* ─── FULL PAGE LOADER ─── */}
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div
+            key="loader"
+            initial={{ opacity: 1 }}
+            exit={{
+              opacity: 0,
+              transition: { duration: 0.5, ease: "easeInOut" },
+            }}
+            className="loader-wrapper"
+          >
+            <div className="thing">
+              <div className="ring ring--1"></div>
+              <div className="ring ring--2"></div>
+              <div className="ring ring--3"></div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        <div className="ic-line-h" style={{ top: "22%" }} />
-        <div className="ic-line-h" style={{ bottom: "22%" }} />
-        <div className="ic-line-v" style={{ left: "12%" }} />
-        <div className="ic-line-v" style={{ right: "12%" }} />
-
-        {[
-          ["top:40px", "left:40px"],
-          ["top:40px", "right:40px"],
-          ["bottom:60px", "left:40px"],
-          ["bottom:60px", "right:40px"],
-        ].map((pos, i) => (
-          <div
-            key={i}
+      <div className="min-h-screen bg-transparent text-[#f0f4ff] font-sans selection:bg-[#3a9de8] selection:text-white">
+        {/* ─── 1. HERO SECTION ─── */}
+        <section className="ic-hero" ref={containerRef}>
+          <canvas
+            ref={canvasRef}
             style={{
               position: "absolute",
-              [pos[0].split(":")[0]]: pos[0].split(":")[1],
-              [pos[1].split(":")[0]]: pos[1].split(":")[1],
-              width: 12,
-              height: 12,
-              borderTop: i < 2 ? "1px solid rgba(59,91,219,0.2)" : "none",
-              borderBottom: i >= 2 ? "1px solid rgba(59,91,219,0.2)" : "none",
-              borderLeft:
-                i === 0 || i === 2 ? "1px solid rgba(59,91,219,0.2)" : "none",
-              borderRight:
-                i === 1 || i === 3 ? "1px solid rgba(59,91,219,0.2)" : "none",
+              inset: 0,
+              width: "100%",
+              height: "100%",
               pointerEvents: "none",
             }}
           />
-        ))}
-
-        <motion.div
-          style={{
-            y,
-            opacity,
-            position: "relative",
-            zIndex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 22,
-            width: "100%",
-            maxWidth: 800,
-          }}
-        >
-          {/* ADDED LOGO HERE */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.05 }}
-            className="flex justify-center"
-          >
-            <img
-              src="/ibg.png" // <-- REPLACE WITH YOUR ACTUAL LOGO PATH
-              alt="InterConnect Logo"
-              className="w-16 md:w-40 lg:w-52 h-auto object-contain drop-shadow-[0_0_15px_rgba(59,91,219,0.3)]"
-            />
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="ic-badge">
-              <span className="ic-badge__dot" />
-              Annual Flagship Event&nbsp;&nbsp;·&nbsp;&nbsp;2026
-            </div>
-          </motion.div>
-
-          <motion.h1
-            className="ic-title mt-[-10px] text-xs" // slight negative margin to pull it closer to the logo
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            InterConnect&nbsp;
-            <span className="ic-title__year">26.O</span>
-          </motion.h1>
 
           <motion.div
-            className="ic-rule"
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 0.5, delay: 0.25 }}
-          />
-          <motion.p
-            className="ic-subtitle"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            style={{ y, opacity }}
+            className="relative z-10 flex flex-col items-center gap-5 md:gap-6 w-full max-w-4xl px-2"
           >
-            An inter-disciplinary project management community where engineers,
-            designers, and innovators solve real-world challenges together.
-          </motion.p>
+            {/* LOGO */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{
+                opacity: isLoading ? 0 : 1,
+                scale: isLoading ? 0.8 : 1,
+              }}
+              transition={{ duration: 0.6, delay: 0.05 }}
+              className="flex justify-center mb-1 md:mb-2"
+            >
+              <img
+                src="/ibg.png"
+                alt="InterConnect Logo"
+                className="w-16 sm:w-24 md:w-32 lg:w-48 h-auto object-contain drop-shadow-[0_0_20px_rgba(59,91,219,0.4)]"
+              />
+            </motion.div>
 
-          <motion.p
-            className="ic-institution"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            GMIT&nbsp;&nbsp;·&nbsp;&nbsp;GMU&nbsp;&nbsp;·&nbsp;&nbsp;Davangere
-          </motion.p>
-
-          <motion.div
-            className="ic-cta"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.45 }}
-          >
-            <Link to="/problems" className="ic-btn-primary">
-              Explore Problems <ArrowRight size={14} strokeWidth={2} />
-            </Link>
-            <Link to="/register" className="ic-btn-ghost">
-              Join the Network
-            </Link>
-          </motion.div>
-
-          <motion.div
-            className="ic-divider"
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 0.6, delay: 0.55 }}
-          />
-
-          <div className="ic-stats">
-            <Stat
-              icon={Users}
-              value={1200}
-              suffix="+"
-              label="Registered Students"
-              delay={0.6}
-            />
-            <Stat
-              icon={Layers}
-              value={84}
-              label="Problem Statements"
-              delay={0.68}
-            />
-            <Stat
-              icon={Award}
-              value={36}
-              label="Projects Completed"
-              delay={0.76}
-            />
-            <Stat
-              icon={Calendar}
-              value={3}
-              suffix=" yrs"
-              label="Consecutive Editions"
-              delay={0.84}
-            />
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="ic-scroll"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.6 }}
-        >
-          <span className="ic-scroll__label">Scroll to Discover</span>
-          <ChevronDown
-            className="ic-scroll__icon"
-            size={16}
-            color="rgba(59,91,219,0.5)"
-            strokeWidth={1.8}
-          />
-        </motion.div>
-      </section>
-
-      {/* ─── 2. EVENT DETAILS SECTION (Unified Bento Theme) ─── */}
-      <section className="relative z-10 w-full max-w-[1100px] mx-auto px-6 py-20">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#fbbf2415] border border-[#fbbf2430] mb-4">
-            <Sparkles size={12} className="text-[#fbbf24]" />
-            <span className="font-mono text-[10px] font-bold tracking-widest text-[#fbbf24] uppercase">
-              Idea & Problem Submission
-            </span>
-          </div>
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-[#f0f4ff] mb-4">
-            Have you ever faced a problem in your field and thought there should
-            be a better solution?
-          </h2>
-          <p className="max-w-2xl mx-auto text-sm md:text-base text-[#8892a4] font-sans leading-relaxed">
-            InterConnect 26.0 is an interdisciplinary innovation initiative
-            where students from different domains collaborate to solve
-            real-world problems by combining domain knowledge and technical
-            expertise.
-          </p>
-        </motion.div>
-
-        {/* Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Card 1: The Focus (Spans 2 columns) */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="md:col-span-2 backdrop-blur-sm border border-[#1e2330] rounded-2xl p-7 lg:p-10 relative overflow-hidden group hover:border-[#3a9de850] transition-colors"
-          >
-            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500">
-              <Lightbulb size={120} />
-            </div>
-            <div className="w-12 h-12 bg-[#3a9de815] border border-[#3a9de830] rounded-xl flex items-center justify-center mb-6">
-              <Target size={20} className="text-[#3a9de8]" />
-            </div>
-            <h3 className="font-display font-bold text-xl text-[#f0f4ff] mb-3">
-              The Focus
-            </h3>
-            <p className="text-sm text-[#8892a4] font-sans leading-relaxed mb-4">
-              The primary focus is on problems you are currently facing or
-              observing in your field—whether academic, technical, social, or
-              industry-related.
-            </p>
-            <p className="text-sm text-[#8892a4] font-sans leading-relaxed">
-              Your idea will be shared across the GM School Campus (GMU / GMIT
-              and other institutions). Interested students will form{" "}
-              <span className="text-[#3a9de8] font-semibold">
-                interdisciplinary teams
-              </span>
-              , collaborate, and develop practical solutions within the event
-              timeline. Selected ideas will be built and presented at the final
-              event.
-            </p>
-          </motion.div>
-
-          {/* Card 2: Why Participate */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="md:col-span-1 backdrop-blur-sm  border border-[#1e2330] rounded-2xl p-7 lg:p-10 hover:border-[#4ade8050] transition-colors"
-          >
-            <div className="w-12 h-12 bg-[#4ade8015] border border-[#4ade8030] rounded-xl flex items-center justify-center mb-6">
-              <Award size={20} className="text-[#4ade80]" />
-            </div>
-            <h3 className="font-display font-bold text-xl text-[#f0f4ff] mb-5">
-              Why Participate?
-            </h3>
-            <ul className="space-y-3 font-sans text-sm text-[#8892a4]">
-              {[
-                "Solve real-world problems",
-                "Collaborate with students from different fields",
-                "Turn ideas into innovative solutions",
-                "Gain practical experience and teamwork skills",
-              ].map((text, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <CheckCircle
-                    size={16}
-                    className="text-[#4ade80] flex-shrink-0 mt-0.5"
-                  />
-                  <span>{text}</span>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Card 3: Who Can Participate (Spans full width) */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="md:col-span-3 backdrop-blur-sm border border-[#1e2330] rounded-2xl p-7 lg:p-10 flex flex-col md:flex-row items-center gap-8 justify-between hover:border-[#9c3ae850] transition-colors"
-          >
-            <div className="flex-1">
-              <div className="w-12 h-12 bg-[#9c3ae815] border border-[#9c3ae830] rounded-xl flex items-center justify-center mb-4">
-                <Globe size={20} className="text-[#9c3ae8]" />
+            <motion.div
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? -12 : 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="ic-badge">
+                <span className="ic-badge__dot" />
+                Annual Flagship Event · 2026
               </div>
-              <h3 className="font-display font-bold text-xl text-[#f0f4ff] mb-2">
-                Who Can Participate?
-              </h3>
-              <p className="text-sm text-[#8892a4] font-sans leading-relaxed mb-4">
-                Any{" "}
-                <strong className="text-[#f0f4ff]">GMU / GMIT student</strong>{" "}
-                with a problem or innovative idea. Students from the following
-                disciplines are encouraged to submit real challenges from their
-                domain:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  "Engineering (CSE, ISE, AIML, ECE, Mech, Civil, EEE)",
-                  "Law",
-                  "Pharmacy",
-                  "MBA",
-                  "BCA",
-                  "B.Com",
-                  "BBA",
-                  "MCA",
-                  "M.Tech",
-                  "Science",
-                ].map((dept) => (
-                  <span
-                    key={dept}
-                    className="inline-block px-3 py-1 bg-[#131925] border border-[#1e2840] rounded-md font-mono text-[10px] text-[#c4cedf]"
-                  >
-                    {dept}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
 
-          {/* Action / CTA Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.4 }}
-            className="md:col-span-3 relative overflow-hidden rounded-2xl p-8 lg:p-12 text-center backdrop-blur-sm border border-[#e85d3a40]"
-            style={{
-              boxShadow: "0 20px 40px -15px rgba(232, 93, 58, 0.15)",
-            }}
-          >
-            {/* Glowing orb behind text */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-[#e85d3a15] rounded-full blur-[80px] pointer-events-none" />
+            <motion.h1
+              className="ic-title"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 20 : 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              InterConnect&nbsp;
+              <span className="ic-title__year">26.O</span>
+            </motion.h1>
 
-            <div className="relative z-10">
-              <h3 className="font-display font-extrabold text-2xl md:text-3xl text-[#f0f4ff] mb-3">
-                Submit Your Idea Today
-              </h3>
-              <p className="font-mono text-sm text-[#e85d3a] mb-8">
-                Your problem could become the starting point of the next
-                impactful innovation.
-              </p>
+            <motion.div
+              className="ic-rule"
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: isLoading ? 0 : 1 }}
+              transition={{ duration: 0.5, delay: 0.25 }}
+            />
 
+            <motion.p
+              className="ic-subtitle"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 12 : 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              An inter-disciplinary project management community where
+              engineers, designers, and innovators solve real-world challenges
+              together.
+            </motion.p>
+
+            <motion.p
+              className="font-mono text-[9px] sm:text-[10px] md:text-xs tracking-[0.15em] text-[#4e5a72] uppercase text-center mt-1 md:mt-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: isLoading ? 0 : 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              GMIT · GMU · Davangere
+            </motion.p>
+
+            {/* CTA Buttons */}
+            <motion.div
+              className="flex flex-col sm:flex-row items-center gap-3 md:gap-4 mt-4 md:mt-6 w-full sm:w-auto"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 12 : 0 }}
+              transition={{ duration: 0.5, delay: 0.45 }}
+            >
               <Link
                 to="/problems"
-                className="inline-flex items-center gap-2 bg-[#e85d3a] hover:bg-[#d14f2f] text-white font-display font-bold px-8 py-3.5 rounded-xl transition-all hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(232,93,58,0.3)] no-underline"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 bg-[#1a2d7a] hover:bg-[#203291] border border-[#2d4399] hover:border-[#3b5bdb] rounded-xl text-[#a5b8f8] hover:text-[#c5d0fb] font-sans text-sm font-semibold transition-all hover:-translate-y-0.5"
               >
-                Go to Submission Form <ArrowRight size={16} />
+                Explore Problems <ArrowRight size={16} strokeWidth={2} />
               </Link>
+              <Link
+                to="/register"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 bg-transparent hover:bg-white/5 border border-white/10 hover:border-white/20 rounded-xl text-[#6b7a99] hover:text-[#8a9ab8] font-sans text-sm font-medium transition-all"
+              >
+                Join the Network
+              </Link>
+            </motion.div>
+
+            <motion.div
+              className="w-full max-w-3xl h-px bg-gradient-to-r from-transparent via-[#3b5bdb40] to-transparent my-6 md:my-8"
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: isLoading ? 0 : 1 }}
+              transition={{ duration: 0.6, delay: 0.55 }}
+            />
+
+            {/* Stats Grid */}
+            <div className="flex flex-wrap justify-center gap-2 md:gap-4 w-full max-w-4xl px-2">
+              <Stat
+                icon={Users}
+                value={1200}
+                suffix="+"
+                label="Registered Students"
+                delay={0.6}
+              />
+              <Stat
+                icon={Layers}
+                value={84}
+                label="Problem Statements"
+                delay={0.68}
+              />
+              <Stat
+                icon={Award}
+                value={36}
+                label="Projects Completed"
+                delay={0.76}
+              />
+              <Stat
+                icon={Calendar}
+                value={3}
+                suffix=" yrs"
+                label="Consecutive Editions"
+                delay={0.84}
+              />
             </div>
           </motion.div>
-        </div>
-      </section>
-    </div>
+
+          <motion.div
+            className="ic-scroll"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isLoading ? 0 : 1 }}
+            transition={{ delay: 1.2, duration: 0.6 }}
+          >
+            <span className="font-mono text-[9px] tracking-[0.15em] text-[#4e5a72] uppercase mb-1">
+              Scroll to Discover
+            </span>
+            <ChevronDown
+              className="ic-scroll__icon text-[#3b5bdb80]"
+              size={18}
+              strokeWidth={2}
+            />
+          </motion.div>
+        </section>
+
+        {/* ─── 2. EVENT DETAILS SECTION (Unified Bento Theme) ─── */}
+        <section className="relative z-10 w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-16 md:py-24">
+          {/* Section Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-10 md:mb-16"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 rounded-full bg-[#fbbf2415] border border-[#fbbf2430] mb-5 md:mb-6">
+              <Sparkles size={14} className="text-[#fbbf24]" />
+              <span className="font-mono text-[10px] md:text-xs font-bold tracking-widest text-[#fbbf24] uppercase">
+                Idea & Problem Submission
+              </span>
+            </div>
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#f0f4ff] mb-4 md:mb-6 leading-tight">
+              Have you ever faced a problem in your field{" "}
+              <br className="hidden md:block" />
+              and thought there should be a better solution?
+            </h2>
+            <p className="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-[#8892a4] font-sans leading-relaxed">
+              InterConnect 26.0 is an interdisciplinary innovation initiative
+              where students from different domains collaborate to solve
+              real-world problems by combining domain knowledge and technical
+              expertise.
+            </p>
+          </motion.div>
+
+          {/* Bento Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
+            {/* Card 1: The Focus (Spans 2 columns) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="md:col-span-1 backdrop-blur-sm bg-[#131824]/50 border border-[#1e2330] rounded-2xl md:rounded-3xl p-6 md:p-8 lg:p-10 hover:border-[#4ade8050] transition-colors"
+            >
+              <div className="w-12 h-12 md:w-14 md:h-14 bg-[#4ade8015] border border-[#4ade8030] rounded-xl md:rounded-2xl flex items-center justify-center mb-5 md:mb-6">
+                <Award size={22} className="text-[#4ade80]" />
+              </div>
+              <h3 className="font-display font-bold text-xl md:text-2xl text-[#f0f4ff] mb-4 md:mb-6">
+                Why Participate?
+              </h3>
+              <ul className="space-y-3 md:space-y-4 font-sans text-sm md:text-base text-[#8892a4]">
+                {[
+                  "Solve real-world problems",
+                  "Collaborate across fields",
+                  "Turn ideas into solutions",
+                  "Gain teamwork skills",
+                ].map((text, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <CheckCircle
+                      size={18}
+                      className="text-[#4ade80] flex-shrink-0 mt-0.5"
+                    />
+                    <span>{text}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+
+            {/* Card 2: Why Participate */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="md:col-span-2 backdrop-blur-sm bg-[#131824]/50 border border-[#1e2330] rounded-2xl md:rounded-3xl p-6 md:p-8 lg:p-10 relative overflow-hidden group hover:border-[#3a9de850] transition-colors"
+            >
+              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500 pointer-events-none">
+                <Lightbulb size={120} className="md:w-[160px] md:h-[160px]" />
+              </div>
+              <div className="w-12 h-12 md:w-14 md:h-14 bg-[#3a9de815] border border-[#3a9de830] rounded-xl md:rounded-2xl flex items-center justify-center mb-5 md:mb-6">
+                <Target size={22} className="text-[#3a9de8]" />
+              </div>
+              <h3 className="font-display font-bold text-xl md:text-2xl text-[#f0f4ff] mb-3 md:mb-4">
+                The Focus
+              </h3>
+              <p className="text-sm md:text-base text-[#8892a4] font-sans leading-relaxed mb-3 md:mb-4">
+                The primary focus is on problems you are currently facing or
+                observing in your field—whether academic, technical, social, or
+                industry-related.
+              </p>
+              <p className="text-sm md:text-base text-[#8892a4] font-sans leading-relaxed">
+                Your idea will be shared across the campus. Interested students
+                will form{" "}
+                <span className="text-[#3a9de8] font-semibold">
+                  interdisciplinary teams
+                </span>
+                , collaborate, and develop practical solutions within the event
+                timeline. Selected ideas will be built and presented at the
+                final event.
+              </p>
+            </motion.div>
+            {/* Card 3: Contribute & Earn Rewards */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="md:col-span-2 backdrop-blur-sm bg-[#131824]/50 border border-[#f59e0b30] rounded-2xl md:rounded-3xl p-6 md:p-8 lg:p-10 relative overflow-hidden group hover:border-[#f59e0b60] transition-colors"
+            >
+              <div className="absolute -bottom-20 -right-20 w-48 h-48 md:w-64 md:h-64 bg-[#f59e0b10] rounded-full blur-[60px] md:blur-[80px] pointer-events-none" />
+
+              <div className="w-12 h-12 md:w-14 md:h-14 bg-[#f59e0b15] border border-[#f59e0b30] rounded-xl md:rounded-2xl flex items-center justify-center mb-5 md:mb-6">
+                <Gift size={22} className="text-[#f59e0b]" />
+              </div>
+              <h3 className="font-display font-bold text-xl md:text-2xl text-[#f0f4ff] mb-3 md:mb-4">
+                Contribute & Earn Rewards
+              </h3>
+              <p className="text-sm md:text-base text-[#8892a4] font-sans leading-relaxed mb-5 md:mb-6">
+                <span className="text-[#f59e0b] font-semibold">
+                  Willing to contribute to projects you are passionate about?
+                </span>{" "}
+                Let's explore the problems! Find a project that matches your
+                preferred tech stack or aligns with your core interests. Start
+                contributing effectively, gain valuable points, and earn
+                exclusive rewards for your hard work.
+              </p>
+              <Link
+                to="/problems"
+                className="inline-flex items-center gap-2 text-[#f59e0b] hover:text-[#fbbf24] font-semibold font-sans text-xs md:text-sm transition-colors"
+              >
+                Explore Tech Stacked Projects <ArrowRight size={16} />
+              </Link>
+            </motion.div>
+
+            {/* Card 4: Who Can Participate */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+              className="md:col-span-1 backdrop-blur-sm bg-[#131824]/50 border border-[#1e2330] rounded-2xl md:rounded-3xl p-6 md:p-8 hover:border-[#9c3ae850] transition-colors flex flex-col"
+            >
+              <div className="w-12 h-12 md:w-14 md:h-14 bg-[#9c3ae815] border border-[#9c3ae830] rounded-xl md:rounded-2xl flex items-center justify-center mb-5 md:mb-6">
+                <Globe size={22} className="text-[#9c3ae8]" />
+              </div>
+              <h3 className="font-display font-bold text-xl md:text-2xl text-[#f0f4ff] mb-3 md:mb-4">
+                Who Can Join?
+              </h3>
+              <p className="text-sm md:text-sm text-[#8892a4] font-sans leading-relaxed mb-5 md:mb-6 flex-grow">
+                Any{" "}
+                <strong className="text-[#f0f4ff]">GMU / GMIT student</strong>{" "}
+                with a problem or innovative idea from disciplines including
+                Engineering, Law, Pharmacy, MBA, Science & more.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-2.5 py-1.5 bg-[#1e2330] rounded-lg font-mono text-[9px] md:text-[10px] text-[#c4cedf]">
+                  All Departments
+                </span>
+                <span className="px-2.5 py-1.5 bg-[#1e2330] rounded-lg font-mono text-[9px] md:text-[10px] text-[#c4cedf]">
+                  Cross-Campus
+                </span>
+              </div>
+            </motion.div>
+
+            {/* Card 5: Final Action / CTA Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.5 }}
+              className="md:col-span-3 relative overflow-hidden rounded-2xl md:rounded-3xl p-8 sm:p-10 lg:p-16 text-center backdrop-blur-sm bg-[#131824]/80 border border-[#e85d3a40] mt-2 md:mt-4"
+              style={{ boxShadow: "0 20px 40px -15px rgba(232, 93, 58, 0.15)" }}
+            >
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] md:w-[400px] h-[250px] md:h-[400px] bg-[#e85d3a15] rounded-full blur-[70px] md:blur-[100px] pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col items-center">
+                <h3 className="font-display font-extrabold text-2xl sm:text-3xl md:text-4xl text-[#f0f4ff] mb-3 md:mb-4">
+                  Submit Your Idea Today
+                </h3>
+                <p className="font-mono text-xs sm:text-sm md:text-base text-[#e85d3a] mb-6 md:mb-10">
+                  Your problem could become the starting point of the next
+                  impactful innovation.
+                </p>
+
+                <Link
+                  to="/problems"
+                  className="inline-flex items-center justify-center gap-2 md:gap-3 bg-[#e85d3a] hover:bg-[#d14f2f] text-white font-display font-bold text-base md:text-lg px-6 py-3.5 md:px-10 md:py-4 rounded-xl md:rounded-2xl transition-all hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(232,93,58,0.35)] w-full sm:w-auto"
+                >
+                  Go to Submission Form{" "}
+                  <ArrowRight size={18} className="md:w-[20px] md:h-[20px]" />
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      </div>
+    </>
   );
 };
+
+export const AboutSection = () => (
+  <section
+    id="about"
+    className="relative w-full min-h-[100dvh] flex flex-col lg:flex-row items-center justify-center gap-10 lg:gap-24 px-6 py-16 md:py-24 lg:px-24 bg-transparent"
+  >
+    <div className="flex-1 w-full max-w-2xl">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+      >
+        <p className="font-mono text-[10px] md:text-xs tracking-[0.3em] uppercase text-[#3a9de8] font-bold mb-3 md:mb-4">
+          ✦ About The Initiative
+        </p>
+        <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#f0f4ff] mb-4 md:mb-6 leading-tight">
+          Where Disciplines <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#3a9de8] to-[#9c3ae8]">
+            Converge
+          </span>
+        </h2>
+        <div className="w-16 md:w-24 h-1 bg-gradient-to-r from-[#3a9de8] to-transparent rounded-full mb-6 md:mb-8" />
+
+        <p className="font-sans text-sm sm:text-base md:text-lg text-[#8892a4] leading-relaxed mb-6 md:mb-8">
+          InterConnect 26.O breaks down academic silos. We bring together
+          engineering innovators, business strategists, legal minds, and science
+          researchers from GMIT and GMU to collaborate on high-impact problem
+          statements.
+        </p>
+
+        <ul className="space-y-4 md:space-y-5 mb-8">
+          {[
+            {
+              icon: Lightbulb,
+              text: "Source real-world problems from various domains.",
+            },
+            {
+              icon: Users,
+              text: "Form cross-functional, highly specialized teams.",
+            },
+            {
+              icon: GitMerge,
+              text: "Develop, deploy, and scale practical solutions.",
+            },
+          ].map((item, idx) => (
+            <li
+              key={idx}
+              className="flex items-center gap-3 md:gap-4 text-[#c4cedf] font-sans text-sm md:text-base"
+            >
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-[#3a9de815] border border-[#3a9de830] flex items-center justify-center flex-shrink-0">
+                <item.icon
+                  size={18}
+                  className="text-[#3a9de8] md:w-[20px] md:h-[20px]"
+                />
+              </div>
+              {item.text}
+            </li>
+          ))}
+        </ul>
+      </motion.div>
+    </div>
+
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6, delay: 0.2 }}
+      className="flex-1 w-full max-w-xl relative"
+    >
+      <div className="absolute -inset-4 bg-gradient-to-br from-[#3a9de820] to-[#9c3ae820] rounded-2xl md:rounded-3xl blur-xl md:blur-2xl -z-10" />
+      <div className="relative rounded-2xl md:rounded-3xl p-6 bg-[#131824]/80 border border-[#1e2330] shadow-2xl overflow-hidden min-h-[250px] md:min-h-[400px] flex items-center justify-center">
+        <Code2
+          size={48}
+          className="text-[#3a9de8]/30 md:w-[64px] md:h-[64px]"
+        />
+      </div>
+    </motion.div>
+  </section>
+);
+
+// ─── WORKFLOW SECTION ────────────────────────────────────────────────────────
+export const WorkflowSection = () => (
+  <section
+    id="workflow"
+    className="relative w-full py-16 md:py-24 px-6 lg:px-24 bg-transparent"
+  >
+    <div className="max-w-4xl mx-auto text-center mb-10 md:mb-16">
+      <p className="font-mono text-[10px] md:text-xs tracking-[0.3em] uppercase text-[#4ade80] font-bold mb-3 md:mb-4">
+        ✦ How It Works
+      </p>
+      <h2 className="font-display text-3xl md:text-4xl md:text-5xl font-extrabold text-[#f0f4ff] mb-4 md:mb-6">
+        The Innovation Pipeline
+      </h2>
+      <p className="font-sans text-sm sm:text-base md:text-lg text-[#8892a4] leading-relaxed max-w-2xl mx-auto">
+        Our platform provides a seamless workflow for project coordinators and
+        student contributors to track milestones, assign tasks, and evaluate
+        performance in real-time.
+      </p>
+    </div>
+  </section>
+);
+
+// ─── CALL TO ACTION SECTION ──────────────────────────────────────────────────
+export const CTASection = () => (
+  <section className="relative w-full py-20 md:py-32 px-6 bg-transparent">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className="max-w-4xl mx-auto text-center"
+    >
+      <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-extrabold text-[#f0f4ff] mb-4 md:mb-6">
+        Ready to make an impact?
+      </h2>
+      <p className="font-sans text-base md:text-lg text-[#8892a4] mb-8 md:mb-12 max-w-2xl mx-auto">
+        Join the network, find a problem statement that challenges you, and
+        start building the future today.
+      </p>
+
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
+        <Link
+          to="/problems"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 md:gap-3 px-6 py-3.5 md:px-8 md:py-4 rounded-xl md:rounded-2xl font-display font-bold text-sm md:text-base bg-[#e85d3a] hover:bg-[#d14f2f] text-white transition-all shadow-[0_0_20px_rgba(232,93,58,0.2)] hover:shadow-[0_0_30px_rgba(232,93,58,0.4)] hover:-translate-y-1"
+        >
+          View Problem Statements{" "}
+          <Lightbulb size={16} className="md:w-[18px] md:h-[18px]" />
+        </Link>
+        <Link
+          to="/dashboard"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 md:gap-3 px-6 py-3.5 md:px-8 md:py-4 rounded-xl md:rounded-2xl font-display font-bold text-sm md:text-base bg-[#1e2330] hover:bg-[#2a3045] border border-slate-700 text-[#f0f4ff] transition-all hover:-translate-y-1"
+        >
+          Enter Dashboard{" "}
+          <LayoutDashboard size={16} className="md:w-[18px] md:h-[18px]" />
+        </Link>
+      </div>
+    </motion.div>
+  </section>
+);
 
 export default Hero;
