@@ -1,11 +1,9 @@
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-
-import yashwanth from "../assets/pic.png";
-import beeresh from "../assets/pic.png";
 import ranjitha from "../assets/ranjitha.png";
 import shiv from "../assets/shivanagowda.png";
-frontend / src / assets / user.png;
+import { User, Phone, Mail } from "lucide-react";
+
 /* ─── animation variants ─── */
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -66,39 +64,47 @@ const FacultyCard = ({ img, name, role, email, delay }) => (
   </motion.div>
 );
 
-/* ─── Student card ─── */
-const StudentCard = ({ img, name, phone, email, delay }) => (
-  <motion.div
-    variants={fadeUp}
-    initial="hidden"
-    whileInView="show"
-    custom={delay}
-    viewport={{ once: true }}
-    className="ab-person-card ab-person-card--student"
-  >
-    <div className="ab-person-card__img-wrap">
-      <img src={img} alt={name} className="ab-person-card__img" />
-      <div className="ab-person-card__img-ring ab-person-card__img-ring--amber" />
-    </div>
-    <div className="ab-person-card__body">
-      <p className="ab-person-card__eyebrow ab-person-card__eyebrow--amber">
-        Student
-      </p>
-      <h3 className="ab-person-card__name">{name}</h3>
-      <div className="ab-person-card__contacts">
-        <a href={`tel:${phone}`} className="ab-person-card__contact">
-          <span className="ab-person-card__contact-icon">☎</span>
-          {phone}
-        </a>
-        <a href={`mailto:${email}`} className="ab-person-card__contact">
-          <span className="ab-person-card__contact-icon">✉</span>
-          {email}
-        </a>
+const StudentCard = ({ name, phone, email, delay }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay }}
+      className="backdrop-blur-sm bg-[#131824]/50 border border-[#1e2330] rounded-2xl p-6 text-center hover:border-[#3a9de850] transition-all group hover:-translate-y-1 shadow-xl"
+    >
+      {/* Profile Icon Wrapper (Replaces the broken <img> tag) */}
+      <div className="w-20 h-20 mx-auto mb-5 bg-gradient-to-br from-[#1e2330] to-[#0c0f18] border border-[#3a9de830] rounded-full flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(58,157,232,0.2)] transition-all duration-300">
+        <User
+          size={40}
+          className="text-[#3a9de8] opacity-80"
+          strokeWidth={1.5}
+        />
       </div>
-    </div>
-  </motion.div>
-);
 
+      <h3 className="font-display font-bold text-lg text-[#f0f4ff] mb-4 tracking-tight">
+        {name}
+      </h3>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-center gap-2.5 text-[#8892a4] text-sm">
+          <div className="p-1.5 bg-[#3a9de810] rounded-lg">
+            <Phone size={14} className="text-[#3a9de8]" />
+          </div>
+          <span className="font-mono">{phone}</span>
+        </div>
+
+        <div className="flex items-center justify-center gap-2.5 text-[#8892a4] text-sm">
+          <div className="p-1.5 bg-[#3a9de810] rounded-lg">
+            <Mail size={14} className="text-[#3a9de8]" />
+          </div>
+          <span className="truncate max-w-[180px] font-sans">{email}</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+StudentCard;
 /* ─── Section label ─── */
 const SectionLabel = ({ color = "#3a9de8", children }) => (
   <p
@@ -883,14 +889,12 @@ const About = () => {
 
           <div className="ab-cards-grid">
             <StudentCard
-              img={beeresh}
               name="Beeresh Kumar B C"
               phone="6360995219"
               email="bcbeereshkumar@gmail.com"
               delay={0.05}
             />
             <StudentCard
-              img={yashwanth}
               name="Yashwanth M"
               phone="7795817114"
               email="yy6996843@gmail.com"
