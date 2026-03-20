@@ -87,7 +87,7 @@ const Stat = ({ icon: Icon, value, suffix = "", label, delay }) => (
         <Counter end={value} />
         {suffix}
       </p>
-      <p className="m-0 mt-0.5 text-[9px] sm:text-[10px] md:text-xs text-[#4e5e7a] font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+      <p className="m-0 mt-0.5 text-[9px] sm:text-[10px] md:text-xs text-[#fff] font-medium whitespace-nowrap overflow-hidden text-ellipsis">
         {label}
       </p>
     </div>
@@ -105,8 +105,6 @@ const Hero = () => {
   /* Page Loader Logic */
   useEffect(() => {
     const handleLoad = () => {
-      // Adding a tiny artificial delay ensures smooth transition
-      // even if the page loads instantly.
       setTimeout(() => setIsLoading(false), 800);
     };
 
@@ -114,7 +112,6 @@ const Hero = () => {
       handleLoad();
     } else {
       window.addEventListener("load", handleLoad);
-      // Fallback incase 'load' event is missed
       const fallback = setTimeout(handleLoad, 3000);
       return () => {
         window.removeEventListener("load", handleLoad);
@@ -126,7 +123,7 @@ const Hero = () => {
   /* grid dots canvas */
   const canvasRef = useRef(null);
   useEffect(() => {
-    if (isLoading) return; // Don't draw until loader is gone
+    if (isLoading) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -191,22 +188,264 @@ const Hero = () => {
 
         .ic-rule { width: 60px; height: 2px; background: rgba(59,91,219,0.4); border-radius: 2px; margin: 20px auto; }
 
-        .ic-subtitle { font-family: 'DM Sans', sans-serif; font-size: clamp(14px, 2vw, 18px); color: #8892a4; font-weight: 400; text-align: center; max-width: 540px; line-height: 1.6; margin: 0 auto; }
+        .ic-subtitle { font-family: 'DM Sans', sans-serif; font-size: clamp(14px, 2vw, 18px); color: #fff; font-weight: 400; text-align: center; max-width: 540px; line-height: 1.6; margin: 0 auto; }
 
         .ic-scroll { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .ic-scroll__icon { animation: ic-scroll-bounce 2s ease-in-out infinite; }
         @keyframes ic-scroll-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(5px)} }
 
-        /* Loader CSS Standardized */
+        /* Loader CSS */
         .loader-wrapper { background-color: #121418; display: grid; place-items: center; min-height: 100vh; position: fixed; inset: 0; z-index: 9999; }
         .thing { width: 25vw; max-width: 120px; aspect-ratio: 1/1; position: relative; perspective: 2000px; transform-style: preserve-3d; transform: rotateY(0deg) rotateX(0deg); animation: box 10s infinite linear; }
         .ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 100%; border: clamp(3px, 1vw, 6px) solid #fff; border-radius: 50%; border-bottom-color: transparent; border-left-width: 0px; animation: spin 1s infinite linear; }
         .ring--1 { --r: rotateY(0deg); transform: translate(-50%, -50%) rotateZ(0deg); }
         .ring--2 { --r: rotateY(-90deg); transform: translate(-50%, -50%) rotateY(-90deg); animation-delay: 0.75s; }
         .ring--3 { --r: rotateX(-90deg); transform: translate(-50%, -50%) rotateX(-90deg); animation-delay: 0.5s; }
-        
         @keyframes spin { to { transform: translate(-50%, -50%) var(--r) rotateZ(360deg); } }
         @keyframes box { to { transform: rotateX(360deg) rotateY(360deg); } }
+
+        /* ════════════════════════════════════════════
+           HIGHLIGHT BANNER — redesigned
+        ════════════════════════════════════════════ */
+        .hb-wrap {
+          position: relative;
+          overflow: hidden;
+          border-radius: 28px;
+          margin-bottom: 72px;
+          border: 1px solid rgba(59,91,219,0.15);
+          background: transparent;
+        }
+
+        /* Subtle noise grain overlay */
+        .hb-wrap::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+          background-size: 180px;
+          pointer-events: none;
+          z-index: 0;
+          border-radius: inherit;
+        }
+
+        .hb-inner {
+          position: relative;
+          z-index: 1;
+          padding: 52px 48px 48px;
+        }
+
+        @media (max-width: 768px) {
+          .hb-inner { padding: 36px 22px 32px; }
+          .hb-wrap { border-radius: 20px; margin-bottom: 48px; }
+        }
+
+        /* ── Two-column statement layout on desktop ── */
+        .hb-statements-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+        }
+
+        @media (min-width: 769px) {
+          .hb-statements-grid {
+            display: grid;
+            grid-template-columns: 1fr 1px 1fr;
+            gap: 0;
+            align-items: start;
+          }
+        }
+
+        .hb-divider {
+          background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.07), transparent);
+          align-self: stretch;
+          margin: 0 32px;
+        }
+
+        /* Each statement row */
+        .hb-statement {
+          display: flex;
+          align-items: flex-start;
+          gap: 18px;
+          padding: 24px 0;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        @media (min-width: 769px) {
+          .hb-statement {
+            border-bottom: none;
+            padding: 0;
+          }
+        }
+
+        .hb-statement__icon-wrap {
+          width: 42px;
+          height: 42px;
+          flex-shrink: 0;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-top: 5px;
+        }
+
+        .hb-statement__content { flex: 1; min-width: 0; }
+
+        /* Statement heading — the BIG text */
+        .hb-statement__heading {
+          font-family: 'Syne', sans-serif;
+          font-size: clamp(21px, 2.6vw, 32px);
+          font-weight: 800;
+          line-height: 1.15;
+          letter-spacing: -0.025em;
+          margin: 0 0 7px;
+          display: block;
+        }
+
+        .hb-statement__sub {
+          font-family: 'DM Sans', sans-serif;
+          font-size: clamp(13px, 1.3vw, 14.5px);
+          color: #fff;
+          line-height: 1.65;
+          margin: 0;
+          max-width: 500px;
+        }
+
+        /* Shimmer gradient text on headings */
+        .hb-grad-yellow {
+          background: linear-gradient(110deg, #fbbf24 0%, #f97316 45%, #fde68a 70%, #fbbf24 100%);
+          background-size: 220% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: hb-shimmer 5s linear infinite;
+        }
+
+        .hb-grad-green {
+          background: linear-gradient(110deg, #4ade80 0%, #22d3ee 50%, #86efac 75%, #4ade80 100%);
+          background-size: 220% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: hb-shimmer 5s linear infinite;
+          animation-delay: 1.2s;
+        }
+
+        @keyframes hb-shimmer {
+          0%   { background-position: 0% center; }
+          100% { background-position: 220% center; }
+        }
+
+        /* ── TAGLINE — the money line ── */
+        .hb-tagline-wrap {
+          padding-top: 40px;
+          margin-top: 36px;
+          text-align: center;
+          position: relative;
+        }
+
+        /* Top separator with glow */
+        .hb-tagline-wrap::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 55%;
+          height: 1px;
+          background: linear-gradient(to right, transparent, rgba(96,128,245,0.45), transparent);
+        }
+
+        /* Small "the mission" eyebrow pill */
+        .hb-tag-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 5px 13px;
+          background: rgba(96,128,245,0.07);
+          border: 1px solid rgba(96,128,245,0.18);
+          border-radius: 999px;
+          font-family: 'DM Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+          color: #6080f5;
+          margin-bottom: 20px;
+        }
+
+        /* Main tagline */
+        .hb-tagline {
+          font-family: 'Syne', sans-serif;
+          font-size: clamp(24px, 4vw, 52px);
+          font-weight: 800;
+          letter-spacing: -0.03em;
+          line-height: 1.1;
+          margin: 0;
+          color: #e8edf5;
+        }
+
+        /* "team up" — blue accent */
+        .hb-tagline .w-team {
+          color: #3a9de8;
+        }
+
+        /* "build" — purple gradient + animated underline */
+        .hb-tagline .w-build {
+          position: relative;
+          display: inline-block;
+          background: linear-gradient(135deg, #6080f5 0%, #9c3ae8 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .hb-tagline .w-build::after {
+          content: '';
+          position: absolute;
+          bottom: -3px;
+          left: 0; right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, #6080f5, #9c3ae8);
+          border-radius: 2px;
+          transform-origin: left;
+          animation: hb-bar 3s ease-in-out infinite;
+        }
+        @keyframes hb-bar {
+          0%,100% { opacity: 1; transform: scaleX(1); }
+          50%      { opacity: 0.45; transform: scaleX(0.82); }
+        }
+
+        /* "real" — amber/orange */
+        .hb-tagline .w-real {
+          background: linear-gradient(110deg, #fbbf24, #f97316);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        /* Ambient glows — purely decorative */
+        .hb-glow-a {
+          position: absolute;
+          top: -60px; left: -80px;
+          width: 320px; height: 320px;
+          background: radial-gradient(circle, rgba(251,191,36,0.055) 0%, transparent 70%);
+          pointer-events: none;
+          border-radius: 50%;
+        }
+        .hb-glow-b {
+          position: absolute;
+          bottom: -60px; right: -80px;
+          width: 340px; height: 340px;
+          background: radial-gradient(circle, rgba(74,222,128,0.05) 0%, transparent 70%);
+          pointer-events: none;
+          border-radius: 50%;
+        }
+        .hb-glow-c {
+          position: absolute;
+          bottom: 10px; left: 50%;
+          transform: translateX(-50%);
+          width: 45%; height: 160px;
+          background: radial-gradient(ellipse at center, rgba(96,128,245,0.07) 0%, transparent 70%);
+          pointer-events: none;
+        }
 
         @media (min-width: 768px) {
           .ic-rule { margin: 24px auto; }
@@ -393,8 +632,121 @@ const Hero = () => {
           </motion.div>
         </section>
 
-        {/* ─── 2. EVENT DETAILS SECTION (Unified Bento Theme) ─── */}
+        {/* ─── 2. EVENT DETAILS SECTION ─── */}
         <section className="relative z-10 w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-16 md:py-24">
+          {/* ════════════════════════════════════════════════════
+              ── HIGHLIGHT BANNER — redesigned ──
+          ════════════════════════════════════════════════════ */}
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+            className="hb-wrap"
+          >
+            {/* ambient glows */}
+            <div className="hb-glow-a" />
+            <div className="hb-glow-b" />
+            <div className="hb-glow-c" />
+
+            <div className="hb-inner">
+              {/* ── Two statements ── */}
+              <div className="hb-statements-grid">
+                {/* LEFT — Got a problem */}
+                <motion.div
+                  initial={{ opacity: 0, x: -14 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{
+                    delay: 0.18,
+                    duration: 0.6,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="hb-statement"
+                >
+                  <div
+                    className="hb-statement__icon-wrap"
+                    style={{
+                      background: "rgba(251,191,36,0.07)",
+                      border: "1px solid rgba(251,191,36,0.16)",
+                    }}
+                  >
+                    <Lightbulb size={19} style={{ color: "#fbbf24" }} />
+                  </div>
+                  <div className="hb-statement__content">
+                    <span className="hb-statement__heading hb-grad-yellow">
+                      Got a problem to solve?
+                    </span>
+                    <p className="hb-statement__sub">
+                      You don't need technical skills to spark innovation.
+                      Submit your idea, and let experts bring it to reality.
+                    </p>
+                  </div>
+                </motion.div>
+
+                {/* Vertical divider — desktop only */}
+                <div className="hb-divider hidden md:block" />
+
+                {/* RIGHT — Want to build */}
+                <motion.div
+                  initial={{ opacity: 0, x: 14 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{
+                    delay: 0.28,
+                    duration: 0.6,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="hb-statement"
+                >
+                  <div
+                    className="hb-statement__icon-wrap"
+                    style={{
+                      background: "rgba(74,222,128,0.07)",
+                      border: "1px solid rgba(74,222,128,0.16)",
+                    }}
+                  >
+                    <Code2 size={19} style={{ color: "#4ade80" }} />
+                  </div>
+                  <div className="hb-statement__content">
+                    <span className="hb-statement__heading hb-grad-green">
+                      Want to build solutions?
+                    </span>
+                    <p className="hb-statement__sub">
+                      Browse our open problem statements, find a project that
+                      matches your tech stack, and start contributing.
+                    </p>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* ── TAGLINE — centrepiece ── */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{
+                  delay: 0.42,
+                  duration: 0.7,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                className="hb-tagline-wrap"
+              >
+                <div className="hb-tag-pill">
+                  <Sparkles size={10} />
+                  the mission
+                </div>
+
+                <p className="hb-tagline">
+                  Let's <span className="w-team">team&nbsp;up</span> and{" "}
+                  <span className="w-build">build</span>{" "}
+                  <span className="w-real">real</span> solutions together!
+                </p>
+              </motion.div>
+            </div>
+          </motion.div>
+          {/* ════════════════════════════════════════════════════ */}
+
           {/* Section Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -413,7 +765,7 @@ const Hero = () => {
               <br className="hidden md:block" />
               and thought there should be a better solution?
             </h2>
-            <p className="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-[#8892a4] font-sans leading-relaxed">
+            <p className="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-[#fff] font-sans leading-relaxed">
               InterConnect 26.0 is an interdisciplinary innovation initiative
               where students from different domains collaborate to solve
               real-world problems by combining domain knowledge and technical
@@ -423,7 +775,41 @@ const Hero = () => {
 
           {/* Bento Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
-            {/* Card 1: The Focus (Spans 2 columns) */}
+            {/* Card 1: The Focus */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="md:col-span-2 backdrop-blur-sm bg-[#131824]/50 border border-[#1e2330] rounded-2xl md:rounded-3xl p-6 md:p-8 lg:p-10 relative overflow-hidden group hover:border-[#3a9de850] transition-colors"
+            >
+              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500 pointer-events-none">
+                <Target size={120} className="md:w-[160px] md:h-[160px]" />
+              </div>
+              <div className="w-12 h-12 md:w-14 md:h-14 bg-[#3a9de815] border border-[#3a9de830] rounded-xl md:rounded-2xl flex items-center justify-center mb-5 md:mb-6">
+                <Target size={22} className="text-[#3a9de8]" />
+              </div>
+              <h3 className="font-display font-bold text-xl md:text-2xl text-[#f0f4ff] mb-3 md:mb-4">
+                The Focus
+              </h3>
+              <p className="text-sm md:text-base text-[#fff] font-sans leading-relaxed mb-3 md:mb-4">
+                The primary focus is on problems you are currently facing or
+                observing in your field—whether academic, technical, social, or
+                industry-related.
+              </p>
+              <p className="text-sm md:text-base text-[#fff] font-sans leading-relaxed">
+                Your idea will be shared across the campus. Interested students
+                will form{" "}
+                <span className="text-[#3a9de8] font-semibold">
+                  interdisciplinary teams
+                </span>
+                , collaborate, and develop practical solutions within the event
+                timeline. Selected ideas will be built and presented at the
+                final event.
+              </p>
+            </motion.div>
+
+            {/* Card 2: Why Participate */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -437,7 +823,7 @@ const Hero = () => {
               <h3 className="font-display font-bold text-xl md:text-2xl text-[#f0f4ff] mb-4 md:mb-6">
                 Why Participate?
               </h3>
-              <ul className="space-y-3 md:space-y-4 font-sans text-sm md:text-base text-[#8892a4]">
+              <ul className="space-y-3 md:space-y-4 font-sans text-sm md:text-base text-[#fff]">
                 {[
                   "Solve real-world problems",
                   "Collaborate across fields",
@@ -455,39 +841,6 @@ const Hero = () => {
               </ul>
             </motion.div>
 
-            {/* Card 2: Why Participate */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="md:col-span-2 backdrop-blur-sm bg-[#131824]/50 border border-[#1e2330] rounded-2xl md:rounded-3xl p-6 md:p-8 lg:p-10 relative overflow-hidden group hover:border-[#3a9de850] transition-colors"
-            >
-              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500 pointer-events-none">
-                <Lightbulb size={120} className="md:w-[160px] md:h-[160px]" />
-              </div>
-              <div className="w-12 h-12 md:w-14 md:h-14 bg-[#3a9de815] border border-[#3a9de830] rounded-xl md:rounded-2xl flex items-center justify-center mb-5 md:mb-6">
-                <Target size={22} className="text-[#3a9de8]" />
-              </div>
-              <h3 className="font-display font-bold text-xl md:text-2xl text-[#f0f4ff] mb-3 md:mb-4">
-                The Focus
-              </h3>
-              <p className="text-sm md:text-base text-[#8892a4] font-sans leading-relaxed mb-3 md:mb-4">
-                The primary focus is on problems you are currently facing or
-                observing in your field—whether academic, technical, social, or
-                industry-related.
-              </p>
-              <p className="text-sm md:text-base text-[#8892a4] font-sans leading-relaxed">
-                Your idea will be shared across the campus. Interested students
-                will form{" "}
-                <span className="text-[#3a9de8] font-semibold">
-                  interdisciplinary teams
-                </span>
-                , collaborate, and develop practical solutions within the event
-                timeline. Selected ideas will be built and presented at the
-                final event.
-              </p>
-            </motion.div>
             {/* Card 3: Contribute & Earn Rewards */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -497,14 +850,13 @@ const Hero = () => {
               className="md:col-span-2 backdrop-blur-sm bg-[#131824]/50 border border-[#f59e0b30] rounded-2xl md:rounded-3xl p-6 md:p-8 lg:p-10 relative overflow-hidden group hover:border-[#f59e0b60] transition-colors"
             >
               <div className="absolute -bottom-20 -right-20 w-48 h-48 md:w-64 md:h-64 bg-[#f59e0b10] rounded-full blur-[60px] md:blur-[80px] pointer-events-none" />
-
               <div className="w-12 h-12 md:w-14 md:h-14 bg-[#f59e0b15] border border-[#f59e0b30] rounded-xl md:rounded-2xl flex items-center justify-center mb-5 md:mb-6">
                 <Gift size={22} className="text-[#f59e0b]" />
               </div>
               <h3 className="font-display font-bold text-xl md:text-2xl text-[#f0f4ff] mb-3 md:mb-4">
                 Contribute & Earn Rewards
               </h3>
-              <p className="text-sm md:text-base text-[#8892a4] font-sans leading-relaxed mb-5 md:mb-6">
+              <p className="text-sm md:text-base text-[#fff] font-sans leading-relaxed mb-5 md:mb-6">
                 <span className="text-[#f59e0b] font-semibold">
                   Willing to contribute to projects you are passionate about?
                 </span>{" "}
@@ -521,7 +873,7 @@ const Hero = () => {
               </Link>
             </motion.div>
 
-            {/* Card 4: Who Can Participate */}
+            {/* Card 4: Who Can Join */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -535,7 +887,7 @@ const Hero = () => {
               <h3 className="font-display font-bold text-xl md:text-2xl text-[#f0f4ff] mb-3 md:mb-4">
                 Who Can Join?
               </h3>
-              <p className="text-sm md:text-sm text-[#8892a4] font-sans leading-relaxed mb-5 md:mb-6 flex-grow">
+              <p className="text-sm text-[#fff] font-sans leading-relaxed mb-5 md:mb-6 flex-grow">
                 Any{" "}
                 <strong className="text-[#f0f4ff]">GMU / GMIT student</strong>{" "}
                 with a problem or innovative idea from disciplines including
@@ -551,7 +903,7 @@ const Hero = () => {
               </div>
             </motion.div>
 
-            {/* Card 5: Final Action / CTA Card */}
+            {/* Card 5: CTA Card */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -561,7 +913,6 @@ const Hero = () => {
               style={{ boxShadow: "0 20px 40px -15px rgba(232, 93, 58, 0.15)" }}
             >
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] md:w-[400px] h-[250px] md:h-[400px] bg-[#e85d3a15] rounded-full blur-[70px] md:blur-[100px] pointer-events-none" />
-
               <div className="relative z-10 flex flex-col items-center">
                 <h3 className="font-display font-extrabold text-2xl sm:text-3xl md:text-4xl text-[#f0f4ff] mb-3 md:mb-4">
                   Submit Your Idea Today
@@ -570,7 +921,6 @@ const Hero = () => {
                   Your problem could become the starting point of the next
                   impactful innovation.
                 </p>
-
                 <Link
                   to="/problems"
                   className="inline-flex items-center justify-center gap-2 md:gap-3 bg-[#e85d3a] hover:bg-[#d14f2f] text-white font-display font-bold text-base md:text-lg px-6 py-3.5 md:px-10 md:py-4 rounded-xl md:rounded-2xl transition-all hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(232,93,58,0.35)] w-full sm:w-auto"
@@ -610,7 +960,7 @@ export const AboutSection = () => (
         </h2>
         <div className="w-16 md:w-24 h-1 bg-gradient-to-r from-[#3a9de8] to-transparent rounded-full mb-6 md:mb-8" />
 
-        <p className="font-sans text-sm sm:text-base md:text-lg text-[#8892a4] leading-relaxed mb-6 md:mb-8">
+        <p className="font-sans text-sm sm:text-base md:text-lg text-[#fff] leading-relaxed mb-6 md:mb-8">
           InterConnect 26.O breaks down academic silos. We bring together
           engineering innovators, business strategists, legal minds, and science
           researchers from GMIT and GMU to collaborate on high-impact problem
@@ -677,10 +1027,10 @@ export const WorkflowSection = () => (
       <p className="font-mono text-[10px] md:text-xs tracking-[0.3em] uppercase text-[#4ade80] font-bold mb-3 md:mb-4">
         ✦ How It Works
       </p>
-      <h2 className="font-display text-3xl md:text-4xl md:text-5xl font-extrabold text-[#f0f4ff] mb-4 md:mb-6">
+      <h2 className="font-display text-3xl md:text-5xl font-extrabold text-[#f0f4ff] mb-4 md:mb-6">
         The Innovation Pipeline
       </h2>
-      <p className="font-sans text-sm sm:text-base md:text-lg text-[#8892a4] leading-relaxed max-w-2xl mx-auto">
+      <p className="font-sans text-sm sm:text-base md:text-lg text-[#fff] leading-relaxed max-w-2xl mx-auto">
         Our platform provides a seamless workflow for project coordinators and
         student contributors to track milestones, assign tasks, and evaluate
         performance in real-time.
@@ -702,11 +1052,10 @@ export const CTASection = () => (
       <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-extrabold text-[#f0f4ff] mb-4 md:mb-6">
         Ready to make an impact?
       </h2>
-      <p className="font-sans text-base md:text-lg text-[#8892a4] mb-8 md:mb-12 max-w-2xl mx-auto">
+      <p className="font-sans text-base md:text-lg text-[#fff] mb-8 md:mb-12 max-w-2xl mx-auto">
         Join the network, find a problem statement that challenges you, and
         start building the future today.
       </p>
-
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
         <Link
           to="/problems"
