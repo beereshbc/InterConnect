@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import ranjitha from "../../public/ranjitha.png";
-import shiv from "../assets/shivanagowda.png";
+import shiv from "../../public/shivanagowda.png";
 import { User, Phone, Mail } from "lucide-react";
 
 /* ─── animation variants ─── */
