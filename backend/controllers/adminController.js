@@ -6,6 +6,7 @@ import Log from "../models/Logs.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import Notification from "../models/Notification.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const genToken = (id) =>
@@ -17,12 +18,15 @@ const genSAToken = () =>
 
 const mailer = nodemailer.createTransport({
   service: "gmail",
-  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
 const sendEmail = async ({ to, subject, html }) => {
   try {
     await mailer.sendMail({
-      from: `"InteConnect" <${process.env.SMTP_USER}>`,
+      from: `"InteConnect" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html,
@@ -997,16 +1001,19 @@ export const saApproveProblem = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "Problem not found." });
+
     const { coordinatorId, githubRepoLink, projectDescription } = req.body;
     if (!coordinatorId)
       return res
         .status(400)
         .json({ success: false, message: "Assign a coordinator." });
+
     const coordinator = await Admin.findById(coordinatorId);
     if (!coordinator)
       return res
         .status(404)
         .json({ success: false, message: "Admin not found." });
+
     if (await Project.findOne({ problem: problem._id }))
       return res.status(400).json({
         success: false,
@@ -1020,7 +1027,32 @@ export const saApproveProblem = async (req, res) => {
     });
     await problem.save();
 
+    // ─── SEQUENTIAL PROJECT ID GENERATOR LOGIC ─────────────────────────────
+    // 1. Find the last created project in the database
+    const lastProject = await Project.findOne().sort({ _id: -1 });
+    let nextIdNumber = 1;
+
+    // 2. Extract numeric part and increment
+    if (
+      lastProject &&
+      lastProject.projectID &&
+      lastProject.projectID.startsWith("GMP-")
+    ) {
+      const lastNumber = parseInt(
+        lastProject.projectID.replace("GMP-", ""),
+        10,
+      );
+      if (!isNaN(lastNumber)) {
+        nextIdNumber = lastNumber + 1;
+      }
+    }
+
+    // 3. Format new ID (e.g., GMP-001, GMP-042)
+    const generatedProjectID = `GMP-${nextIdNumber.toString().padStart(3, "0")}`;
+    // ────────────────────────────────────────────────────────────────────────
+
     const project = await Project.create({
+      projectID: generatedProjectID, // Injecting the generated ID here
       problem: problem._id,
       coordinators: [coordinatorId],
       contributors: [],
@@ -1028,14 +1060,17 @@ export const saApproveProblem = async (req, res) => {
       githubRepoLink: githubRepoLink || "https://github.com/placeholder",
       projectDescription: projectDescription || problem.description,
     });
+
     await Admin.findByIdAndUpdate(coordinatorId, {
       $push: { managedProjects: project._id },
     });
+
     await sendEmail({
       to: problem.contactInfo,
       subject: "✅ Problem Approved — InteConnect 26.0",
       html: `<div style="font-family:monospace;background:#080c14;color:#f0f4ff;padding:32px;border-radius:12px;max-width:600px"><h2 style="color:#4ade80">Problem Approved ✓</h2><p>Your problem <strong>${problem.title}</strong> has been approved.</p><p>Project ID: ${project.projectID}<br>Coordinator: ${coordinator.name} (${coordinator.email})</p></div>`,
     });
+
     res.status(201).json({
       success: true,
       message: `Problem approved. Project ${project.projectID} initiated.`,
@@ -1182,6 +1217,148 @@ export const saGetStudentDetail = async (req, res) => {
     if (!student)
       return res.status(404).json({ success: false, message: "Not found." });
     res.json({ success: true, student });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUPER ADMIN NOTIFICATIONS & BROADCASTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Re-using the same transport you already configured earlier in the file to avoid Auth issues.
+const broadcastEmail = async (title, message, type) => {
+  try {
+    const [students, admins] = await Promise.all([
+      Student.find({ isBlocked: false }).select("email").lean(),
+      Admin.find({ isBlocked: false }).select("email").lean(),
+    ]);
+
+    const allEmails = [
+      ...students.map((s) => s.email),
+      ...admins.map((a) => a.email),
+    ];
+
+    if (allEmails.length === 0) return;
+
+    const colorMap = {
+      info: "#3a9de8",
+      update: "#fbbf24",
+      alert: "#f87171",
+      success: "#4ade80",
+    };
+    const accentColor = colorMap[type] || colorMap.info;
+
+    // IMPORTANT: Make sure this uses the exact same 'mailer' instance used for OTPs,
+    // which relies on EMAIL_USER and EMAIL_PASS if SMTP_USER is failing.
+    await mailer.sendMail({
+      from: `"InterConnect 26.0" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_USER, // Send to self
+      bcc: allEmails, // Blind copy to everyone else
+      subject: `📢 Announcement: ${title}`,
+      html: `
+        <div style="font-family:monospace;background:#080c14;color:#f0f4ff;padding:32px;border-radius:12px;max-width:600px;margin:auto;border:1px solid #1e2330;">
+          <h2 style="color:${accentColor}; border-bottom: 1px solid #1e2330; padding-bottom: 12px;">${title}</h2>
+          <p style="color:#8892a4; font-size: 16px; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+          <hr style="border-color:#1e2330;margin:30px 0 20px 0">
+          <p style="color:#4a5568;font-size:12px;text-align:center;">© InteConnect 26.0 · GMU Campus</p>
+        </div>
+      `,
+    });
+    console.log(`[BROADCAST SUCCESS] Sent to ${allEmails.length} users.`);
+  } catch (error) {
+    console.error("[BROADCAST ERROR]", error.message);
+  }
+};
+
+export const saCreateNotification = async (req, res) => {
+  try {
+    const { title, message, type, isPublished } = req.body;
+
+    const notification = await Notification.create({
+      title,
+      message,
+      type,
+      isPublished: Boolean(isPublished),
+      emailSent: Boolean(isPublished),
+    });
+
+    // If published immediately, trigger the email broadcast asynchronously
+    if (notification.isPublished) {
+      broadcastEmail(title, message, type);
+    }
+
+    res
+      .status(201)
+      .json({ success: true, message: "Notification created", notification });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+export const saGetNotifications = async (req, res) => {
+  try {
+    // Sort by pinned status first, then by the newest creation date
+    const notifications = await Notification.find().sort({
+      isPinned: -1,
+      createdAt: -1,
+    });
+    res.json({ success: true, count: notifications.length, notifications });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+export const saTogglePublishNotification = async (req, res) => {
+  try {
+    const notification = await Notification.findById(req.params.id);
+    if (!notification)
+      return res.status(404).json({ success: false, message: "Not found." });
+
+    notification.isPublished = !notification.isPublished;
+
+    // Broadcast email only if it's being published for the VERY FIRST time
+    if (notification.isPublished && !notification.emailSent) {
+      broadcastEmail(
+        notification.title,
+        notification.message,
+        notification.type,
+      );
+      notification.emailSent = true;
+    }
+
+    await notification.save();
+    res.json({
+      success: true,
+      message: `Notification ${notification.isPublished ? "Published" : "Unpublished"}`,
+      notification,
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+export const saTogglePinNotification = async (req, res) => {
+  try {
+    const notification = await Notification.findById(req.params.id);
+    if (!notification)
+      return res.status(404).json({ success: false, message: "Not found." });
+
+    notification.isPinned = !notification.isPinned;
+    await notification.save();
+    res.json({
+      success: true,
+      message: `Notification ${notification.isPinned ? "Pinned" : "Unpinned"}`,
+      notification,
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+export const saDeleteNotification = async (req, res) => {
+  try {
+    await Notification.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: "Notification deleted." });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }

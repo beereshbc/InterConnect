@@ -31,6 +31,11 @@ import {
   saGetAllStudents,
   saToggleBlockStudent,
   saGetStudentDetail,
+  saCreateNotification,
+  saGetNotifications,
+  saTogglePublishNotification,
+  saTogglePinNotification,
+  saDeleteNotification,
 } from "../controllers/adminController.js";
 import adminAuth from "../middlewares/adminAuth.js";
 import superAdminAuth from "../middlewares/superAdminAuth.js";
@@ -120,6 +125,37 @@ adminRouter.patch(
   "/sa/students/:studentId/toggle-block",
   superAdminAuth,
   saToggleBlockStudent,
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUPER ADMIN NOTIFICATION ROUTES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Create a new notification (and broadcast if published)
+adminRouter.post("/sa/notifications", superAdminAuth, saCreateNotification);
+
+// Get all notifications for the SA dashboard
+adminRouter.get("/sa/notifications", superAdminAuth, saGetNotifications);
+
+// Toggle Publish status (and broadcast if publishing for the first time)
+adminRouter.patch(
+  "/sa/notifications/:id/publish",
+  superAdminAuth,
+  saTogglePublishNotification,
+);
+
+// Toggle Pin status
+adminRouter.patch(
+  "/sa/notifications/:id/pin",
+  superAdminAuth,
+  saTogglePinNotification,
+);
+
+// Delete a notification
+adminRouter.delete(
+  "/sa/notifications/:id",
+  superAdminAuth,
+  saDeleteNotification,
 );
 
 export default adminRouter;

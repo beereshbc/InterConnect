@@ -5,7 +5,6 @@ const projectSchema = new mongoose.Schema(
     projectID: {
       type: String,
       unique: true,
-      default: () => `PROJ-${Math.floor(100000 + Math.random() * 900000)}`,
     },
     problem: {
       type: mongoose.Schema.Types.ObjectId,

@@ -6,7 +6,6 @@ const problemSchema = new mongoose.Schema(
     problemID: {
       type: String,
       unique: true,
-      default: () => `PRB-${Math.floor(1000 + Math.random() * 9000)}`,
     },
     title: {
       type: String,

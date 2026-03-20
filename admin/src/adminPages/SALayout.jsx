@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { icon: "⬡", label: "Problems", path: "/super-admin/problems" },
   { icon: "⊞", label: "Admins", path: "/super-admin/admins" },
   { icon: "◎", label: "Students", path: "/super-admin/students" },
+  { icon: "◐", label: "Notifications", path: "/super-admin/notifications" },
 ];
 
 export function SALayout({ children, title, subtitle }) {

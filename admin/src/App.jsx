@@ -13,6 +13,7 @@ import SADashboard from "./adminPages/SADashboard";
 import ProblemManagement from "./adminPages/ProblemManagement";
 import AdminManagement from "./adminPages/AdminManagement";
 import StudentManagement from "./adminPages/StudentManagement";
+import SANotification from "./adminPages/SANotification";
 
 const RequireSA = ({ children }) => {
   const saToken = localStorage.getItem("saToken");
@@ -149,6 +150,15 @@ const App = () => {
             element={
               <RequireSA>
                 <StudentManagement />
+              </RequireSA>
+            }
+          />
+
+          <Route
+            path="/super-admin/notifications"
+            element={
+              <RequireSA>
+                <SANotification />
               </RequireSA>
             }
           />

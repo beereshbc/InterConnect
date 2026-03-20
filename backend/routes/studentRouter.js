@@ -14,6 +14,7 @@ import {
   selfAssignLog,
   getLeaderboard,
   getStudentDashboard,
+  getPublishedNotifications,
 } from "../controllers/studentController.js";
 import studentAuth from "../middlewares/studentAuth.js";
 
@@ -50,5 +51,5 @@ studentRouter.patch("/logs/:logId/self-assign", studentAuth, selfAssignLog);
 
 // Leaderboard
 studentRouter.get("/leaderboard", studentAuth, getLeaderboard);
-
+studentRouter.get("/notifications", getPublishedNotifications);
 export default studentRouter;
