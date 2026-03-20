@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import ranjitha from "../assets/ranjitha.png";
+import ranjitha from "../../public/ranjitha.png";
 import shiv from "../assets/shivanagowda.png";
 import { User, Phone, Mail } from "lucide-react";
 
