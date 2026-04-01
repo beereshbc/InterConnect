@@ -14,6 +14,7 @@ import Resources from "./pages/Resources";
 import About from "./pages/About";
 import Dashboard from "./pages/Dashboard";
 import { useAppContext } from "./context/AppContext";
+import Sponsored from "./pages/Sponsored";
 
 const App = () => {
   const { studentToken } = useAppContext();
@@ -69,6 +70,7 @@ const App = () => {
           <Route path="/leaderboard" element={<LeaderBoard />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/about" element={<About />} />
+          <Route path="/sponsored" element={<Sponsored />} />
 
           {/* Authentication - Redirects to dashboard if they are ALREADY logged in */}
           <Route

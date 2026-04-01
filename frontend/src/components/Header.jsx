@@ -17,6 +17,7 @@ import {
   X,
   LayoutDashboard,
   LogOut,
+  Handshake,
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 
@@ -34,6 +35,7 @@ const Header = () => {
     { name: "Problem Statement", path: "/problems", icon: AlertCircle },
     { name: "LeaderBoard", path: "/leaderboard", icon: Trophy },
     { name: "Resource", path: "/resources", icon: BookOpen },
+    { name: "Sponsor", path: "/sponsored", icon: Handshake },
     { name: "About", path: "/about", icon: Info },
     ...(!studentToken
       ? [{ name: "Register", path: "/register", icon: UserPlus }]
