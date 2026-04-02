@@ -229,7 +229,6 @@ const Problems = () => {
     organization: "",
     department: "",
     contactInfo: "",
-    problem_coordinator: "",
   });
 
   const joditConfig = useMemo(
@@ -322,7 +321,6 @@ const Problems = () => {
           organization: "",
           department: "",
           contactInfo: "",
-          problem_coordinator: "",
         });
       }
     } catch (error) {
@@ -643,13 +641,7 @@ const Problems = () => {
                     placeholder="Your Full Name"
                     required
                   />
-                  <Input
-                    label="Coordinator Name"
-                    name="problem_coordinator"
-                    value={formData.problem_coordinator}
-                    onChange={handleChange}
-                    placeholder="Coordinator overseeing this"
-                  />
+
                   <Input
                     label="Contact Info"
                     name="contactInfo"
