@@ -10,10 +10,10 @@ import Notification from "../models/Notification.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const genToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 const genSAToken = () =>
   jwt.sign({ role: "superadmin" }, process.env.JWT_SECRET, {
-    expiresIn: "12h",
+    expiresIn: "30d",
   });
 
 const mailer = nodemailer.createTransport({

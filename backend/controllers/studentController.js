@@ -10,7 +10,7 @@ import Notification from "../models/Notification.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -19,7 +19,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
-
 // ═════════════════════════════════════════════════════════════════════════════
 // AUTH
 // ═════════════════════════════════════════════════════════════════════════════

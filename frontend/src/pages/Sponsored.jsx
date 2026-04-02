@@ -447,7 +447,7 @@ const Sponsored = () => {
               className="flex items-center gap-3 flex-wrap justify-center"
             >
               <a
-                href="https://instagram.com/strengtharena"
+                href="https://www.instagram.com/strength_arena_"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-7 py-3.5 sp-btn-primary text-white sp-cond font-bold text-sm rounded-xl"
