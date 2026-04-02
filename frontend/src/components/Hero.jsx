@@ -1008,9 +1008,11 @@ export const AboutSection = () => (
     >
       <div className="absolute -inset-4 bg-gradient-to-br from-[#3a9de820] to-[#9c3ae820] rounded-2xl md:rounded-3xl blur-xl md:blur-2xl -z-10" />
       <div className="relative rounded-2xl md:rounded-3xl p-6 bg-[#131824]/80 border border-[#1e2330] shadow-2xl overflow-hidden min-h-[250px] md:min-h-[400px] flex items-center justify-center">
-        <Code2
-          size={48}
-          className="text-[#3a9de8]/30 md:w-[64px] md:h-[64px]"
+        <img
+          className="rounded-2xl"
+          src="../../public/ICPoster_26.png"
+          alt="InterConnect 26.O Poster"
+          srcSet=""
         />
       </div>
     </motion.div>
