@@ -62,12 +62,6 @@ const problemSchema = new mongoose.Schema(
     contactInfo: {
       type: String, // Email or Phone of the external owner
     },
-
-    // The coordinator from the external organization
-    problem_coordinator: {
-      type: String,
-      required: true,
-    },
     is_published: {
       type: Boolean,
       default: false,

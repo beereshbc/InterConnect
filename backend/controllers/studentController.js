@@ -270,7 +270,6 @@ export const createProblem = async (req, res) => {
       organization,
       department,
       contactInfo,
-      problem_coordinator,
     } = req.body;
 
     // ─── SEQUENTIAL ID GENERATOR LOGIC ───────────────────────────────────────
@@ -307,7 +306,6 @@ export const createProblem = async (req, res) => {
       organization,
       department,
       contactInfo,
-      problem_coordinator,
       is_published: false,
     });
 
