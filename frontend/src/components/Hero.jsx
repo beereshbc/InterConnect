@@ -1010,7 +1010,7 @@ export const AboutSection = () => (
       <div className="relative rounded-2xl md:rounded-3xl p-6 bg-[#131824]/80 border border-[#1e2330] shadow-2xl overflow-hidden min-h-[250px] md:min-h-[400px] flex items-center justify-center">
         <img
           className="rounded-2xl"
-          src="../../public/ICPoster_26.png"
+          src="public/ICPoster_26.png"
           alt="InterConnect 26.O Poster"
           srcSet=""
         />
