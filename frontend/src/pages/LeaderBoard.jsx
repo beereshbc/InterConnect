@@ -61,8 +61,9 @@ const LeaderBoard = () => {
     if (!studentToken) return;
     setLoading(true);
     try {
+      // UPDATED: Changed limit from 100 to 20
       const res = await axios.get(
-        `/api/student/leaderboard?page=${page}&limit=100`,
+        `/api/student/leaderboard?page=${page}&limit=20`,
         {
           headers: { Authorization: `Bearer ${studentToken}` },
         },
@@ -231,7 +232,7 @@ const LeaderBoard = () => {
                   style={{ background: "#101520" }}
                 >
                   <div className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                    Top 100 Contributors
+                    Top Contributors
                   </div>
                   <div className="text-[10px] text-slate-500">
                     Page {pagination?.page} of {pagination?.totalPages}
@@ -330,14 +331,26 @@ const LeaderBoard = () => {
                                 />
                               )}
                             </div>
+
+                            {/* UPDATED: Program and Department Display */}
                             <div className="flex items-center gap-2 mt-0.5 font-mono text-[9px] sm:text-[10px] text-slate-500 truncate">
-                              {student.department ||
-                                student.branch ||
-                                "Contributor"}
-                              {student.college && (
-                                <span className="hidden sm:inline">
-                                  · {student.college}
+                              {student.program && student.department ? (
+                                <>
+                                  <span className="font-semibold text-slate-400">
+                                    {student.program}
+                                  </span>
+                                  <span className="hidden sm:inline">
+                                    · {student.department}
+                                  </span>
+                                </>
+                              ) : student.program ? (
+                                <span className="font-semibold text-slate-400">
+                                  {student.program}
                                 </span>
+                              ) : student.department ? (
+                                <span>{student.department}</span>
+                              ) : (
+                                <span>Contributor</span>
                               )}
                             </div>
                           </div>

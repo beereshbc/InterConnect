@@ -16,8 +16,8 @@ import {
   SlidersHorizontal,
   ChevronDown,
   Phone,
-  Rocket, // Added for the new banner
-  Timer, // Added for the new banner
+  Rocket,
+  Timer,
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
@@ -563,7 +563,7 @@ const Problems = () => {
         .jodit-toolbar{background:#0d1017!important;border-color:#1e2330!important}
         mark{background:#1e2d6b;color:#a5b4fc;border-radius:3px;padding:0 2px}
 
-        /* Rich Text Viewer Resets (Crucial for overriding Tailwind stripping lists/bold) */
+        /* Rich Text Viewer Resets */
         .rich-text-viewer ul { list-style-type: disc !important; padding-left: 1.5rem !important; margin-bottom: 1rem !important; }
         .rich-text-viewer ol { list-style-type: decimal !important; padding-left: 1.5rem !important; margin-bottom: 1rem !important; }
         .rich-text-viewer li { margin-bottom: 0.25rem !important; display: list-item !important; }
@@ -634,7 +634,6 @@ const Problems = () => {
                 borderColor: "#10b98140",
               }}
             >
-              {/* Abstract decorative shapes */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/10 rounded-full blur-xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
 
@@ -683,7 +682,6 @@ const Problems = () => {
         {/* ── Search Bar ── */}
         <div className="mb-3">
           <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-            {/* Search input */}
             <div className="relative flex-1 min-w-0">
               <Search
                 size={14}
@@ -715,7 +713,6 @@ const Problems = () => {
               )}
             </div>
 
-            {/* Filter toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2 rounded-xl font-mono text-[12px] font-medium px-4 py-2.5 cursor-pointer transition-all flex-shrink-0"
@@ -899,10 +896,11 @@ const Problems = () => {
                     borderBottom: "1px solid #191f2e",
                   }}
                 >
+                  {/* ── CHANGED: Replaced "Organization" with "Department" ── */}
                   {[
                     "Problem ID",
                     "Title",
-                    "Organization",
+                    "Department",
                     "Theme",
                     "Date",
                     "",
@@ -1004,15 +1002,21 @@ const Problems = () => {
                           </div>
                         )}
                       </td>
+
+                      {/* ── CHANGED: Show department instead of organization ── */}
                       <td style={{ padding: "12px 16px" }}>
                         <span
                           className="inline-flex items-center gap-1.5 font-mono text-[12px]"
                           style={{ color: "#6b7a94" }}
                         >
-                          <Building size={11} className="flex-shrink-0" />
-                          <Highlight text={prob.organization} query={search} />
+                          <Briefcase size={11} className="flex-shrink-0" />
+                          <Highlight
+                            text={prob.department || "—"}
+                            query={search}
+                          />
                         </span>
                       </td>
+
                       <td style={{ padding: "12px 16px" }}>
                         <ThemeBadge>
                           <Highlight text={prob.theme} query={search} />
@@ -1105,15 +1109,18 @@ const Problems = () => {
                 >
                   <Highlight text={prob.title} query={search} />
                 </p>
+
+                {/* ── CHANGED: Show department instead of organization on mobile ── */}
                 <div className="flex items-center gap-1.5 mb-2">
-                  <Building size={11} style={{ color: "#4e5a72" }} />
+                  <Briefcase size={11} style={{ color: "#4e5a72" }} />
                   <span
                     className="font-mono text-[12px]"
                     style={{ color: "#6b7a94" }}
                   >
-                    <Highlight text={prob.organization} query={search} />
+                    <Highlight text={prob.department || "—"} query={search} />
                   </span>
                 </div>
+
                 <div className="flex flex-wrap gap-1.5 items-center">
                   {prob.theme && (
                     <ThemeBadge>

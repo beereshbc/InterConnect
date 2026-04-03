@@ -2,7 +2,7 @@ import Student from "../models/Student.js";
 import Project from "../models/Project.js";
 import Problem from "../models/Problem.js";
 import Log from "../models/Logs.js";
-import Admin from "../models/Admin.js"; // <-- Imported for Top Coordinator Logic
+import Admin from "../models/Admin.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
@@ -19,6 +19,7 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
+
 // ═════════════════════════════════════════════════════════════════════════════
 // AUTH
 // ═════════════════════════════════════════════════════════════════════════════
@@ -53,8 +54,8 @@ export const registerStudent = async (req, res) => {
       phone,
       college,
       program,
-      semester, // Saved to DB
-      usn, // Saved to DB
+      semester,
+      usn,
       department: department || "",
       branch: branch || "",
       password: hashedPassword,
@@ -77,6 +78,7 @@ export const registerStudent = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 export const loginStudent = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -269,31 +271,24 @@ export const createProblem = async (req, res) => {
       organization,
       department,
       contactInfo,
-      Phone, // <-- Extracted Phone from req.body
+      Phone,
     } = req.body;
 
-    // ─── SEQUENTIAL ID GENERATOR LOGIC ───────────────────────────────────────
-    // 1. Find the last created problem in the database by sorting by _id
     const lastProblem = await Problem.findOne().sort({ _id: -1 });
-
-    let nextIdNumber = 1; // Default starting number
+    let nextIdNumber = 1;
 
     if (
       lastProblem &&
       lastProblem.problemID &&
       lastProblem.problemID.startsWith("P-")
     ) {
-      // 2. Extract the numeric part (e.g., "0004" from "P-0004")
       const lastNumber = parseInt(lastProblem.problemID.replace("P-", ""), 10);
-
       if (!isNaN(lastNumber)) {
-        nextIdNumber = lastNumber + 1; // Increment by 1
+        nextIdNumber = lastNumber + 1;
       }
     }
 
-    // 3. Format the new ID with leading zeros (e.g., P-0001, P-0012)
     const generatedProblemID = `P-${nextIdNumber.toString().padStart(4, "0")}`;
-    // ─────────────────────────────────────────────────────────────────────────
 
     const newProblem = new Problem({
       problemID: generatedProblemID,
@@ -306,7 +301,7 @@ export const createProblem = async (req, res) => {
       organization,
       department,
       contactInfo,
-      Phone, // <-- Added Phone to the new Problem object
+      Phone,
       is_published: false,
     });
 
@@ -315,7 +310,7 @@ export const createProblem = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Problem submitted successfully. Pending admin review.",
-      problemID: generatedProblemID, // Send the newly generated ID back to frontend if needed
+      problemID: generatedProblemID,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -546,6 +541,62 @@ export const selfAssignLog = async (req, res) => {
   }
 };
 
+// ─── NEW: Mark Log Complete (Student side) ───
+export const markLogComplete = async (req, res) => {
+  try {
+    const { githubPrLink, closureNote } = req.body;
+    const logId = req.params.logId;
+    const studentId = req.studentId;
+
+    if (!githubPrLink) {
+      return res.status(400).json({
+        success: false,
+        message: "A GitHub PR or Commit link is required to submit your task.",
+      });
+    }
+
+    const log = await Log.findOne({ _id: logId, contributorID: studentId });
+    if (!log) {
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "Log not found or not assigned to you.",
+        });
+    }
+
+    if (log.task_status !== "assigned") {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Only assigned tasks can be marked for review.",
+        });
+    }
+
+    // Set to pending so Admin knows to review/close it
+    log.task_status = "pending";
+    log.githubPrLink = githubPrLink;
+    if (closureNote) log.closureNote = closureNote;
+
+    log.actions.push({
+      actionType: "submitted_for_review",
+      note: `Submitted by student. PR: ${githubPrLink}. Note: ${closureNote || "None"}`,
+      by: studentId.toString(),
+    });
+
+    await log.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Task submitted successfully! Pending admin review.",
+      log,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // ═════════════════════════════════════════════════════════════════════════════
 // DASHBOARD
 // ═════════════════════════════════════════════════════════════════════════════
@@ -589,7 +640,9 @@ export const getStudentDashboard = async (req, res) => {
       0,
     );
     const completedLogs = logs.filter((l) => l.task_status === "completed");
-    const assignedLogs = logs.filter((l) => l.task_status === "assigned");
+    const assignedLogs = logs.filter(
+      (l) => l.task_status === "assigned" || l.task_status === "pending",
+    );
     const terminatedLogs = logs.filter((l) => l.task_status === "terminated");
     const totalPoints = completedLogs.reduce(
       (a, l) => a + (l.assignedTaskPoints || 0),
@@ -614,8 +667,9 @@ export const getStudentDashboard = async (req, res) => {
           myLogs: projLogs,
           myTasksDone: projLogs.filter((l) => l.task_status === "completed")
             .length,
-          myTasksActive: projLogs.filter((l) => l.task_status === "assigned")
-            .length,
+          myTasksActive: projLogs.filter(
+            (l) => l.task_status === "assigned" || l.task_status === "pending",
+          ).length,
         };
       })
       .sort((a, b) => b.myScore - a.myScore);
@@ -789,7 +843,6 @@ export const getLeaderboard = async (req, res) => {
 
 export const getPublishedNotifications = async (req, res) => {
   try {
-    // Only fetch published notifications. Sort by pinned first, then newest.
     const notifications = await Notification.find({ isPublished: true }).sort({
       isPinned: -1,
       createdAt: -1,

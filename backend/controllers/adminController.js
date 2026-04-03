@@ -11,6 +11,7 @@ import Notification from "../models/Notification.js";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const genToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+
 const genSAToken = () =>
   jwt.sign({ role: "superadmin" }, process.env.JWT_SECRET, {
     expiresIn: "30d",
@@ -23,6 +24,7 @@ const mailer = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
+
 const sendEmail = async ({ to, subject, html }) => {
   try {
     await mailer.sendMail({
@@ -192,14 +194,6 @@ export const getAdminProfile = async (req, res) => {
 // PROJECTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// ─── ONLY THE CHANGED SECTIONS ARE SHOWN BELOW ───────────────────────────────
-// Replace the existing getAssignedProjects, getProjectById, and updateProject
-// with these versions. Everything else in the controller stays the same.
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// PROJECTS  (updated populate strings)
-// ═══════════════════════════════════════════════════════════════════════════════
-
 export const getAssignedProjects = async (req, res) => {
   try {
     const projects = await Project.find({ coordinators: req.adminId })
@@ -210,7 +204,6 @@ export const getAssignedProjects = async (req, res) => {
       })
       .populate({
         path: "contributors",
-        // ✅ Added: phone, usn, semester, githubLink for student-info panels
         select:
           "name email phone usn semester department program branch college githubLink isBlocked projectWiseContribution totalScore totalTasksCompleted",
       })
@@ -223,7 +216,6 @@ export const getAssignedProjects = async (req, res) => {
         path: "topContributors",
         select: "name email department totalScore",
       })
-      // ✅ Added: phone and college for coordinator info card in Problem tab
       .populate({
         path: "coordinators",
         select: "name email phone college branch",
@@ -248,7 +240,6 @@ export const getProjectById = async (req, res) => {
       })
       .populate({
         path: "contributors",
-        // ✅ Added: phone, usn, semester, githubLink
         select:
           "name email phone usn semester department program branch college githubLink isBlocked projectWiseContribution totalScore totalTasksCompleted",
       })
@@ -261,7 +252,6 @@ export const getProjectById = async (req, res) => {
         path: "topContributors",
         select: "name email department totalScore",
       })
-      // ✅ Added: phone and college for coordinator card
       .populate({
         path: "coordinators",
         select: "name email phone college branch",
@@ -278,7 +268,6 @@ export const getProjectById = async (req, res) => {
   }
 };
 
-// updateProject — repopulate with the same extended fields after save
 export const updateProject = async (req, res) => {
   try {
     const project = await Project.findOne({
@@ -336,7 +325,6 @@ export const updateProject = async (req, res) => {
         { runValidators: true },
       );
 
-    // ✅ Re-populate with extended coordinator + contributor fields
     const updated = await Project.findById(project._id)
       .populate("problem")
       .populate({
@@ -547,6 +535,7 @@ export const updateLog = async (req, res) => {
   }
 };
 
+// ─── FIX: closeLog now accepts both "assigned" AND "pending" statuses ─────────
 export const closeLog = async (req, res) => {
   try {
     const log = await Log.findById(req.params.logId);
@@ -564,15 +553,27 @@ export const closeLog = async (req, res) => {
         .status(403)
         .json({ success: false, message: "Access denied." });
 
+    // Guard: already completed
     if (log.task_status === "completed")
       return res
         .status(400)
         .json({ success: false, message: "Log is already completed." });
-    if (log.task_status !== "assigned")
+
+    // Guard: terminated
+    if (log.task_status === "terminated")
       return res.status(400).json({
         success: false,
-        message: "Only assigned logs can be completed.",
+        message: "Cannot close a terminated log. Reopen it first.",
       });
+
+    // ✅ FIX: Accept both "assigned" and "pending" (student-submitted) statuses
+    const closeableStatuses = ["assigned", "pending"];
+    if (!closeableStatuses.includes(log.task_status))
+      return res.status(400).json({
+        success: false,
+        message: `Only assigned or pending-review logs can be completed. Current status: "${log.task_status}".`,
+      });
+
     if (!log.contributorID)
       return res
         .status(400)
@@ -597,11 +598,12 @@ export const closeLog = async (req, res) => {
     log.closedAt = new Date();
     log.actions.push({
       actionType: "completed",
-      note: `Closed. PR: ${githubPrLink}. Points: ${pts}.`,
+      note: `Closed by admin. PR: ${githubPrLink}. Points awarded: ${pts}.`,
       by: req.adminId.toString(),
     });
     await log.save();
 
+    // ── Update student scores ──────────────────────────────────────────────
     const student = await Student.findById(studentId);
     let studentName = log.task_contributor || "contributor";
     if (student) {
@@ -627,6 +629,7 @@ export const closeLog = async (req, res) => {
 
     await syncProjectStats(projectId);
 
+    // ── Recalculate top contributors ──────────────────────────────────────
     const allContribs = await Student.find({ projects: projectId })
       .select("_id projectWiseContribution")
       .lean();
@@ -751,8 +754,9 @@ export const reopenLog = async (req, res) => {
 
 export const checkAndTerminateExpiredLogs = async (req, res) => {
   try {
+    // ✅ Also auto-terminate "pending" logs that have blown past deadline
     const expired = await Log.find({
-      task_status: "assigned",
+      task_status: { $in: ["assigned", "pending"] },
       deadlineAt: { $lte: new Date() },
     });
     let count = 0;
@@ -760,7 +764,7 @@ export const checkAndTerminateExpiredLogs = async (req, res) => {
       log.task_status = "terminated";
       log.isPublished = false;
       log.closureNote =
-        "Auto-terminated: deadline exceeded without completion.";
+        "Auto-terminated: deadline exceeded without admin review.";
       log.closedAt = new Date();
       log.actions.push({
         actionType: "terminated",
@@ -807,7 +811,7 @@ export const getOpenLogs = async (req, res) => {
   }
 };
 
-// ─── ADMIN FORCES ASSIGNMENT TO A STUDENT ───
+// ─── Admin forces assignment to a specific student ────────────────────────────
 export const selfAssignLog = async (req, res) => {
   try {
     const log = await Log.findById(req.params.logId);
@@ -1042,10 +1046,12 @@ export const saApproveProblem = async (req, res) => {
         .json({ success: false, message: "Admin not found." });
 
     if (await Project.findOne({ problem: problem._id }))
-      return res.status(400).json({
-        success: false,
-        message: "Project already exists for this problem.",
-      });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Project already exists for this problem.",
+        });
 
     problem.is_published = true;
     problem.actions.push({
@@ -1054,32 +1060,19 @@ export const saApproveProblem = async (req, res) => {
     });
     await problem.save();
 
-    // ─── SEQUENTIAL PROJECT ID GENERATOR LOGIC ─────────────────────────────
-    // 1. Find the last created project in the database
     const lastProject = await Project.findOne().sort({ _id: -1 });
     let nextIdNumber = 1;
-
-    // 2. Extract numeric part and increment
-    if (
-      lastProject &&
-      lastProject.projectID &&
-      lastProject.projectID.startsWith("GMP-")
-    ) {
+    if (lastProject?.projectID?.startsWith("GMP-")) {
       const lastNumber = parseInt(
         lastProject.projectID.replace("GMP-", ""),
         10,
       );
-      if (!isNaN(lastNumber)) {
-        nextIdNumber = lastNumber + 1;
-      }
+      if (!isNaN(lastNumber)) nextIdNumber = lastNumber + 1;
     }
-
-    // 3. Format new ID (e.g., GMP-001, GMP-042)
     const generatedProjectID = `GMP-${nextIdNumber.toString().padStart(3, "0")}`;
-    // ────────────────────────────────────────────────────────────────────────
 
     const project = await Project.create({
-      projectID: generatedProjectID, // Injecting the generated ID here
+      projectID: generatedProjectID,
       problem: problem._id,
       coordinators: [coordinatorId],
       contributors: [],
@@ -1175,6 +1168,7 @@ export const saGetAllAdmins = async (req, res) => {
     res.status(500).json({ success: false, message: e.message });
   }
 };
+
 export const saToggleBlockAdmin = async (req, res) => {
   try {
     const admin = await Admin.findById(req.params.adminId);
@@ -1191,6 +1185,7 @@ export const saToggleBlockAdmin = async (req, res) => {
     res.status(500).json({ success: false, message: e.message });
   }
 };
+
 export const saDeleteAdmin = async (req, res) => {
   try {
     await Admin.findByIdAndDelete(req.params.adminId);
@@ -1199,6 +1194,7 @@ export const saDeleteAdmin = async (req, res) => {
     res.status(500).json({ success: false, message: e.message });
   }
 };
+
 export const saGetAllStudents = async (req, res) => {
   try {
     const students = await Student.find()
@@ -1213,6 +1209,7 @@ export const saGetAllStudents = async (req, res) => {
     res.status(500).json({ success: false, message: e.message });
   }
 };
+
 export const saToggleBlockStudent = async (req, res) => {
   try {
     const student = await Student.findById(req.params.studentId);
@@ -1229,6 +1226,7 @@ export const saToggleBlockStudent = async (req, res) => {
     res.status(500).json({ success: false, message: e.message });
   }
 };
+
 export const saGetStudentDetail = async (req, res) => {
   try {
     const student = await Student.findById(req.params.studentId)
@@ -1248,25 +1246,22 @@ export const saGetStudentDetail = async (req, res) => {
     res.status(500).json({ success: false, message: e.message });
   }
 };
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUPER ADMIN NOTIFICATIONS & BROADCASTS
+// SUPER ADMIN — NOTIFICATIONS & BROADCASTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Re-using the same transport you already configured earlier in the file to avoid Auth issues.
 const broadcastEmail = async (title, message, type) => {
   try {
     const [students, admins] = await Promise.all([
       Student.find({ isBlocked: false }).select("email").lean(),
       Admin.find({ isBlocked: false }).select("email").lean(),
     ]);
-
     const allEmails = [
       ...students.map((s) => s.email),
       ...admins.map((a) => a.email),
     ];
-
     if (allEmails.length === 0) return;
-
     const colorMap = {
       info: "#3a9de8",
       update: "#fbbf24",
@@ -1274,13 +1269,10 @@ const broadcastEmail = async (title, message, type) => {
       success: "#4ade80",
     };
     const accentColor = colorMap[type] || colorMap.info;
-
-    // IMPORTANT: Make sure this uses the exact same 'mailer' instance used for OTPs,
-    // which relies on EMAIL_USER and EMAIL_PASS if SMTP_USER is failing.
     await mailer.sendMail({
       from: `"InterConnect 26.0" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER, // Send to self
-      bcc: allEmails, // Blind copy to everyone else
+      to: process.env.EMAIL_USER,
+      bcc: allEmails,
       subject: `📢 Announcement: ${title}`,
       html: `
         <div style="font-family:monospace;background:#080c14;color:#f0f4ff;padding:32px;border-radius:12px;max-width:600px;margin:auto;border:1px solid #1e2330;">
@@ -1300,7 +1292,6 @@ const broadcastEmail = async (title, message, type) => {
 export const saCreateNotification = async (req, res) => {
   try {
     const { title, message, type, isPublished } = req.body;
-
     const notification = await Notification.create({
       title,
       message,
@@ -1308,12 +1299,7 @@ export const saCreateNotification = async (req, res) => {
       isPublished: Boolean(isPublished),
       emailSent: Boolean(isPublished),
     });
-
-    // If published immediately, trigger the email broadcast asynchronously
-    if (notification.isPublished) {
-      broadcastEmail(title, message, type);
-    }
-
+    if (notification.isPublished) broadcastEmail(title, message, type);
     res
       .status(201)
       .json({ success: true, message: "Notification created", notification });
@@ -1324,7 +1310,6 @@ export const saCreateNotification = async (req, res) => {
 
 export const saGetNotifications = async (req, res) => {
   try {
-    // Sort by pinned status first, then by the newest creation date
     const notifications = await Notification.find().sort({
       isPinned: -1,
       createdAt: -1,
@@ -1340,10 +1325,7 @@ export const saTogglePublishNotification = async (req, res) => {
     const notification = await Notification.findById(req.params.id);
     if (!notification)
       return res.status(404).json({ success: false, message: "Not found." });
-
     notification.isPublished = !notification.isPublished;
-
-    // Broadcast email only if it's being published for the VERY FIRST time
     if (notification.isPublished && !notification.emailSent) {
       broadcastEmail(
         notification.title,
@@ -1352,7 +1334,6 @@ export const saTogglePublishNotification = async (req, res) => {
       );
       notification.emailSent = true;
     }
-
     await notification.save();
     res.json({
       success: true,
@@ -1369,7 +1350,6 @@ export const saTogglePinNotification = async (req, res) => {
     const notification = await Notification.findById(req.params.id);
     if (!notification)
       return res.status(404).json({ success: false, message: "Not found." });
-
     notification.isPinned = !notification.isPinned;
     await notification.save();
     res.json({

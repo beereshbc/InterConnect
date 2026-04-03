@@ -12,6 +12,7 @@ import {
   getMyProjects,
   getMyLogs,
   selfAssignLog,
+  markLogComplete, // <-- Added
   getLeaderboard,
   getStudentDashboard,
   getPublishedNotifications,
@@ -45,11 +46,13 @@ studentRouter.post("/:id/join", studentAuth, joinProblem); // legacy
 // Projects
 studentRouter.get("/projects", studentAuth, getMyProjects);
 
-// Logs (The Route for Claiming the Task)
+// Logs
 studentRouter.get("/logs", studentAuth, getMyLogs);
 studentRouter.patch("/logs/:logId/self-assign", studentAuth, selfAssignLog);
+studentRouter.patch("/logs/:logId/complete", studentAuth, markLogComplete); // <-- Added complete route
 
 // Leaderboard
 studentRouter.get("/leaderboard", studentAuth, getLeaderboard);
 studentRouter.get("/notifications", getPublishedNotifications);
+
 export default studentRouter;

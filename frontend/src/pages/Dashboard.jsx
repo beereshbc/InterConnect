@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
+import { Link as LinkIcon, Loader2 } from "lucide-react";
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
 const fmtDate = (d) =>
@@ -55,6 +56,13 @@ const ST = {
     border: "#fbbf2435",
     dot: "#fbbf24",
     label: "Assigned",
+  },
+  pending: {
+    bg: "#1e1b4b",
+    txt: "#818cf8",
+    border: "#818cf835",
+    dot: "#818cf8",
+    label: "Pending Review",
   },
   completed: {
     bg: "#08271a",
@@ -120,7 +128,7 @@ const ToastBar = ({ message, type, onDone }) => {
   useEffect(() => {
     const t = setTimeout(onDone, 3400);
     return () => clearTimeout(t);
-  }, []);
+  }, [onDone]);
   const c =
     { success: "#4ade80", error: "#f87171", warn: "#fbbf24" }[type] ||
     "#4ade80";
@@ -227,9 +235,143 @@ const Brick = ({ icon, label, value, accent, sub }) => (
   </motion.div>
 );
 
-const LogCard = ({ log, showClaim = false, onClaim, claiming = false }) => {
+// ─── Modal Component ─────────────────────────────────────────────────────────
+const Modal = ({ title, onClose, children }) => (
+  <div
+    onClick={onClose}
+    className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-5"
+    style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)" }}
+  >
+    <motion.div
+      initial={{ scale: 0.95, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.95, opacity: 0 }}
+      onClick={(e) => e.stopPropagation()}
+      className="relative bg-[#0f1219] border border-slate-700/60 rounded-2xl w-full max-w-lg overflow-y-auto shadow-2xl"
+    >
+      <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#1e2330]">
+        <h2 className="text-lg font-extrabold text-slate-100 font-display">
+          {title}
+        </h2>
+        <button
+          onClick={onClose}
+          className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer border-none bg-transparent hover:bg-[#1e2330]"
+          style={{ color: "#8892a4" }}
+        >
+          ✕
+        </button>
+      </div>
+      <div className="px-6 py-6">{children}</div>
+    </motion.div>
+  </div>
+);
+
+// ─── Mark Complete Modal ──────────────────────────────────────────────────────
+const MarkCompleteModal = ({ log, onClose, onSubmit }) => {
+  const [form, setForm] = useState({
+    githubPrLink: "",
+    closureNote: "",
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handle = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    await onSubmit(log._id, form);
+    setSaving(false);
+  };
+
+  return (
+    <Modal title="Submit Task for Review" onClose={onClose}>
+      <div className="mb-5">
+        <p className="text-[#8892a4] text-sm font-mono mb-2 leading-relaxed">
+          You are submitting{" "}
+          <span className="text-white font-bold">{log.taskTitle}</span>. Provide
+          the link to your work so the Admin can review and award your points.
+        </p>
+      </div>
+      <form onSubmit={handle} className="space-y-4">
+        <div>
+          <label className="block text-[10px] font-bold text-[#6b7a99] mb-1.5 font-mono uppercase tracking-widest">
+            GitHub PR / Commit Link <span className="text-[#4ade80]">*</span>
+          </label>
+          <div className="relative">
+            <LinkIcon
+              size={14}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6b7a99]"
+            />
+            <input
+              type="url"
+              required
+              placeholder="https://github.com/..."
+              value={form.githubPrLink}
+              onChange={(e) =>
+                setForm({ ...form, githubPrLink: e.target.value })
+              }
+              className="w-full rounded-lg pl-9 p-2.5 text-[#f0f4ff] font-mono text-[13px] outline-none transition-colors"
+              style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
+              onFocus={(e) => (e.target.style.borderColor = "#4ade8050")}
+              onBlur={(e) => (e.target.style.borderColor = "#1e2330")}
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-[10px] font-bold text-[#6b7a99] mb-1.5 font-mono uppercase tracking-widest">
+            Completion Note (Optional)
+          </label>
+          <textarea
+            rows={3}
+            placeholder="Any details the reviewer should know..."
+            value={form.closureNote}
+            onChange={(e) => setForm({ ...form, closureNote: e.target.value })}
+            className="w-full rounded-lg p-3 text-[#f0f4ff] font-mono text-[13px] outline-none transition-colors resize-none"
+            style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
+            onFocus={(e) => (e.target.style.borderColor = "#4ade8050")}
+            onBlur={(e) => (e.target.style.borderColor = "#1e2330")}
+          />
+        </div>
+        <div className="flex gap-3 justify-end pt-2 mt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-[12px] font-bold font-mono cursor-pointer transition-colors bg-transparent border-none hover:text-white"
+            style={{ color: "#6b7a99" }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving || !form.githubPrLink}
+            className="px-5 py-2 rounded-lg text-[12px] font-bold font-mono text-white transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50 border-none"
+            style={{
+              background: "#08271a",
+              color: "#4ade80",
+              border: "1px solid #4ade8035",
+            }}
+          >
+            {saving && <Loader2 size={14} className="animate-spin" />}
+            Submit Work
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+// ─── Log Card ─────────────────────────────────────────────────────────────────
+const LogCard = ({
+  log,
+  showClaim = false,
+  onClaim,
+  claiming = false,
+  onMarkComplete,
+}) => {
   const days = daysLeft(log.deadlineAt);
-  const overdue = log.task_status === "assigned" && days !== null && days <= 0;
+  const isPending = log.task_status === "pending";
+  const overdue =
+    (log.task_status === "assigned" || isPending) && days !== null && days <= 0;
+
+  // Use terminated styles if overdue, else use mapped styles
   const st = ST[overdue ? "terminated" : log.task_status] || ST.open;
   const proj = log.projectId?.problem?.title || log.projectId?.projectID || "—";
 
@@ -272,14 +414,14 @@ const LogCard = ({ log, showClaim = false, onClaim, claiming = false }) => {
         </p>
       )}
 
-      <div className="flex flex-wrap gap-2 items-center text-[11px] font-mono">
+      <div className="flex flex-wrap gap-2 items-center text-[11px] font-mono mt-1.5">
         <span style={{ color: "#fbbf24" }}>
           ⬡ {log.assignedTaskPoints ?? 0} pts
         </span>
         {log.deadlineDays && (
           <span style={{ color: "#6b7a99" }}>⏱ {log.deadlineDays}d window</span>
         )}
-        {log.task_status === "assigned" && log.deadlineAt && (
+        {(log.task_status === "assigned" || isPending) && log.deadlineAt && (
           <span
             style={{
               color: days <= 0 ? "#f87171" : days <= 2 ? "#fb923c" : "#8892a4",
@@ -292,7 +434,8 @@ const LogCard = ({ log, showClaim = false, onClaim, claiming = false }) => {
         {log.task_status === "completed" && log.closedAt && (
           <span style={{ color: "#4ade80" }}>✓ {fmtDate(log.closedAt)}</span>
         )}
-        <div className="flex gap-2 ml-auto">
+
+        <div className="flex gap-3 ml-auto items-center">
           {log.githubIssueLink && (
             <a
               href={log.githubIssueLink}
@@ -314,6 +457,15 @@ const LogCard = ({ log, showClaim = false, onClaim, claiming = false }) => {
             >
               PR ↗
             </a>
+          )}
+          {log.task_status === "assigned" && onMarkComplete && (
+            <button
+              onClick={() => onMarkComplete(log)}
+              className="no-underline hover:opacity-75 transition-opacity font-bold font-mono text-[11px] bg-transparent border-none cursor-pointer"
+              style={{ color: "#4ade80" }}
+            >
+              ✓ Mark Complete
+            </button>
           )}
         </div>
       </div>
@@ -512,26 +664,31 @@ const RRow = ({ rank, name, score, dept, isMe }) => {
   );
 };
 
-const Drawer = ({ proj, myLogs, openLogs, claiming, onClaim, onClose }) => (
+const Drawer = ({
+  proj,
+  myLogs,
+  openLogs,
+  claiming,
+  onClaim,
+  onClose,
+  onMarkComplete,
+}) => (
   <motion.div
     initial={{ y: "100%", opacity: 0 }}
     animate={{ y: 0, opacity: 1 }}
     exit={{ y: "100%", opacity: 0 }}
     transition={{ type: "spring", stiffness: 280, damping: 30 }}
-    className="fixed z-[500] shadow-2xl overflow-y-auto"
+    className="proj-drawer fixed z-[500] shadow-2xl overflow-y-auto"
     style={{
       background: "#0a0d16",
       borderTop: "1px solid #252d3e",
-      // Mobile: full screen bottom sheet
       bottom: 0,
       left: 0,
       right: 0,
       maxHeight: "92dvh",
       borderRadius: "20px 20px 0 0",
-      // Desktop override via inline media via JS class
     }}
   >
-    {/* Pull handle — mobile only */}
     <div className="flex justify-center pt-3 pb-1 sm:hidden">
       <div
         className="w-10 h-1 rounded-full"
@@ -563,10 +720,9 @@ const Drawer = ({ proj, myLogs, openLogs, claiming, onClaim, onClose }) => (
       </div>
       <button
         onClick={onClose}
-        className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer font-mono text-sm"
+        className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer font-mono text-sm border-none"
         style={{
           background: "#1e2330",
-          border: "1px solid #252d3e",
           color: "#8892a4",
           WebkitTapHighlightColor: "transparent",
         }}
@@ -743,6 +899,7 @@ const Drawer = ({ proj, myLogs, openLogs, claiming, onClaim, onClose }) => (
                 showClaim
                 onClaim={onClaim}
                 claiming={claiming === l._id}
+                onMarkComplete={onMarkComplete}
               />
             ))}
           </div>
@@ -759,7 +916,7 @@ const Drawer = ({ proj, myLogs, openLogs, claiming, onClaim, onClose }) => (
           </div>
           <div className="space-y-2.5">
             {myLogs.map((l) => (
-              <LogCard key={l._id} log={l} />
+              <LogCard key={l._id} log={l} onMarkComplete={onMarkComplete} />
             ))}
           </div>
         </div>
@@ -879,21 +1036,21 @@ const Dashboard = () => {
     return { data };
   };
 
-  const authPatch = async (url) => {
+  const authPatch = async (url, payload = {}) => {
     const token = resolveToken();
     const headers = token
       ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
       : {};
 
     if (axiosInst) {
-      return await axiosInst.patch(url, {}, { headers });
+      return await axiosInst.patch(url, payload, { headers });
     }
 
     const base = import.meta.env?.VITE_BASE_URL || "";
     const res = await fetch(`${base}${url}`, {
       method: "PATCH",
       headers,
-      body: JSON.stringify({}),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (!res.ok) throw { response: { data } };
@@ -902,13 +1059,14 @@ const Dashboard = () => {
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState(null);
+  const [toastData, setToastData] = useState(null);
   const [tab, setTab] = useState("overview");
   const [lFilter, setLFilter] = useState("all");
   const [claiming, setClaiming] = useState(null);
   const [drawer, setDrawer] = useState(null);
+  const [completingLog, setCompletingLog] = useState(null);
 
-  const boom = (message, type = "success") => setToast({ message, type });
+  const boom = (message, type = "success") => setToastData({ message, type });
 
   const load = useCallback(async () => {
     const token = resolveToken();
@@ -931,7 +1089,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   // Lock body scroll when drawer open on mobile
   useEffect(() => {
@@ -964,15 +1122,43 @@ const Dashboard = () => {
     }
   };
 
+  const handleMarkComplete = async (logId, formPayload) => {
+    try {
+      const { data: r } = await authPatch(
+        `/api/student/logs/${logId}/complete`,
+        formPayload,
+      );
+      if (r.success) {
+        boom("Task submitted for admin review!", "success");
+        setCompletingLog(null);
+        await load();
+      } else {
+        boom(r.message || "Failed to submit task.", "error");
+      }
+    } catch (e) {
+      boom(e?.response?.data?.message || "Failed to submit task.", "error");
+    }
+  };
+
   const logs = data?.student?.logs || [];
   const LC = {
     all: logs.length,
-    assigned: logs.filter((l) => l.task_status === "assigned").length,
+    assigned: logs.filter(
+      (l) => l.task_status === "assigned" || l.task_status === "pending",
+    ).length,
     completed: logs.filter((l) => l.task_status === "completed").length,
     terminated: logs.filter((l) => l.task_status === "terminated").length,
   };
+
   const fLogs =
-    lFilter === "all" ? logs : logs.filter((l) => l.task_status === lFilter);
+    lFilter === "all"
+      ? logs
+      : logs.filter((l) => {
+          if (lFilter === "assigned")
+            return l.task_status === "assigned" || l.task_status === "pending";
+          return l.task_status === lFilter;
+        });
+
   const { student, stats, projects, openLogs, ranking } = data || {};
 
   const TABS = [
@@ -1516,10 +1702,18 @@ const Dashboard = () => {
                     />
                     <div className="space-y-2.5">
                       {logs
-                        .filter((l) => l.task_status === "assigned")
+                        .filter(
+                          (l) =>
+                            l.task_status === "assigned" ||
+                            l.task_status === "pending",
+                        )
                         .slice(0, 3)
                         .map((l) => (
-                          <LogCard key={l._id} log={l} />
+                          <LogCard
+                            key={l._id}
+                            log={l}
+                            onMarkComplete={setCompletingLog}
+                          />
                         ))}
                     </div>
                   </div>
@@ -1543,7 +1737,11 @@ const Dashboard = () => {
                         .filter((l) => l.task_status === "completed")
                         .slice(0, 3)
                         .map((l) => (
-                          <LogCard key={l._id} log={l} />
+                          <LogCard
+                            key={l._id}
+                            log={l}
+                            onMarkComplete={setCompletingLog}
+                          />
                         ))}
                     </div>
                   </div>
@@ -1627,6 +1825,7 @@ const Dashboard = () => {
                         showClaim
                         onClaim={handleClaim}
                         claiming={claiming === l._id}
+                        onMarkComplete={setCompletingLog}
                       />
                     ))}
                     {!openLogs?.length && (
@@ -1735,7 +1934,11 @@ const Dashboard = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {fLogs.map((l) => (
-                    <LogCard key={l._id} log={l} />
+                    <LogCard
+                      key={l._id}
+                      log={l}
+                      onMarkComplete={setCompletingLog}
+                    />
                   ))}
                 </div>
               )}
@@ -1782,6 +1985,7 @@ const Dashboard = () => {
                       showClaim
                       onClaim={handleClaim}
                       claiming={claiming === l._id}
+                      onMarkComplete={setCompletingLog}
                     />
                   ))}
                 </div>
@@ -2123,10 +2327,9 @@ const Dashboard = () => {
                   </div>
                   <button
                     onClick={() => setDrawer(null)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer font-mono text-sm"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer font-mono text-sm border-none"
                     style={{
                       background: "#1e2330",
-                      border: "1px solid #252d3e",
                       color: "#8892a4",
                       WebkitTapHighlightColor: "transparent",
                     }}
@@ -2364,6 +2567,7 @@ const Dashboard = () => {
                               showClaim
                               onClaim={handleClaim}
                               claiming={claiming === l._id}
+                              onMarkComplete={setCompletingLog}
                             />
                           ))}
                       </div>
@@ -2403,7 +2607,11 @@ const Dashboard = () => {
                                 drawer._id?.toString(),
                           )
                           .map((l) => (
-                            <LogCard key={l._id} log={l} />
+                            <LogCard
+                              key={l._id}
+                              log={l}
+                              onMarkComplete={setCompletingLog}
+                            />
                           ))}
                       </div>
                     </div>
@@ -2414,7 +2622,20 @@ const Dashboard = () => {
           )}
         </AnimatePresence>
 
-        {toast && <ToastBar {...toast} onDone={() => setToast(null)} />}
+        {toastData && (
+          <ToastBar {...toastData} onDone={() => setToastData(null)} />
+        )}
+
+        {/* Mark Complete Modal */}
+        <AnimatePresence>
+          {completingLog && (
+            <MarkCompleteModal
+              log={completingLog}
+              onClose={() => setCompletingLog(null)}
+              onSubmit={handleMarkComplete}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </>
   );

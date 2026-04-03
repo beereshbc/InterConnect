@@ -1,6 +1,7 @@
 /**
  * Hero.jsx — InterConnect 26.O  · Full Updated Component
- * Added: Cash Prize banner, Contact Section, improved responsiveness
+ * Added: Cash Prize banner, Contact Section, improved responsiveness,
+ * and LIVE Development Phase banner.
  */
 
 import React, { useEffect, useRef, useState } from "react";
@@ -34,6 +35,8 @@ import {
   Zap,
   Crown,
   Medal,
+  Rocket, // Added for Dev Banner
+  Timer, // Added for Dev Banner
 } from "lucide-react";
 
 import { Link } from "react-router-dom";
@@ -232,7 +235,7 @@ const Hero = () => {
         .hb-glow-c { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); width: 45%; height: 160px; background: radial-gradient(ellipse at center, rgba(96,128,245,0.07) 0%, transparent 70%); pointer-events: none; }
 
         /* ════════════════════════════
-           💰 CASH PRIZE SECTION
+            💰 CASH PRIZE SECTION
         ════════════════════════════ */
         .prize-section {
           position: relative;
@@ -435,6 +438,50 @@ const Hero = () => {
       </AnimatePresence>
 
       <div className="min-h-screen bg-transparent text-[#f0f4ff] font-sans selection:bg-[#3a9de8] selection:text-white">
+        {/* ── Development Phase LIVE Banner ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 20 : 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="relative w-full max-w-4xl rounded-2xl overflow-hidden mx-auto mt-6 border p-6 sm:p-4 shadow-2xl"
+        >
+          <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full blur-xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex gap-4 sm:gap-6 items-start">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/30">
+                <Rocket size={24} className="text-emerald-400" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 flex items-center gap-2 flex-wrap">
+                  The Development Phase is LIVE!
+                  <span className="inline-flex items-center gap-1 bg-red-500/20 text-red-400 text-[10px] uppercase tracking-widest px-2 py-0.5 rounded font-mono border border-red-500/30">
+                    <Timer size={12} /> Active Now
+                  </span>
+                </h3>
+                <p className="font-mono text-xs sm:text-sm text-emerald-100/80 leading-relaxed max-w-xl">
+                  Select a problem statement below and join as a{" "}
+                  <strong className="text-white">contributor</strong> to start
+                  working on tasks, or{" "}
+                  <strong className="text-white">
+                    upload your own problem statement
+                  </strong>{" "}
+                  to kickstart a brand new project.
+                </p>
+              </div>
+            </div>
+            <div className="flex-shrink-0 w-full md:w-auto mt-2 md:mt-0">
+              <Link
+                to="/problems"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 w-full bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold font-mono text-[12px] uppercase tracking-wider rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
+              >
+                <Zap size={16} /> Get Started
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+
         {/* ═══════════════════════════════════════════
             1. HERO SECTION
         ═══════════════════════════════════════════ */}
@@ -549,6 +596,54 @@ const Hero = () => {
               >
                 Join the Network
               </Link>
+            </motion.div>
+
+            {/* ── Development Phase LIVE Banner ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 20 : 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="relative w-full max-w-4xl rounded-2xl overflow-hidden mt-8 border p-6 sm:p-8 shadow-2xl"
+              style={{
+                background: "linear-gradient(90deg, #0f1c3f 0%, #064e3b 100%)",
+                borderColor: "#10b98140",
+              }}
+            >
+              <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full blur-xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div className="flex gap-4 sm:gap-6 items-start">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/30">
+                    <Rocket size={24} className="text-emerald-400" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 flex items-center gap-2 flex-wrap">
+                      The Development Phase is LIVE!
+                      <span className="inline-flex items-center gap-1 bg-red-500/20 text-red-400 text-[10px] uppercase tracking-widest px-2 py-0.5 rounded font-mono border border-red-500/30">
+                        <Timer size={12} /> Active Now
+                      </span>
+                    </h3>
+                    <p className="font-mono text-xs sm:text-sm text-emerald-100/80 leading-relaxed max-w-xl">
+                      Select a problem statement below and join as a{" "}
+                      <strong className="text-white">contributor</strong> to
+                      start working on tasks, or{" "}
+                      <strong className="text-white">
+                        upload your own problem statement
+                      </strong>{" "}
+                      to kickstart a brand new project.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-shrink-0 w-full md:w-auto mt-2 md:mt-0">
+                  <Link
+                    to="/problems"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 w-full bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold font-mono text-[12px] uppercase tracking-wider rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
+                  >
+                    <Zap size={16} /> Get Started
+                  </Link>
+                </div>
+              </div>
             </motion.div>
 
             <motion.div
