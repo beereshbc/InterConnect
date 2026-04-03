@@ -33,7 +33,6 @@ export const registerStudent = async (req, res) => {
       program,
       semester,
       usn,
-      github,
       department,
       branch,
       password,
@@ -54,9 +53,10 @@ export const registerStudent = async (req, res) => {
       phone,
       college,
       program,
+      semester, // Saved to DB
+      usn, // Saved to DB
       department: department || "",
       branch: branch || "",
-      githubLink: github || "",
       password: hashedPassword,
     });
 
@@ -77,7 +77,6 @@ export const registerStudent = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 export const loginStudent = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -270,6 +269,7 @@ export const createProblem = async (req, res) => {
       organization,
       department,
       contactInfo,
+      Phone, // <-- Extracted Phone from req.body
     } = req.body;
 
     // ─── SEQUENTIAL ID GENERATOR LOGIC ───────────────────────────────────────
@@ -306,6 +306,7 @@ export const createProblem = async (req, res) => {
       organization,
       department,
       contactInfo,
+      Phone, // <-- Added Phone to the new Problem object
       is_published: false,
     });
 

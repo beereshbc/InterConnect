@@ -174,6 +174,7 @@ const BTN_VARIANTS = {
     "bg-emerald-950 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-900",
   warn: "bg-amber-950 text-amber-400 border border-amber-500/30 hover:bg-amber-900",
   blue: "bg-blue-950 text-blue-400 border border-blue-500/30 hover:bg-blue-900",
+  info: "bg-purple-950 text-purple-400 border border-purple-500/30 hover:bg-purple-900",
 };
 
 const Btn = ({
@@ -369,6 +370,117 @@ const SectionLabel = ({ children, color = "#e85d3a" }) => (
   </div>
 );
 
+// ─── Info Row ─────────────────────────────────────────────────────────────────
+const InfoRow = ({ label, value, color = "#c4cedf" }) => (
+  <div className="bg-[#0c0f18] border border-slate-800 rounded-lg p-3">
+    <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
+      {label}
+    </div>
+    <div className="text-[12px] font-semibold font-mono mt-1" style={{ color }}>
+      {value || "—"}
+    </div>
+  </div>
+);
+
+// ─── Contributor Info Modal ───────────────────────────────────────────────────
+const ContributorInfoModal = ({ log, contributors, onClose }) => {
+  const student = (contributors || []).find(
+    (c) => c._id === log.contributorID || c.name === log.task_contributor,
+  );
+
+  return (
+    <Modal title="Contributor Info" onClose={onClose}>
+      {!student ? (
+        <div className="text-center py-8">
+          <div className="text-3xl opacity-20 mb-2">◌</div>
+          <p className="text-[11px] text-slate-600 font-mono">
+            {log.task_status === "open"
+              ? "No contributor has claimed this task yet."
+              : "Contributor details not found."}
+          </p>
+        </div>
+      ) : (
+        <div>
+          <div className="flex gap-4 items-start mb-6">
+            <Avatar name={student.name} size={48} />
+            <div className="flex-1">
+              <div className="text-[16px] font-extrabold text-slate-100 font-display">
+                {student.name}
+              </div>
+              <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                {student.email}
+              </div>
+              <div className="flex gap-2 mt-2 flex-wrap">
+                <StatusPill status={student.isBlocked ? "blocked" : "active"} />
+                {student.projectWiseContribution?.[0] && (
+                  <Badge color="#9c3ae8">
+                    {student.projectWiseContribution[0].role}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <InfoRow label="Phone" value={student.phone} color="#3a9de8" />
+            <InfoRow label="USN" value={student.usn} color="#fbbf24" />
+            <InfoRow label="Department" value={student.department} />
+            <InfoRow label="Branch" value={student.branch} />
+            <InfoRow label="Program" value={student.program} />
+            <InfoRow label="Semester" value={student.semester} />
+            <InfoRow label="College" value={student.college} />
+            <InfoRow
+              label="Total Score"
+              value={`${student.totalScore || 0} pts`}
+              color="#e85d3a"
+            />
+          </div>
+
+          {/* Task context */}
+          <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4 mb-4">
+            <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mb-2">
+              Claimed Task
+            </div>
+            <div className="text-[13px] font-bold text-slate-100 font-display mb-1">
+              {log.taskTitle}
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              <span className="text-[10px] text-amber-400 font-mono">
+                ⬡ {log.assignedTaskPoints} pts
+              </span>
+              {log.assignedAt && (
+                <span className="text-[10px] text-slate-500 font-mono">
+                  Claimed {fmtDate(log.assignedAt)}
+                </span>
+              )}
+              {log.deadlineAt && (
+                <span
+                  className={`text-[10px] font-mono ${daysLeft(log.deadlineAt) <= 0 ? "text-red-400" : "text-slate-500"}`}
+                >
+                  {daysLeft(log.deadlineAt) <= 0
+                    ? "⚠ Overdue"
+                    : `⏳ ${daysLeft(log.deadlineAt)}d remaining`}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {student.githubLink && (
+            <a
+              href={student.githubLink}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-blue-400 font-mono text-[12px] no-underline hover:text-blue-300 transition-colors"
+            >
+              ⌥ GitHub Profile ↗
+            </a>
+          )}
+        </div>
+      )}
+    </Modal>
+  );
+};
+
 // ─── MODAL: Edit Project ──────────────────────────────────────────────────────
 const EditProjectModal = ({ project, onClose, onSave }) => {
   const [form, setForm] = useState({
@@ -401,7 +513,6 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
   return (
     <Modal title={`Edit · ${project.projectID}`} onClose={onClose} wide>
       <SectionLabel color="#e85d3a">Project Data</SectionLabel>
-
       <Field
         label="Project Description"
         value={form.projectDescription}
@@ -422,7 +533,6 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
         onChange={set("liveHostedLink")}
         placeholder="https://..."
       />
-
       <div className="grid grid-cols-2 gap-4">
         <Field
           label="Resources Link"
@@ -439,7 +549,6 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           hint="Team communication platform link"
         />
       </div>
-
       <RangeField
         label="Progress Rate"
         value={form.projectProgressRate}
@@ -450,7 +559,6 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           }))
         }
       />
-
       <div className="flex items-center gap-3 mb-5 p-3.5 bg-red-950/40 rounded-xl border border-red-500/20">
         <input
           type="checkbox"
@@ -470,7 +578,6 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
       </div>
 
       <SectionLabel color="#3a9de8">Problem Data</SectionLabel>
-
       <Field
         label="Problem Title"
         value={form.title}
@@ -563,7 +670,6 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
   return (
     <Modal title={`Create Log · ${project.projectID}`} onClose={onClose} wide>
       <SectionLabel color="#4ade80">Task Details</SectionLabel>
-
       <Field
         label="Task Title"
         value={form.taskTitle}
@@ -594,7 +700,6 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
         required
         placeholder="https://github.com/.../issues/X"
       />
-
       <div className="grid grid-cols-2 gap-4">
         <RangeField
           label="Task Points"
@@ -624,7 +729,6 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
           unit=" days"
         />
       </div>
-
       <div className="p-3.5 bg-blue-950/30 border border-blue-500/20 rounded-xl mb-4">
         <p className="text-[11px] text-blue-400 font-mono">
           ℹ The log will be created as a <strong>draft</strong>. You must
@@ -632,7 +736,6 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
           starts only after a contributor claims the task.
         </p>
       </div>
-
       <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
         <Btn variant="secondary" onClick={onClose}>
           Cancel
@@ -677,7 +780,6 @@ const EditLogModal = ({ log, onClose, onUpdate }) => {
       wide
     >
       <SectionLabel color="#fbbf24">Update Task</SectionLabel>
-
       <Field
         label="Task Title"
         value={form.taskTitle}
@@ -704,7 +806,6 @@ const EditLogModal = ({ log, onClose, onUpdate }) => {
         onChange={set("githubIssueLink")}
         required
       />
-
       <div className="grid grid-cols-2 gap-4">
         <RangeField
           label="Task Points"
@@ -734,7 +835,6 @@ const EditLogModal = ({ log, onClose, onUpdate }) => {
           unit=" days"
         />
       </div>
-
       <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
         <Btn variant="secondary" onClick={onClose}>
           Cancel
@@ -784,9 +884,7 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
           </div>
         )}
       </div>
-
       <SectionLabel color="#4ade80">Completion Credentials</SectionLabel>
-
       <Field
         label="GitHub PR / Commit Link"
         value={form.githubPrLink}
@@ -813,7 +911,6 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
         type="textarea"
         placeholder="What was achieved? Any remarks for the contributor..."
       />
-
       <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
         <Btn variant="secondary" onClick={onClose}>
           Cancel
@@ -945,6 +1042,7 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
         </div>
       </div>
 
+      {/* Stats row */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
           {
@@ -977,12 +1075,18 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
         ))}
       </div>
 
+      {/* All essential details */}
       <div className="grid grid-cols-2 gap-3 mb-5">
         {[
           ["Department", student.department],
           ["Program", student.program],
-          ["College", student.college],
+          ["Branch", student.branch],
+          ["Semester", student.semester],
+          ["USN", student.usn],
           ["Phone", student.phone],
+          ["College", student.college],
+          ["Total Score", `${student.totalScore || 0} pts`],
+          ["Tasks Done", student.totalTasksCompleted || 0],
         ].map(([k, v]) => (
           <div
             key={k}
@@ -1058,12 +1162,14 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
 const LogCard = ({
   log,
   projectId,
+  contributors,
   onPublish,
   onEdit,
   onClose,
   onTerminate,
   onReopen,
 }) => {
+  const [showStudentInfo, setShowStudentInfo] = useState(false);
   const days = daysLeft(log.deadlineAt);
   const isOverdue =
     log.task_status === "assigned" && days !== null && days <= 0;
@@ -1077,174 +1183,192 @@ const LogCard = ({
     }[log.task_status] || "border-l-slate-700";
 
   return (
-    <div
-      className={`bg-[#0c0f18] border border-slate-800 border-l-2 ${statusBorder} rounded-xl p-5 transition-all duration-200`}
-    >
-      {/* Header row */}
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="min-w-0 flex-1">
-          <div
-            className="font-display font-bold text-[13px] leading-tight truncate mb-1"
-            style={{ color: "#f0f4ff" }}
-          >
-            {log.taskTitle}
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {log.task_contributor ? (
-              <div className="flex items-center gap-1.5 bg-[#131825] border border-slate-700/60 px-1.5 py-0.5 rounded-md">
-                <Avatar name={log.task_contributor} size={14} />
-                <span className="text-[10px] text-slate-300 font-mono truncate max-w-[120px]">
-                  {log.task_contributor}
+    <>
+      <div
+        className={`bg-[#0c0f18] border border-slate-800 border-l-2 ${statusBorder} rounded-xl p-5 transition-all duration-200`}
+      >
+        {/* Header row */}
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="min-w-0 flex-1">
+            <div
+              className="font-display font-bold text-[13px] leading-tight truncate mb-1"
+              style={{ color: "#f0f4ff" }}
+            >
+              {log.taskTitle}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {log.task_contributor ? (
+                <div className="flex items-center gap-1.5 bg-[#131825] border border-slate-700/60 px-1.5 py-0.5 rounded-md">
+                  <Avatar name={log.task_contributor} size={14} />
+                  <span className="text-[10px] text-slate-300 font-mono truncate max-w-[120px]">
+                    {log.task_contributor}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+                  Unassigned
                 </span>
-              </div>
-            ) : (
-              <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
-                Unassigned
+              )}
+              <span className="text-[10px] text-slate-600 font-mono">
+                · {fmtDate(log.createdAt)}
               </span>
-            )}
-            <span className="text-[10px] text-slate-600 font-mono">
-              · {fmtDate(log.createdAt)}
-            </span>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1.5">
+            <StatusPill status={isOverdue ? "terminated" : log.task_status} />
+            {!log.isPublished &&
+              log.task_status !== "completed" &&
+              log.task_status !== "terminated" && (
+                <span className="text-[9px] font-bold tracking-widest uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                  Draft
+                </span>
+              )}
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1.5">
-          <StatusPill status={isOverdue ? "terminated" : log.task_status} />
-          {!log.isPublished &&
-            log.task_status !== "completed" &&
-            log.task_status !== "terminated" && (
-              <span className="text-[9px] font-bold tracking-widest uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                Draft
-              </span>
-            )}
+
+        {/* Description */}
+        <p className="text-[11px] text-slate-500 font-mono leading-relaxed mb-3 line-clamp-2 mt-2">
+          {log.description}
+        </p>
+
+        {/* Requirements */}
+        {log.requirements && (
+          <details className="mb-3 group">
+            <summary className="text-[10px] text-slate-600 font-mono cursor-pointer hover:text-slate-400 transition-colors list-none flex items-center gap-1">
+              <span className="group-open:rotate-90 transition-transform inline-block">
+                ▶
+              </span>{" "}
+              Requirements
+            </summary>
+            <p className="text-[11px] text-slate-500 font-mono leading-relaxed mt-1.5 pl-3 border-l border-slate-700">
+              {log.requirements}
+            </p>
+          </details>
+        )}
+
+        {/* Meta row */}
+        <div className="flex flex-wrap gap-3 items-center mb-3">
+          <span className="text-[11px] text-amber-400 font-mono">
+            ⬡ {log.assignedTaskPoints} pts
+          </span>
+          <span className="text-[11px] text-blue-400 font-mono">
+            ⏱ {log.deadlineDays}d window
+          </span>
+          {log.assignedAt && (
+            <span className="text-[10px] text-slate-600 font-mono">
+              Claimed {fmtDate(log.assignedAt)}
+            </span>
+          )}
+          {log.task_status === "assigned" && log.deadlineAt && (
+            <span
+              className={`text-[11px] font-bold font-mono ${daysLeft(log.deadlineAt) <= 0 ? "text-red-400" : daysLeft(log.deadlineAt) <= 2 ? "text-orange-400" : "text-slate-400"}`}
+            >
+              {daysLeft(log.deadlineAt) <= 0
+                ? "⚠ Overdue"
+                : `⏳ ${daysLeft(log.deadlineAt)}d remaining`}
+            </span>
+          )}
+          {log.task_status === "completed" && log.closedAt && (
+            <span className="text-[10px] text-emerald-500 font-mono">
+              ✓ Closed {fmtDate(log.closedAt)}
+            </span>
+          )}
+          {log.task_status === "terminated" && log.closedAt && (
+            <span className="text-[10px] text-red-400 font-mono">
+              ✕ Terminated {fmtDate(log.closedAt)}
+            </span>
+          )}
         </div>
-      </div>
 
-      {/* Description */}
-      <p className="text-[11px] text-slate-500 font-mono leading-relaxed mb-3 line-clamp-2 mt-2">
-        {log.description}
-      </p>
-
-      {/* Requirements */}
-      {log.requirements && (
-        <details className="mb-3 group">
-          <summary className="text-[10px] text-slate-600 font-mono cursor-pointer hover:text-slate-400 transition-colors list-none flex items-center gap-1">
-            <span className="group-open:rotate-90 transition-transform inline-block">
-              ▶
-            </span>{" "}
-            Requirements
-          </summary>
-          <p className="text-[11px] text-slate-500 font-mono leading-relaxed mt-1.5 pl-3 border-l border-slate-700">
-            {log.requirements}
-          </p>
-        </details>
-      )}
-
-      {/* Meta row */}
-      <div className="flex flex-wrap gap-3 items-center mb-3">
-        <span className="text-[11px] text-amber-400 font-mono">
-          ⬡ {log.assignedTaskPoints} pts
-        </span>
-        <span className="text-[11px] text-blue-400 font-mono">
-          ⏱ {log.deadlineDays}d window
-        </span>
-        {log.assignedAt && (
-          <span className="text-[10px] text-slate-600 font-mono">
-            Claimed {fmtDate(log.assignedAt)}
-          </span>
-        )}
-        {log.task_status === "assigned" && log.deadlineAt && (
-          <span
-            className={`text-[11px] font-bold font-mono ${daysLeft(log.deadlineAt) <= 0 ? "text-red-400" : daysLeft(log.deadlineAt) <= 2 ? "text-orange-400" : "text-slate-400"}`}
-          >
-            {daysLeft(log.deadlineAt) <= 0
-              ? "⚠ Overdue"
-              : `⏳ ${daysLeft(log.deadlineAt)}d remaining`}
-          </span>
-        )}
-        {log.task_status === "completed" && log.closedAt && (
-          <span className="text-[10px] text-emerald-500 font-mono">
-            ✓ Closed {fmtDate(log.closedAt)}
-          </span>
-        )}
-        {log.task_status === "terminated" && log.closedAt && (
-          <span className="text-[10px] text-red-400 font-mono">
-            ✕ Terminated {fmtDate(log.closedAt)}
-          </span>
-        )}
-      </div>
-
-      {/* Links */}
-      <div className="flex gap-4 items-center mb-4">
-        <a
-          href={log.githubIssueLink}
-          target="_blank"
-          rel="noreferrer"
-          className="text-[11px] text-blue-400 font-mono hover:text-blue-300 transition-colors no-underline"
-        >
-          ⌥ Issue ↗
-        </a>
-        {log.githubPrLink && (
+        {/* Links */}
+        <div className="flex gap-4 items-center mb-4">
           <a
-            href={log.githubPrLink}
+            href={log.githubIssueLink}
             target="_blank"
             rel="noreferrer"
-            className="text-[11px] text-emerald-400 font-mono hover:text-emerald-300 transition-colors no-underline"
+            className="text-[11px] text-blue-400 font-mono hover:text-blue-300 transition-colors no-underline"
           >
-            ⌥ PR ↗
+            ⌥ Issue ↗
           </a>
-        )}
-        {log.closureNote && (
-          <span
-            className="text-[10px] text-slate-600 font-mono truncate max-w-[200px]"
-            title={log.closureNote}
-          >
-            Note: {log.closureNote}
-          </span>
-        )}
+          {log.githubPrLink && (
+            <a
+              href={log.githubPrLink}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[11px] text-emerald-400 font-mono hover:text-emerald-300 transition-colors no-underline"
+            >
+              ⌥ PR ↗
+            </a>
+          )}
+          {log.closureNote && (
+            <span
+              className="text-[10px] text-slate-600 font-mono truncate max-w-[200px]"
+              title={log.closureNote}
+            >
+              Note: {log.closureNote}
+            </span>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2 flex-wrap pt-3 border-t border-slate-800/60">
+          {/* Student Info button — always visible */}
+          <Btn variant="info" small onClick={() => setShowStudentInfo(true)}>
+            👤{" "}
+            {log.task_status === "open"
+              ? "Unassigned"
+              : log.task_contributor || "Student Info"}
+          </Btn>
+
+          {/* Publish / Unpublish */}
+          {log.task_status === "open" && (
+            <Btn
+              variant={log.isPublished ? "warn" : "blue"}
+              small
+              onClick={() => onPublish(log._id, log.isPublished)}
+            >
+              {log.isPublished ? "Unpublish" : "↑ Publish"}
+            </Btn>
+          )}
+
+          {/* Edit — only open/unpublished */}
+          {log.task_status === "open" && (
+            <Btn variant="secondary" small onClick={() => onEdit(log)}>
+              Edit
+            </Btn>
+          )}
+
+          {/* Close — assigned logs */}
+          {log.task_status === "assigned" && (
+            <Btn variant="success" small onClick={() => onClose(log)}>
+              ✓ Close
+            </Btn>
+          )}
+
+          {/* Terminate — open or assigned */}
+          {(log.task_status === "open" || log.task_status === "assigned") && (
+            <Btn variant="danger" small onClick={() => onTerminate(log)}>
+              Terminate
+            </Btn>
+          )}
+
+          {/* Reopen — terminated only */}
+          {log.task_status === "terminated" && (
+            <Btn variant="success" small onClick={() => onReopen(log)}>
+              ↺ Reopen
+            </Btn>
+          )}
+        </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-2 flex-wrap pt-3 border-t border-slate-800/60">
-        {/* Publish / Unpublish — only for open logs */}
-        {log.task_status === "open" && (
-          <Btn
-            variant={log.isPublished ? "warn" : "blue"}
-            small
-            onClick={() => onPublish(log._id, log.isPublished)}
-          >
-            {log.isPublished ? "Unpublish" : "↑ Publish"}
-          </Btn>
-        )}
-
-        {/* Edit — only open/unpublished */}
-        {log.task_status === "open" && (
-          <Btn variant="secondary" small onClick={() => onEdit(log)}>
-            Edit
-          </Btn>
-        )}
-
-        {/* Close — assigned logs */}
-        {log.task_status === "assigned" && (
-          <Btn variant="success" small onClick={() => onClose(log)}>
-            ✓ Close
-          </Btn>
-        )}
-
-        {/* Terminate — open or assigned */}
-        {(log.task_status === "open" || log.task_status === "assigned") && (
-          <Btn variant="danger" small onClick={() => onTerminate(log)}>
-            Terminate
-          </Btn>
-        )}
-
-        {/* Reopen — terminated only */}
-        {log.task_status === "terminated" && (
-          <Btn variant="success" small onClick={() => onReopen(log)}>
-            ↺ Reopen
-          </Btn>
-        )}
-      </div>
-    </div>
+      {showStudentInfo && (
+        <ContributorInfoModal
+          log={log}
+          contributors={contributors}
+          onClose={() => setShowStudentInfo(false)}
+        />
+      )}
+    </>
   );
 };
 
@@ -1272,6 +1396,10 @@ const WorkflowInsight = ({ project }) => {
     completed: "#4ade80",
     terminated: "#f87171",
   };
+
+  // Lookup student details from contributors
+  const findStudent = (name) =>
+    (project.contributors || []).find((c) => c.name === name);
 
   return (
     <div className="space-y-6 mt-2">
@@ -1313,9 +1441,16 @@ const WorkflowInsight = ({ project }) => {
               <div key={stu._id}>
                 <div className="flex items-center gap-2.5 mb-2.5">
                   <Avatar name={stu.name} size={26} />
-                  <span className="text-[12px] font-bold text-slate-200 font-display">
-                    {stu.name}
-                  </span>
+                  <div>
+                    <span className="text-[12px] font-bold text-slate-200 font-display">
+                      {stu.name}
+                    </span>
+                    {stu.phone && (
+                      <span className="text-[10px] text-slate-500 font-mono ml-2">
+                        · {stu.phone}
+                      </span>
+                    )}
+                  </div>
                   {contrib && <Badge color="#9c3ae8">{contrib.role}</Badge>}
                   <span className="ml-auto text-[11px] text-amber-400 font-mono">
                     ⬡ {pts} pts
@@ -1330,7 +1465,7 @@ const WorkflowInsight = ({ project }) => {
                     stu.logs.map((log, i) => (
                       <div key={log._id} className="flex items-center">
                         <div
-                          className="rounded-lg px-3 py-2 text-[11px] font-mono max-w-[180px]"
+                          className="rounded-lg px-3 py-2 text-[11px] font-mono max-w-[200px]"
                           style={{
                             background: `${statusColor[log.task_status]}18`,
                             border: `1px solid ${statusColor[log.task_status]}30`,
@@ -1346,10 +1481,26 @@ const WorkflowInsight = ({ project }) => {
                             {log.taskTitle.slice(0, 22)}
                             {log.taskTitle.length > 22 ? "…" : ""}
                           </div>
+                          {/* Show contributor name in assigned/completed tasks */}
+                          {log.task_contributor && (
+                            <div className="text-[9px] opacity-75 mt-0.5 flex items-center gap-1">
+                              <span>👤</span>
+                              <span>{log.task_contributor}</span>
+                            </div>
+                          )}
                           <div className="text-[9px] opacity-60 mt-0.5">
                             {log.assignedTaskPoints}pts ·{" "}
                             {fmtDate(log.createdAt)}
                           </div>
+                          {log.task_status === "assigned" && log.deadlineAt && (
+                            <div
+                              className={`text-[9px] mt-0.5 font-bold ${daysLeft(log.deadlineAt) <= 0 ? "opacity-100" : "opacity-70"}`}
+                            >
+                              {daysLeft(log.deadlineAt) <= 0
+                                ? "⚠ Overdue"
+                                : `⏳ ${daysLeft(log.deadlineAt)}d left`}
+                            </div>
+                          )}
                         </div>
                         {i < stu.logs.length - 1 && (
                           <div className="w-4 h-px bg-slate-700 mx-1" />
@@ -1372,50 +1523,63 @@ const WorkflowInsight = ({ project }) => {
           {timeline.length === 0 ? (
             <p className="text-[11px] text-slate-700 font-mono">No logs yet.</p>
           ) : (
-            timeline.map((log, i) => (
-              <div
-                key={log._id}
-                className={`relative ${i < timeline.length - 1 ? "mb-5" : ""}`}
-              >
+            timeline.map((log, i) => {
+              const student = findStudent(log.task_contributor);
+              return (
                 <div
-                  className="absolute -left-[22px] top-1 w-3 h-3 rounded-full border-2 border-[#0c0f18]"
-                  style={{
-                    background: statusColor[log.task_status],
-                    boxShadow: `0 0 8px ${statusColor[log.task_status]}60`,
-                  }}
-                />
-                <div className="flex justify-between items-start gap-2">
-                  <div>
-                    <div className="text-[12px] font-bold text-slate-100 font-display mb-1">
-                      {log.taskTitle}
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      {log.task_contributor ? (
-                        <div className="flex items-center gap-1">
-                          <Avatar name={log.task_contributor} size={12} />
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            {log.task_contributor}
+                  key={log._id}
+                  className={`relative ${i < timeline.length - 1 ? "mb-5" : ""}`}
+                >
+                  <div
+                    className="absolute -left-[22px] top-1 w-3 h-3 rounded-full border-2 border-[#0c0f18]"
+                    style={{
+                      background: statusColor[log.task_status],
+                      boxShadow: `0 0 8px ${statusColor[log.task_status]}60`,
+                    }}
+                  />
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <div className="text-[12px] font-bold text-slate-100 font-display mb-1">
+                        {log.taskTitle}
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {log.task_contributor ? (
+                          <div className="flex items-center gap-1">
+                            <Avatar name={log.task_contributor} size={13} />
+                            <span className="text-[10px] text-slate-300 font-mono font-bold">
+                              {log.task_contributor}
+                            </span>
+                            {student?.phone && (
+                              <span className="text-[10px] text-slate-500 font-mono">
+                                · {student.phone}
+                              </span>
+                            )}
+                            {student?.department && (
+                              <span className="text-[10px] text-slate-600 font-mono">
+                                · {student.department}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+                            Unassigned
                           </span>
-                        </div>
-                      ) : (
-                        <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
-                          Unassigned
+                        )}
+                        <span className="text-[10px] text-slate-600 font-mono">
+                          · {fmtDate(log.createdAt)}
                         </span>
-                      )}
-                      <span className="text-[10px] text-slate-600 font-mono">
-                        · {fmtDate(log.createdAt)}
-                      </span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-[10px] text-amber-400 font-mono">
-                      ⬡ {log.assignedTaskPoints}pt
-                    </span>
-                    <StatusPill status={log.task_status} />
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-[10px] text-amber-400 font-mono">
+                        ⬡ {log.assignedTaskPoints}pt
+                      </span>
+                      <StatusPill status={log.task_status} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
@@ -1468,7 +1632,6 @@ const ProjectView = ({
           borderBottom: "1px solid #1e2330",
         }}
       >
-        {/* decorative circles */}
         <div
           className="absolute -right-5 -top-5 w-40 h-40 rounded-full"
           style={{ background: "#e85d3a08", border: "1px solid #e85d3a15" }}
@@ -1561,7 +1724,6 @@ const ProjectView = ({
           ))}
         </div>
 
-        {/* Resource / Community links */}
         {(project.resourcesLink || project.communityLink) && (
           <div className="flex gap-3 mt-4 flex-wrap">
             {project.resourcesLink && (
@@ -1679,8 +1841,6 @@ const ProjectView = ({
                 ),
               )}
             </div>
-
-            {/* Resources & Community */}
             <div className="grid grid-cols-2 gap-4 mb-5">
               {[
                 {
@@ -1735,7 +1895,6 @@ const ProjectView = ({
                 ),
               )}
             </div>
-
             <p className="text-[10px] text-slate-700 font-mono">
               Created {fmtDate(project.createdAt)} ·{" "}
               {project.contributors?.length} contributors ·{" "}
@@ -1784,7 +1943,8 @@ const ProjectView = ({
                 </div>
               ))}
             </div>
-            <div className="bg-[#0c0f18] border border-slate-800 rounded-xl p-5 mb-4">
+
+            <div className="bg-[#0c0f18] border border-slate-800 rounded-xl p-5 mb-5">
               <div className="text-[10px] text-slate-600 font-mono uppercase tracking-widest mb-2">
                 Description
               </div>
@@ -1792,6 +1952,70 @@ const ProjectView = ({
                 {project.problem?.description}
               </p>
             </div>
+
+            {/* ── Assigned Coordinators ── */}
+            {project.coordinators?.length > 0 && (
+              <>
+                <SectionLabel color="#3a9de8">
+                  Assigned Coordinators
+                </SectionLabel>
+                <div
+                  className="grid gap-3 mb-5"
+                  style={{
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(260px, 1fr))",
+                  }}
+                >
+                  {project.coordinators.map((coord) => (
+                    <div
+                      key={coord._id}
+                      className="bg-[#0c0f18] border border-blue-500/20 rounded-xl p-4"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <Avatar name={coord.name} size={38} />
+                        <div>
+                          <div className="text-[13px] font-bold text-slate-100 font-display">
+                            {coord.name}
+                          </div>
+                          <Badge color="#3a9de8">Coordinator</Badge>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-slate-600 font-mono w-12 uppercase">
+                            Email
+                          </span>
+                          <span className="text-[11px] text-blue-400 font-mono truncate">
+                            {coord.email}
+                          </span>
+                        </div>
+                        {coord.phone && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-slate-600 font-mono w-12 uppercase">
+                              Phone
+                            </span>
+                            <span className="text-[11px] text-slate-300 font-mono">
+                              {coord.phone}
+                            </span>
+                          </div>
+                        )}
+                        {coord.college && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-slate-600 font-mono w-12 uppercase">
+                              College
+                            </span>
+                            <span className="text-[11px] text-slate-400 font-mono truncate">
+                              {coord.college}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
             <div className="flex gap-2 flex-wrap">
               {project.problem?.tags?.map((t) => (
                 <Badge key={t} color="#3a9de8">
@@ -1843,10 +2067,36 @@ const ProjectView = ({
                         status={stu.isBlocked ? "blocked" : "active"}
                       />
                     </div>
-                    <div className="flex gap-2 flex-wrap mb-3.5">
+
+                    <div className="flex gap-2 flex-wrap mb-3">
                       {contrib && <Badge color="#9c3ae8">{contrib.role}</Badge>}
                       <Badge color="#3a9de8">{stu.branch}</Badge>
                     </div>
+
+                    {/* Essential details grid */}
+                    <div className="grid grid-cols-2 gap-1.5 mb-3.5">
+                      {[
+                        ["Dept", stu.department],
+                        ["Phone", stu.phone],
+                        ["USN", stu.usn],
+                        ["Semester", stu.semester],
+                        ["Program", stu.program],
+                        ["College", stu.college],
+                      ].map(([k, v]) => (
+                        <div
+                          key={k}
+                          className="bg-slate-900/60 rounded-md px-2 py-1"
+                        >
+                          <span className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
+                            {k}{" "}
+                          </span>
+                          <span className="text-[10px] text-slate-300 font-mono">
+                            {v || "—"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
                     <div className="grid grid-cols-3 gap-2">
                       {[
                         ["Score", contrib?.contributionScore ?? 0, "#e85d3a"],
@@ -1888,11 +2138,7 @@ const ProjectView = ({
                     onClick={() => setLogFilter(key)}
                     className={`
                       px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-widest cursor-pointer transition-all
-                      ${
-                        logFilter === key
-                          ? "bg-[#e85d3a] text-white"
-                          : "bg-slate-900 text-slate-500 border border-slate-800 hover:text-slate-300"
-                      }
+                      ${logFilter === key ? "bg-[#e85d3a] text-white" : "bg-slate-900 text-slate-500 border border-slate-800 hover:text-slate-300"}
                     `}
                   >
                     {key} <span className="opacity-60">({count})</span>
@@ -1918,6 +2164,7 @@ const ProjectView = ({
                     key={log._id}
                     log={log}
                     projectId={project._id}
+                    contributors={project.contributors || []}
                     onPublish={(logId, isPublished) =>
                       onLogAction("publish", project._id, logId, {
                         isPublished,
@@ -1932,7 +2179,6 @@ const ProjectView = ({
               </div>
             )}
 
-            {/* Sub-modals triggered from log cards */}
             {editingLog && (
               <EditLogModal
                 log={editingLog}
@@ -2013,6 +2259,7 @@ const ManageProjects = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState(null);
+  const [adminProfile, setAdminProfile] = useState({ name: "", email: "" });
 
   const [editingProject, setEditingProject] = useState(null);
   const [creatingLog, setCreatingLog] = useState(null);
@@ -2020,10 +2267,24 @@ const ManageProjects = () => {
   const [viewingStudentLogs, setViewingStudentLogs] = useState([]);
 
   const showToast = (message, type = "success") => setToast({ message, type });
-
   const authHeader = { Authorization: `Bearer ${adminToken}` };
 
-  // ── Fetch ────────────────────────────────────────────────────────────────────
+  // ── Fetch admin profile ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!adminToken) return;
+    const fetchProfile = async () => {
+      try {
+        const { data } = await axios.get("/api/admin/profile", {
+          headers: authHeader,
+        });
+        if (data.success)
+          setAdminProfile({ name: data.admin.name, email: data.admin.email });
+      } catch (_) {}
+    };
+    fetchProfile();
+  }, [adminToken]);
+
+  // ── Fetch projects ────────────────────────────────────────────────────────
   const fetchProjects = useCallback(
     async (silent = false) => {
       silent ? setRefreshing(true) : setLoading(true);
@@ -2064,7 +2325,7 @@ const ManageProjects = () => {
     } catch (_) {}
   };
 
-  // ── Project save ─────────────────────────────────────────────────────────────
+  // ── Project save ──────────────────────────────────────────────────────────
   const handleSaveProject = async (form) => {
     try {
       const { data } = await axios.put(
@@ -2083,7 +2344,7 @@ const ManageProjects = () => {
     }
   };
 
-  // ── Create log ───────────────────────────────────────────────────────────────
+  // ── Create log ────────────────────────────────────────────────────────────
   const handleCreateLog = async (project, form) => {
     try {
       const { data } = await axios.post(
@@ -2103,7 +2364,7 @@ const ManageProjects = () => {
     }
   };
 
-  // ── Log lifecycle actions ────────────────────────────────────────────────────
+  // ── Log lifecycle actions ─────────────────────────────────────────────────
   const handleLogAction = async (action, projectId, logId, payload = {}) => {
     const routes = {
       publish: () =>
@@ -2129,7 +2390,6 @@ const ManageProjects = () => {
           headers: authHeader,
         }),
     };
-
     const messages = {
       publish: "Publish state toggled.",
       update: "Log updated.",
@@ -2137,7 +2397,6 @@ const ManageProjects = () => {
       terminate: "Log terminated.",
       reopen: "Log reopened and published.",
     };
-
     try {
       const { data } = await routes[action]();
       if (data.success) {
@@ -2208,14 +2467,15 @@ const ManageProjects = () => {
               {refreshing ? <Spinner size={11} /> : "↻"}{" "}
               {refreshing ? "Syncing…" : "Sync"}
             </button>
-            <div className="flex items-center gap-2">
-              <Avatar name="Admin User" size={30} />
+            {/* ── Admin Info (real data from API) ── */}
+            <div className="flex items-center gap-2.5 pl-3 border-l border-slate-800">
+              <Avatar name={adminProfile.name || "Admin"} size={32} />
               <div>
-                <div className="text-[11px] font-bold text-slate-300">
-                  Admin
+                <div className="text-[12px] font-bold text-slate-200 font-display leading-tight">
+                  {adminProfile.name || "Admin"}
                 </div>
-                <div className="text-[9px] text-slate-600 font-mono">
-                  admin@inteconnect.io
+                <div className="text-[9px] text-slate-600 font-mono leading-tight">
+                  {adminProfile.email || "—"}
                 </div>
               </div>
             </div>

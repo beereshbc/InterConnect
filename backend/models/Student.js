@@ -15,10 +15,12 @@ const studentSchema = new mongoose.Schema(
     image: { type: String, default: "" },
     isBlocked: { type: Boolean, default: false },
 
-    githubLink: { type: String, trim: true, default: "" },
+    // Essential fields added
+    usn: { type: String, required: true, trim: true },
+    semester: { type: String, required: true, trim: true },
+
     department: { type: String, trim: true, default: "" },
     program: { type: String, trim: true, default: "" },
-    branch: { type: String, trim: true, default: "" },
     college: { type: String, trim: true, default: "" },
 
     projects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Project" }],
@@ -29,7 +31,7 @@ const studentSchema = new mongoose.Schema(
         project: { type: mongoose.Schema.Types.ObjectId, ref: "Project" },
         contributionScore: { type: Number, default: 0 },
         tasksCompleted: { type: Number, default: 0 },
-        role: { type: String, default: "Contributor" }, // ← RESTORED
+        role: { type: String, default: "Contributor" },
         description: { type: String, default: "" },
       },
     ],

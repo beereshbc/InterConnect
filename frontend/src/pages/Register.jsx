@@ -7,7 +7,6 @@ import {
   Phone,
   Building,
   Hash,
-  Github,
   BookOpen,
   GraduationCap,
   ArrowRight,
@@ -15,7 +14,6 @@ import {
   Eye,
   EyeOff,
   Terminal,
-  Shield,
   Cpu,
   Key,
   ArrowLeft,
@@ -25,6 +23,7 @@ import {
   Users,
   Lightbulb,
   Trophy,
+  Briefcase, // Added for Department
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -88,10 +87,10 @@ const Register = () => {
     email: "",
     phone: "",
     college: "",
+    department: "", // Added to map with Schema
     program: "",
     semester: "",
     usn: "",
-    github: "",
     password: "",
   });
 
@@ -568,10 +567,10 @@ const Register = () => {
                             required
                           />
                           <InputField
-                            icon={Hash}
-                            name="usn"
-                            placeholder="USN / Roll Number"
-                            value={formData.usn}
+                            icon={Briefcase}
+                            name="department"
+                            placeholder="Department (e.g., CS, IS)"
+                            value={formData.department}
                             onChange={handleChange}
                             required
                           />
@@ -585,7 +584,6 @@ const Register = () => {
                             options={PROGRAMS}
                             required
                           />
-
                           <SelectField
                             icon={GraduationCap}
                             name="semester"
@@ -598,11 +596,10 @@ const Register = () => {
 
                           <div className="sm:col-span-2">
                             <InputField
-                              icon={Github}
-                              name="github"
-                              placeholder="GitHub Profile URL"
-                              type="url"
-                              value={formData.github}
+                              icon={Hash}
+                              name="usn"
+                              placeholder="USN / Roll Number"
+                              value={formData.usn}
                               onChange={handleChange}
                               required
                             />

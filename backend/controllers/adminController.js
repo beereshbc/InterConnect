@@ -192,6 +192,14 @@ export const getAdminProfile = async (req, res) => {
 // PROJECTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ─── ONLY THE CHANGED SECTIONS ARE SHOWN BELOW ───────────────────────────────
+// Replace the existing getAssignedProjects, getProjectById, and updateProject
+// with these versions. Everything else in the controller stays the same.
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROJECTS  (updated populate strings)
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export const getAssignedProjects = async (req, res) => {
   try {
     const projects = await Project.find({ coordinators: req.adminId })
@@ -202,8 +210,9 @@ export const getAssignedProjects = async (req, res) => {
       })
       .populate({
         path: "contributors",
+        // ✅ Added: phone, usn, semester, githubLink for student-info panels
         select:
-          "name email phone department program branch college githubLink isBlocked projectWiseContribution totalScore",
+          "name email phone usn semester department program branch college githubLink isBlocked projectWiseContribution totalScore totalTasksCompleted",
       })
       .populate({
         path: "logs",
@@ -214,7 +223,11 @@ export const getAssignedProjects = async (req, res) => {
         path: "topContributors",
         select: "name email department totalScore",
       })
-      .populate({ path: "coordinators", select: "name email" })
+      // ✅ Added: phone and college for coordinator info card in Problem tab
+      .populate({
+        path: "coordinators",
+        select: "name email phone college branch",
+      })
       .sort({ createdAt: -1 });
     res.json({ success: true, count: projects.length, projects });
   } catch (e) {
@@ -235,8 +248,9 @@ export const getProjectById = async (req, res) => {
       })
       .populate({
         path: "contributors",
+        // ✅ Added: phone, usn, semester, githubLink
         select:
-          "name email phone department program branch college githubLink isBlocked projectWiseContribution totalScore",
+          "name email phone usn semester department program branch college githubLink isBlocked projectWiseContribution totalScore totalTasksCompleted",
       })
       .populate({
         path: "logs",
@@ -246,7 +260,13 @@ export const getProjectById = async (req, res) => {
       .populate({
         path: "topContributors",
         select: "name email department totalScore",
+      })
+      // ✅ Added: phone and college for coordinator card
+      .populate({
+        path: "coordinators",
+        select: "name email phone college branch",
       });
+
     if (!project)
       return res.status(404).json({
         success: false,
@@ -258,6 +278,7 @@ export const getProjectById = async (req, res) => {
   }
 };
 
+// updateProject — repopulate with the same extended fields after save
 export const updateProject = async (req, res) => {
   try {
     const project = await Project.findOne({
@@ -315,15 +336,21 @@ export const updateProject = async (req, res) => {
         { runValidators: true },
       );
 
+    // ✅ Re-populate with extended coordinator + contributor fields
     const updated = await Project.findById(project._id)
       .populate("problem")
       .populate({
         path: "contributors",
         select:
-          "name email department branch totalScore projectWiseContribution",
+          "name email phone usn semester department program branch college githubLink isBlocked projectWiseContribution totalScore totalTasksCompleted",
       })
       .populate("logs")
-      .populate({ path: "topContributors", select: "name email" });
+      .populate({ path: "topContributors", select: "name email" })
+      .populate({
+        path: "coordinators",
+        select: "name email phone college branch",
+      });
+
     res.json({ success: true, message: "Project updated.", project: updated });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });

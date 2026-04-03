@@ -15,6 +15,9 @@ import {
   Search,
   SlidersHorizontal,
   ChevronDown,
+  Phone,
+  Rocket, // Added for the new banner
+  Timer, // Added for the new banner
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
@@ -80,10 +83,12 @@ const Input = ({
   placeholder,
   required,
   className = "",
+  type = "text",
 }) => (
   <div className={className}>
     <Label required={required}>{label}</Label>
     <input
+      type={type}
       name={name}
       value={value}
       onChange={onChange}
@@ -262,6 +267,9 @@ const Problems = () => {
   const [submitting, setSubmitting] = useState(false);
   const [joining, setJoining] = useState(false);
 
+  // Show Development Banner State
+  const [showDevBanner, setShowDevBanner] = useState(true);
+
   // ── Search & Filter State ──
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -303,8 +311,10 @@ const Problems = () => {
     organization: "",
     department: "",
     contactInfo: "",
+    Phone: "",
   });
 
+  // Editor Configuration
   const joditConfig = useMemo(
     () => ({
       theme: "dark",
@@ -332,6 +342,10 @@ const Problems = () => {
         "redo",
       ],
       toolbarAdaptive: false,
+      removeButtons: ["hr", "source", "fullsize"],
+      askBeforePasteHTML: false,
+      askBeforePasteFromWord: false,
+      defaultActionOnPaste: "insert_as_html",
     }),
     [],
   );
@@ -392,6 +406,7 @@ const Problems = () => {
           organization: "",
           department: "",
           contactInfo: "",
+          Phone: "",
         });
       }
     } catch (error) {
@@ -427,7 +442,6 @@ const Problems = () => {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return problems.filter((p) => {
-      // Global text search across all meaningful fields
       const searchFields = [
         p.title,
         p.organization,
@@ -436,13 +450,13 @@ const Problems = () => {
         p.department,
         p.ownerName,
         p.contactInfo,
+        p.Phone,
         p.problemID,
         ...(p.tags || []),
       ].map((v) => (v || "").toLowerCase());
 
       const matchesSearch = !q || searchFields.some((f) => f.includes(q));
 
-      // Dropdown filters
       const matchTheme =
         !filters.theme ||
         (p.theme || "").toLowerCase() === filters.theme.toLowerCase();
@@ -542,10 +556,22 @@ const Problems = () => {
         ::-webkit-scrollbar-track{background:transparent}
         ::-webkit-scrollbar-thumb{background:#2a2f3a;border-radius:4px}
         .prob-row:hover{background:rgba(255,255,255,0.025)!important}
+        
+        /* Jodit Editor Styling */
         .jodit-container{border-color:#1e2330!important}
         .jodit-workplace{background:#0d1017!important}
         .jodit-toolbar{background:#0d1017!important;border-color:#1e2330!important}
         mark{background:#1e2d6b;color:#a5b4fc;border-radius:3px;padding:0 2px}
+
+        /* Rich Text Viewer Resets (Crucial for overriding Tailwind stripping lists/bold) */
+        .rich-text-viewer ul { list-style-type: disc !important; padding-left: 1.5rem !important; margin-bottom: 1rem !important; }
+        .rich-text-viewer ol { list-style-type: decimal !important; padding-left: 1.5rem !important; margin-bottom: 1rem !important; }
+        .rich-text-viewer li { margin-bottom: 0.25rem !important; display: list-item !important; }
+        .rich-text-viewer b, .rich-text-viewer strong { font-weight: 700 !important; color: #e2e8f0; }
+        .rich-text-viewer i, .rich-text-viewer em { font-style: italic !important; }
+        .rich-text-viewer u { text-decoration: underline !important; }
+        .rich-text-viewer p { margin-bottom: 0.75rem !important; }
+        .rich-text-viewer a { color: #3b5bdb !important; text-decoration: underline !important; }
       `}</style>
 
       <div
@@ -594,6 +620,65 @@ const Problems = () => {
             <span className="xs:hidden">Upload</span>
           </button>
         </div>
+
+        {/* ── Development Phase LIVE Banner ── */}
+        <AnimatePresence>
+          {showDevBanner && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              className="relative w-full rounded-xl overflow-hidden mb-6 border"
+              style={{
+                background: "linear-gradient(90deg, #0f1c3f 0%, #064e3b 100%)",
+                borderColor: "#10b98140",
+              }}
+            >
+              {/* Abstract decorative shapes */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/10 rounded-full blur-xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
+
+              <div className="relative z-10 px-5 py-4 sm:px-6 sm:py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex gap-4 items-start">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 border border-emerald-500/30">
+                    <Rocket size={20} className="text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-[15px] sm:text-[17px] text-white mb-1 flex items-center gap-2">
+                      The Development Phase is LIVE!
+                      <span className="inline-flex items-center gap-1 bg-red-500/20 text-red-400 text-[10px] uppercase tracking-widest px-2 py-0.5 rounded font-mono border border-red-500/30">
+                        <Timer size={10} /> Active Now
+                      </span>
+                    </h3>
+                    <p className="font-mono text-[12px] sm:text-[13px] text-emerald-100/70 leading-relaxed max-w-2xl">
+                      Select a problem statement below and join as a{" "}
+                      <strong>contributor</strong> to start working on tasks, or{" "}
+                      <strong>upload your own problem statement</strong> to
+                      kickstart a brand new project.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+                  <button
+                    onClick={handleUploadClick}
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold font-mono text-[12px] uppercase tracking-wider rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Plus size={14} strokeWidth={3} />
+                    Upload Statement
+                  </button>
+                  <button
+                    onClick={() => setShowDevBanner(false)}
+                    className="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/60 border border-emerald-500/20 transition-colors"
+                    aria-label="Dismiss"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Search Bar ── */}
         <div className="mb-3">
@@ -1128,14 +1213,22 @@ const Problems = () => {
                     onChange={handleChange}
                     placeholder="Your Full Name"
                     required
+                    className="sm:col-span-2"
                   />
                   <Input
-                    label="Contact Info"
+                    label="Email Address"
                     name="contactInfo"
                     value={formData.contactInfo}
                     onChange={handleChange}
-                    placeholder="Email or Phone"
-                    className="sm:col-span-2"
+                    placeholder="name@company.com"
+                  />
+                  <Input
+                    label="Phone Number"
+                    name="Phone"
+                    type="tel"
+                    value={formData.Phone}
+                    onChange={handleChange}
+                    placeholder="+91 9876543210"
                   />
                   <Input
                     label="Tags (comma separated)"
@@ -1157,8 +1250,8 @@ const Problems = () => {
                       ref={editorRef}
                       value={formData.description}
                       config={joditConfig}
-                      onBlur={(c) =>
-                        setFormData({ ...formData, description: c })
+                      onBlur={(newContent) =>
+                        setFormData({ ...formData, description: newContent })
                       }
                     />
                   </div>
@@ -1216,7 +1309,7 @@ const Problems = () => {
                     }}
                   >
                     <div
-                      className="font-mono text-[13px] leading-relaxed"
+                      className="rich-text-viewer font-mono text-[13px] leading-relaxed"
                       style={{ color: "#8a95a8" }}
                       dangerouslySetInnerHTML={{
                         __html: selectedProblem.description,
@@ -1253,9 +1346,16 @@ const Problems = () => {
                   />
                   <DetailBox
                     icon={Mail}
-                    label="Contact"
+                    label="Email"
                     value={selectedProblem.contactInfo}
                   />
+                  {selectedProblem.Phone && (
+                    <DetailBox
+                      icon={Phone}
+                      label="Phone"
+                      value={selectedProblem.Phone}
+                    />
+                  )}
                 </div>
 
                 {selectedProblem.tags?.length > 0 && (

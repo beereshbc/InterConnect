@@ -67,7 +67,6 @@ const App = () => {
           {/* Public Routes - Anyone can see these */}
           <Route path="/" element={<Home />} />
           <Route path="/problems" element={<Problems />} />
-          <Route path="/leaderboard" element={<LeaderBoard />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/about" element={<About />} />
           <Route path="/sponsored" element={<Sponsored />} />
@@ -77,6 +76,16 @@ const App = () => {
             path="/register"
             element={
               studentToken ? <Navigate to="/dashboard" replace /> : <Register />
+            }
+          />
+          <Route
+            path="/leaderboard"
+            element={
+              studentToken ? (
+                <LeaderBoard />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
             }
           />
           <Route
