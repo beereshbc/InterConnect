@@ -182,7 +182,7 @@ const Hero = () => {
         .ic-badge { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; background: rgba(59,91,219,0.08); border: 1px solid rgba(59,91,219,0.18); border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: #6080f5; letter-spacing: 0.08em; text-transform: uppercase; }
         .ic-badge__dot { width: 6px; height: 6px; border-radius: 50%; background: #6080f5; animation: ic-pulse 2s ease-in-out infinite; }
         @keyframes ic-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(0.7)} }
-        .ic-title { font-family: 'Syne', sans-serif; font-size: clamp(30px, 6vw, 84px); font-weight: 800; color: #e8edf5; line-height: 1.05; letter-spacing: -0.03em; margin: 0; text-align: center; }
+        .ic-title { font-family: 'Syne', sans-serif; font-size: clamp(30px, 6vw, 84px); font-weight: 800; color: #e8edf5; line-height: 1.05; letter-spacing: -0.03em; margin: 2px 0; text-align: center; }
         .ic-title__year { color: #3b5bdb; position: relative; }
         .ic-title__year::after { content: ''; position: absolute; bottom: 4px; left: 0; right: 0; height: 3px; background: #3b5bdb; border-radius: 2px; opacity: 0.5; }
         .ic-rule { width: 60px; height: 2px; background: rgba(59,91,219,0.4); border-radius: 2px; margin: 20px auto; }

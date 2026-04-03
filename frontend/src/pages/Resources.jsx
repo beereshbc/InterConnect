@@ -5,29 +5,28 @@ import {
   Bell,
   BookOpen,
   Pin,
-  ExternalLink,
-  Download,
   AlertCircle,
   CheckCircle,
   Clock,
   Info,
-  FileCode2,
-  Figma,
-  Terminal,
-  Database,
+  Youtube,
+  FileText,
+  Download,
+  ExternalLink,
   Layers,
+  Play,
 } from "lucide-react";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const Resources = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [videoReady, setVideoReady] = useState(false);
 
   // Fetch published notifications
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        // Adjust this endpoint based on your router setup
         const { data } = await axios.get("/api/student/notifications");
         setNotifications(data.notifications || []);
       } catch (error) {
@@ -53,45 +52,9 @@ const Resources = () => {
     }
   };
 
-  // Dummy resources data
-  const STATIC_RESOURCES = [
-    {
-      title: "InterConnect 26.O GitHub Template",
-      description:
-        "The official boilerplate repository with pre-configured linting, folders, and README structures.",
-      category: "Code",
-      icon: <FileCode2 size={20} className="text-[#3a9de8]" />,
-      color: "#3a9de8",
-      link: "#",
-    },
-    {
-      title: "UI/UX Design Kit (Figma)",
-      description:
-        "Official color palettes, typography, and logo assets to use in your project presentations.",
-      category: "Design",
-      icon: <Figma size={20} className="text-[#9c3ae8]" />,
-      color: "#9c3ae8",
-      link: "#",
-    },
-    {
-      title: "API Documentation Guidelines",
-      description:
-        "Standard practices for documenting your backend endpoints for the final evaluation.",
-      category: "Docs",
-      icon: <Terminal size={20} className="text-[#4ade80]" />,
-      color: "#4ade80",
-      link: "#",
-    },
-    {
-      title: "Sample Database Schemas",
-      description:
-        "Common architecture patterns for E-commerce, Healthcare, and Social platforms.",
-      category: "Database",
-      icon: <Database size={20} className="text-[#fbbf24]" />,
-      color: "#fbbf24",
-      link: "#",
-    },
-  ];
+  // YouTube video ID
+  const YOUTUBE_VIDEO_ID = "apGV9Kg7ics";
+  const YOUTUBE_THUMB = `https://img.youtube.com/vi/${YOUTUBE_VIDEO_ID}/maxresdefault.jpg`;
 
   return (
     <>
@@ -99,17 +62,63 @@ const Resources = () => {
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500;700&display=swap');
         .font-display { font-family: 'Syne', sans-serif; }
         .font-mono    { font-family: 'DM Mono', monospace; }
-        
-        /* Custom Scrollbar matching Leaderboard */
+
+        /* Custom Scrollbar */
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #2a3045; border-radius: 3px; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background: #3a9de8; }
+
+        /* YouTube thumbnail fade */
+        .yt-thumb-overlay {
+          background: linear-gradient(135deg, rgba(10,13,22,0.55) 0%, rgba(10,13,22,0.3) 100%);
+          transition: background 0.25s ease;
+        }
+        .yt-thumb-overlay:hover {
+          background: linear-gradient(135deg, rgba(10,13,22,0.2) 0%, rgba(10,13,22,0.1) 100%);
+        }
+        .yt-play-btn {
+          transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease;
+        }
+        .yt-play-btn:hover {
+          transform: scale(1.13);
+          box-shadow: 0 0 32px #ff000060;
+        }
+
+        /* PDF card shimmer line */
+        @keyframes shimmer {
+          0%   { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .pdf-shimmer::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+          animation: shimmer 2.8s infinite;
+        }
+
+        /* Iframe responsive */
+        .video-iframe-wrapper {
+          position: relative;
+          width: 100%;
+          padding-bottom: 56.25%;
+          height: 0;
+          overflow: hidden;
+          border-radius: 12px;
+        }
+        .video-iframe-wrapper iframe {
+          position: absolute;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+          border: none;
+          border-radius: 12px;
+        }
       `}</style>
 
       <div
         className="min-h-screen font-mono pt-24 pb-10 px-4 sm:px-8 relative overflow-hidden"
-        style={{ background: "#", color: "#f0f4ff" }}
+        style={{ background: "#080b14", color: "#f0f4ff" }}
       >
         {/* Ambient Background Glows */}
         <div className="fixed inset-0 pointer-events-none z-0">
@@ -130,7 +139,7 @@ const Resources = () => {
         </div>
 
         <div className="relative z-10 max-w-[1200px] mx-auto">
-          {/* Header */}
+          {/* ── Page Header ── */}
           <div className="flex flex-col items-center justify-center text-center mb-10">
             <div
               className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
@@ -152,10 +161,10 @@ const Resources = () => {
             </p>
           </div>
 
-          {/* Two Equal Panels Grid */}
+          {/* ── Two-Panel Grid ── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            {/* ── LEFT PANEL: NOTIFICATIONS ── */}
-            <div className="flex flex-col h-[600px] lg:h-[650px]">
+            {/* ════ LEFT PANEL: NOTIFICATIONS ════ */}
+            <div className="flex flex-col h-[600px] lg:h-[700px]">
               <div
                 className="rounded-2xl flex flex-col h-full overflow-hidden"
                 style={{
@@ -182,7 +191,7 @@ const Resources = () => {
                   )}
                 </div>
 
-                {/* Panel Body (Scrollable) */}
+                {/* Panel Body */}
                 <div className="p-5 overflow-y-auto custom-scroll flex-1">
                   {loading ? (
                     <div className="flex flex-col items-center justify-center h-full gap-4">
@@ -230,10 +239,7 @@ const Resources = () => {
                               <div className="flex items-start gap-3">
                                 <div
                                   className="mt-0.5 p-1.5 rounded-lg flex-shrink-0"
-                                  style={{
-                                    background: `${color}15`,
-                                    color: color,
-                                  }}
+                                  style={{ background: `${color}15`, color }}
                                 >
                                   {icon}
                                 </div>
@@ -266,8 +272,8 @@ const Resources = () => {
               </div>
             </div>
 
-            {/* ── RIGHT PANEL: RESOURCES ── */}
-            <div className="flex flex-col h-[600px] lg:h-[650px]">
+            {/* ════ RIGHT PANEL: PROJECT TOOLKIT ════ */}
+            <div className="flex flex-col h-[600px] lg:h-[700px]">
               <div
                 className="rounded-2xl flex flex-col h-full overflow-hidden"
                 style={{
@@ -287,94 +293,288 @@ const Resources = () => {
                       Project Toolkit
                     </span>
                   </div>
+                  <span
+                    className="text-[9px] font-mono px-2 py-0.5 rounded-full uppercase tracking-wider"
+                    style={{
+                      background: "#3a9de820",
+                      color: "#3a9de8",
+                      border: "1px solid #3a9de830",
+                    }}
+                  >
+                    2 Resources
+                  </span>
                 </div>
 
-                {/* Panel Body (Scrollable) */}
-                <div className="p-5 overflow-y-auto custom-scroll flex-1">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
-                    {STATIC_RESOURCES.map((res, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        className="rounded-xl p-5 flex flex-col h-full transition-colors hover:bg-[#131925]/80"
+                {/* Panel Body */}
+                <div className="p-5 overflow-y-auto custom-scroll flex-1 flex flex-col gap-5">
+                  {/* ── 1. YouTube Tutorial Card ── */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 }}
+                    className="rounded-xl overflow-hidden flex flex-col"
+                    style={{
+                      background: "#101520",
+                      border: "1px solid #1e2840",
+                    }}
+                  >
+                    {/* Card Header */}
+                    <div className="px-4 pt-4 pb-3 flex items-center gap-3 border-b border-slate-800/50">
+                      <div
+                        className="p-2 rounded-lg"
                         style={{
-                          background: "#101520",
-                          border: "1px solid #1e2840",
+                          background: "#ff000018",
+                          border: "1px solid #ff000030",
                         }}
                       >
-                        <div className="flex items-center gap-3 mb-3">
-                          <div
-                            className="p-2 rounded-lg border border-[#1e2840]"
-                            style={{ background: `${res.color}15` }}
-                          >
-                            {res.icon}
+                        <Youtube size={16} className="text-[#ff4545]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-display font-bold text-[13px] text-slate-100 leading-tight truncate">
+                          Git & GitHub — Version Control Tutorial
+                        </h3>
+                        <p className="text-[10px] text-slate-500 mt-0.5 tracking-wide">
+                          YouTube · Official InterConnect Resource
+                        </p>
+                      </div>
+                      <span
+                        className="shrink-0 text-[9px] uppercase tracking-widest px-2 py-0.5 rounded"
+                        style={{
+                          background: "#ff000018",
+                          color: "#ff4545",
+                          border: "1px solid #ff000025",
+                        }}
+                      >
+                        Video
+                      </span>
+                    </div>
+
+                    {/* Thumbnail / Embed Toggle */}
+                    <div className="px-4 pt-4 pb-2">
+                      {!videoReady ? (
+                        /* Thumbnail Clickable Preview */
+                        <div
+                          className="relative rounded-xl overflow-hidden cursor-pointer group"
+                          style={{ aspectRatio: "16/9" }}
+                          onClick={() => setVideoReady(true)}
+                        >
+                          <img
+                            src={YOUTUBE_THUMB}
+                            alt="Video thumbnail"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.src = `https://img.youtube.com/vi/${YOUTUBE_VIDEO_ID}/hqdefault.jpg`;
+                            }}
+                          />
+                          {/* Overlay */}
+                          <div className="yt-thumb-overlay absolute inset-0" />
+                          {/* Play Button */}
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div
+                              className="yt-play-btn w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center"
+                              style={{
+                                background: "#ff0000ee",
+                                boxShadow: "0 0 24px #ff000050",
+                              }}
+                            >
+                              <Play
+                                size={22}
+                                fill="white"
+                                className="text-white ml-1"
+                              />
+                            </div>
                           </div>
-                          <span
-                            className="text-[9px] uppercase tracking-widest px-2 py-1 rounded"
+                          {/* Click to play hint */}
+                          <div
+                            className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-widest px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                             style={{
-                              background: "#131925",
-                              color: res.color,
-                              border: "1px solid #1e2840",
+                              background: "#000000aa",
+                              color: "#ffffffcc",
                             }}
                           >
-                            {res.category}
+                            Click to play
+                          </div>
+                        </div>
+                      ) : (
+                        /* Actual iframe embed */
+                        <div className="video-iframe-wrapper">
+                          <iframe
+                            src={`https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&rel=0&modestbranding=1`}
+                            title="Git & GitHub Version Control Tutorial"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Description + Action */}
+                    <div className="px-4 pb-4 pt-2">
+                      <p className="font-sans text-[11px] text-slate-400 leading-relaxed mb-3">
+                        Learn the fundamentals of version control using Git and
+                        GitHub — covering commits, branches, pull requests, and
+                        collaborative workflows essential for InterConnect 26.O.
+                      </p>
+                      <a
+                        href={`https://youtu.be/${YOUTUBE_VIDEO_ID}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg px-3 py-2 transition-colors hover:opacity-80"
+                        style={{
+                          background: "#ff000018",
+                          color: "#ff4545",
+                          border: "1px solid #ff000030",
+                        }}
+                      >
+                        <ExternalLink size={11} /> Open on YouTube
+                      </a>
+                    </div>
+                  </motion.div>
+
+                  {/* ── 2. Rulebook PDF Card ── */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="rounded-xl overflow-hidden relative pdf-shimmer flex flex-col"
+                    style={{
+                      background: "#101520",
+                      border: "1px solid #1e2840",
+                    }}
+                  >
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5">
+                      {/* PDF Icon Block */}
+                      <div
+                        className="shrink-0 w-14 h-16 sm:w-12 sm:h-14 rounded-xl flex flex-col items-center justify-center relative overflow-hidden"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, #1e2840 0%, #131925 100%)",
+                          border: "1px solid #2a3a55",
+                        }}
+                      >
+                        {/* Folded corner */}
+                        <div
+                          className="absolute top-0 right-0 w-4 h-4"
+                          style={{
+                            background: "#0c0f18",
+                            clipPath: "polygon(100% 0, 0 0, 100% 100%)",
+                            borderLeft: "1px solid #2a3a55",
+                            borderBottom: "1px solid #2a3a55",
+                          }}
+                        />
+                        <FileText size={22} className="text-[#e84040]" />
+                        <span
+                          className="text-[7px] font-bold mt-1 tracking-widest"
+                          style={{ color: "#e84040" }}
+                        >
+                          PDF
+                        </span>
+                      </div>
+
+                      {/* Text Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h3 className="font-display font-bold text-[14px] text-slate-100 leading-tight">
+                            InterConnect 26.O — Official Rulebook
+                          </h3>
+                          <span
+                            className="text-[8px] uppercase tracking-widest px-2 py-0.5 rounded font-bold"
+                            style={{
+                              background: "#e8404018",
+                              color: "#e84040",
+                              border: "1px solid #e8404030",
+                            }}
+                          >
+                            Rulebook
                           </span>
                         </div>
-
-                        <h3 className="font-display font-bold text-[14px] text-slate-100 leading-tight mb-2">
-                          {res.title}
-                        </h3>
-                        <p className="font-sans text-[12px] text-slate-400 leading-relaxed mb-4 flex-grow">
-                          {res.description}
+                        <p className="font-sans text-[11px] text-slate-400 leading-relaxed mb-3">
+                          The complete official guidelines, judging criteria,
+                          submission rules, and code-of-conduct for all
+                          participants of InterConnect 26.O. Read before you
+                          build.
                         </p>
 
-                        <div className="flex gap-2 mt-auto pt-4 border-t border-slate-800/60">
+                        {/* Meta Tags */}
+                        <div className="flex items-center gap-3 flex-wrap mb-4">
+                          {[
+                            { label: "Format", value: "PDF" },
+                            { label: "Edition", value: "26.O" },
+                            {
+                              label: "Status",
+                              value: "Official",
+                              highlight: true,
+                            },
+                          ].map((tag) => (
+                            <div
+                              key={tag.label}
+                              className="flex items-center gap-1"
+                            >
+                              <span className="text-[9px] uppercase tracking-wider text-slate-600">
+                                {tag.label}:
+                              </span>
+                              <span
+                                className="text-[9px] font-bold tracking-wider"
+                                style={{
+                                  color: tag.highlight ? "#4ade80" : "#6b7a99",
+                                }}
+                              >
+                                {tag.value}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex flex-wrap gap-2">
                           <a
-                            href={res.link}
-                            className="flex-1 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg py-2 transition-colors hover:text-white"
+                            href="/rulebook-interconnect-26.pdf"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg px-3 py-2 transition-opacity hover:opacity-80"
+                            style={{
+                              background: "#e8404015",
+                              color: "#e84040",
+                              border: "1px solid #e8404030",
+                            }}
+                          >
+                            <ExternalLink size={11} /> Preview
+                          </a>
+                          <a
+                            href="/rulebook-interconnect-26.pdf"
+                            download="InterConnect-26.O-Rulebook.pdf"
+                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg px-3 py-2 transition-opacity hover:opacity-80"
                             style={{
                               background: "#131925",
                               color: "#6b7a99",
                               border: "1px solid #1e2840",
                             }}
                           >
-                            <Download size={12} /> Get
-                          </a>
-                          <a
-                            href={res.link}
-                            className="flex-1 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg py-2 transition-colors"
-                            style={{
-                              background: `${res.color}15`,
-                              color: res.color,
-                              border: `1px solid ${res.color}30`,
-                            }}
-                          >
-                            <ExternalLink size={12} /> View
+                            <Download size={11} /> Download
                           </a>
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  {/* Help Banner */}
-                  <div className="mt-4 rounded-xl p-5 border border-dashed border-slate-700 bg-[#131925] flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="text-center sm:text-left">
-                      <div className="font-display font-bold text-[14px] text-white mb-1">
-                        Need Mentorship?
-                      </div>
-                      <div className="text-[11px] text-slate-400 font-sans">
-                        Connect with coordinators on Discord.
                       </div>
                     </div>
-                    <button className="shrink-0 text-[10px] font-bold uppercase tracking-widest bg-[#9c3ae8] hover:bg-[#8a2be2] text-white px-4 py-2.5 rounded-lg transition-colors">
-                      Join Server
-                    </button>
-                  </div>
+
+                    {/* Bottom bar with warning */}
+                    <div
+                      className="px-5 py-3 flex items-center gap-2 border-t border-slate-800/50"
+                      style={{ background: "#0c0f18" }}
+                    >
+                      <div
+                        className="w-1.5 h-1.5 rounded-full animate-pulse"
+                        style={{ background: "#4ade80" }}
+                      />
+                      <p className="text-[10px] text-slate-500 font-sans">
+                        Carefully read all rules before starting your project
+                        submission.
+                      </p>
+                    </div>
+                  </motion.div>
                 </div>
               </div>
             </div>
+            {/* ════ END RIGHT PANEL ════ */}
           </div>
         </div>
       </div>
