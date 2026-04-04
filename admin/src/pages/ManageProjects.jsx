@@ -22,12 +22,11 @@ const fmtDatetime = (d) =>
 
 const daysLeft = (deadlineAt) => {
   if (!deadlineAt) return null;
-  const diff = new Date(deadlineAt) - new Date();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return Math.ceil((new Date(deadlineAt) - new Date()) / (1000 * 60 * 60 * 24));
 };
 
-const totalPoints = (logs) =>
-  (logs || [])
+const totalPoints = (logs = []) =>
+  logs
     .filter((l) => l.task_status === "completed")
     .reduce((a, l) => a + (l.assignedTaskPoints || 0), 0);
 
@@ -53,7 +52,7 @@ const initials = (name = "") =>
     .toUpperCase()
     .slice(0, 2);
 
-// ─── Status helpers ───────────────────────────────────────────────────────────
+// ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_MAP = {
   open: {
     label: "Open",
@@ -65,7 +64,6 @@ const STATUS_MAP = {
     cls: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
     dot: "bg-amber-400",
   },
-  // ✅ "pending" = student submitted for review — distinct visual
   pending: {
     label: "Under Review",
     cls: "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30",
@@ -93,6 +91,7 @@ const STATUS_MAP = {
   },
 };
 
+// ─── Primitives ───────────────────────────────────────────────────────────────
 const StatusPill = ({ status }) => {
   const s = STATUS_MAP[status] || STATUS_MAP.open;
   return (
@@ -105,7 +104,6 @@ const StatusPill = ({ status }) => {
   );
 };
 
-// ─── Avatar ───────────────────────────────────────────────────────────────────
 const Avatar = ({ name = "", size = 36 }) => (
   <div
     className="rounded-full flex items-center justify-center font-bold text-white font-mono flex-shrink-0"
@@ -120,7 +118,6 @@ const Avatar = ({ name = "", size = 36 }) => (
   </div>
 );
 
-// ─── Badge ────────────────────────────────────────────────────────────────────
 const Badge = ({ children, color = "#3a9de8" }) => (
   <span
     className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase font-mono"
@@ -130,7 +127,6 @@ const Badge = ({ children, color = "#3a9de8" }) => (
   </span>
 );
 
-// ─── Progress Bar ─────────────────────────────────────────────────────────────
 const ProgressBar = ({ value, color = "#e85d3a" }) => (
   <div>
     <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
@@ -149,7 +145,6 @@ const ProgressBar = ({ value, color = "#e85d3a" }) => (
   </div>
 );
 
-// ─── Spinner ──────────────────────────────────────────────────────────────────
 const Spinner = ({ size = 20, color = "#e85d3a" }) => (
   <div
     className="rounded-full flex-shrink-0 animate-spin"
@@ -162,7 +157,6 @@ const Spinner = ({ size = 20, color = "#e85d3a" }) => (
   />
 );
 
-// ─── Button ───────────────────────────────────────────────────────────────────
 const BTN_VARIANTS = {
   primary: "bg-[#e85d3a] text-white hover:bg-[#d14f2f]",
   secondary:
@@ -175,7 +169,6 @@ const BTN_VARIANTS = {
   warn: "bg-amber-950 text-amber-400 border border-amber-500/30 hover:bg-amber-900",
   blue: "bg-blue-950 text-blue-400 border border-blue-500/30 hover:bg-blue-900",
   info: "bg-purple-950 text-purple-400 border border-purple-500/30 hover:bg-purple-900",
-  // ✅ New variant for "pending review" close action
   indigo:
     "bg-indigo-950 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-900",
 };
@@ -205,7 +198,6 @@ const Btn = ({
   </button>
 );
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
 const ToastBar = ({ message, type = "success", onDone }) => {
   useEffect(() => {
     const t = setTimeout(onDone, 3200);
@@ -232,7 +224,6 @@ const ToastBar = ({ message, type = "success", onDone }) => {
   );
 };
 
-// ─── Modal Shell ──────────────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children, wide = false }) => (
   <div
     onClick={onClose}
@@ -263,7 +254,6 @@ const Modal = ({ title, onClose, children, wide = false }) => (
   </div>
 );
 
-// ─── Form Field ───────────────────────────────────────────────────────────────
 const Field = ({
   label,
   value,
@@ -297,21 +287,6 @@ const Field = ({
     {hint && (
       <p className="text-[10px] text-slate-600 font-mono mt-1">{hint}</p>
     )}
-  </div>
-);
-
-const SelectField = ({ label, value, onChange, children, required }) => (
-  <div className="mb-4">
-    <label className="block text-[10px] font-bold text-slate-500 mb-1.5 font-mono tracking-widest uppercase">
-      {label} {required && <span className="text-[#e85d3a]">*</span>}
-    </label>
-    <select
-      value={value}
-      onChange={onChange}
-      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-slate-200 font-mono text-[13px] outline-none focus:border-[#e85d3a60] transition-colors"
-    >
-      {children}
-    </select>
   </div>
 );
 
@@ -383,11 +358,21 @@ const InfoRow = ({ label, value, color = "#c4cedf" }) => (
   </div>
 );
 
-// ─── Contributor Info Modal ───────────────────────────────────────────────────
+const SkeletonCard = () => (
+  <div className="rounded-xl p-4 bg-[#0c0f18] border border-slate-800/50 mb-2.5">
+    <div className="h-2.5 w-20 bg-slate-800 rounded mb-3 animate-pulse" />
+    <div className="h-3.5 w-36 bg-slate-800 rounded mb-2 animate-pulse" />
+    <div className="h-2 w-14 bg-slate-800 rounded mb-3 animate-pulse" />
+    <div className="h-1 bg-slate-800 rounded animate-pulse" />
+  </div>
+);
+
+// ─── Contributor Info Modal ────────────────────────────────────────────────────
 const ContributorInfoModal = ({ log, contributors, onClose }) => {
   const student = (contributors || []).find(
     (c) => c._id === log.contributorID || c.name === log.task_contributor,
   );
+
   return (
     <Modal title="Contributor Info" onClose={onClose}>
       {!student ? (
@@ -477,7 +462,7 @@ const ContributorInfoModal = ({ log, contributors, onClose }) => {
   );
 };
 
-// ─── MODAL: Edit Project ──────────────────────────────────────────────────────
+// ─── Edit Project Modal ───────────────────────────────────────────────────────
 const EditProjectModal = ({ project, onClose, onSave }) => {
   const [form, setForm] = useState({
     projectDescription: project.projectDescription || "",
@@ -498,13 +483,6 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
   });
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-
-  const handleSave = async () => {
-    setSaving(true);
-    await onSave(form);
-    setSaving(false);
-    onClose();
-  };
 
   return (
     <Modal title={`Edit · ${project.projectID}`} onClose={onClose} wide>
@@ -535,14 +513,14 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           value={form.resourcesLink}
           onChange={set("resourcesLink")}
           placeholder="Drive / Notion / Figma..."
-          hint="External docs, design files, data resources"
+          hint="External docs, design files"
         />
         <Field
           label="Community Link"
           value={form.communityLink}
           onChange={set("communityLink")}
-          placeholder="WhatsApp / Discord / Slack..."
-          hint="Team communication platform link"
+          placeholder="WhatsApp / Discord..."
+          hint="Team communication"
         />
       </div>
       <RangeField
@@ -572,7 +550,6 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           Block this project — disables contributor access
         </label>
       </div>
-
       <SectionLabel color="#3a9de8">Problem Data</SectionLabel>
       <Field
         label="Problem Title"
@@ -629,12 +606,19 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           required
         />
       </div>
-
       <div className="flex gap-3 justify-end mt-2 pt-4 border-t border-slate-800">
         <Btn variant="secondary" onClick={onClose}>
           Cancel
         </Btn>
-        <Btn onClick={handleSave} loading={saving}>
+        <Btn
+          loading={saving}
+          onClick={async () => {
+            setSaving(true);
+            await onSave(form);
+            setSaving(false);
+            onClose();
+          }}
+        >
           Save Changes
         </Btn>
       </div>
@@ -642,7 +626,7 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
   );
 };
 
-// ─── MODAL: Create Log ────────────────────────────────────────────────────────
+// ─── Create Log Modal ─────────────────────────────────────────────────────────
 const CreateLogModal = ({ project, onClose, onCreate }) => {
   const [form, setForm] = useState({
     taskTitle: "",
@@ -655,13 +639,6 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const isValid = form.taskTitle && form.description && form.githubIssueLink;
-
-  const handleCreate = async () => {
-    setSaving(true);
-    await onCreate(form);
-    setSaving(false);
-    onClose();
-  };
 
   return (
     <Modal title={`Create Log · ${project.projectID}`} onClose={onClose} wide>
@@ -687,7 +664,7 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
         onChange={set("requirements")}
         type="textarea"
         placeholder="- Must handle edge case X&#10;- Tests required&#10;- PR must link to issue"
-        hint="Detailed checklist contributors need to follow"
+        hint="Detailed checklist"
       />
       <Field
         label="GitHub Issue Link"
@@ -727,9 +704,8 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
       </div>
       <div className="p-3.5 bg-blue-950/30 border border-blue-500/20 rounded-xl mb-4">
         <p className="text-[11px] text-blue-400 font-mono">
-          ℹ The log will be created as a <strong>draft</strong>. You must
-          publish it for contributors to see and self-assign. The deadline clock
-          starts only after a contributor claims the task.
+          ℹ The log will be created as a <strong>draft</strong>. Publish it for
+          contributors to see and self-assign.
         </p>
       </div>
       <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
@@ -738,9 +714,14 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
         </Btn>
         <Btn
           variant="success"
-          onClick={handleCreate}
           disabled={!isValid}
           loading={saving}
+          onClick={async () => {
+            setSaving(true);
+            await onCreate(form);
+            setSaving(false);
+            onClose();
+          }}
         >
           Create Log
         </Btn>
@@ -749,7 +730,7 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
   );
 };
 
-// ─── MODAL: Edit Log ──────────────────────────────────────────────────────────
+// ─── Edit Log Modal ───────────────────────────────────────────────────────────
 const EditLogModal = ({ log, onClose, onUpdate }) => {
   const [form, setForm] = useState({
     taskTitle: log.taskTitle || "",
@@ -761,13 +742,6 @@ const EditLogModal = ({ log, onClose, onUpdate }) => {
   });
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-
-  const handleUpdate = async () => {
-    setSaving(true);
-    await onUpdate(form);
-    setSaving(false);
-    onClose();
-  };
 
   return (
     <Modal
@@ -790,7 +764,7 @@ const EditLogModal = ({ log, onClose, onUpdate }) => {
         required
       />
       <Field
-        label="Requirements / Acceptance Criteria"
+        label="Requirements"
         value={form.requirements}
         onChange={set("requirements")}
         type="textarea"
@@ -835,7 +809,16 @@ const EditLogModal = ({ log, onClose, onUpdate }) => {
         <Btn variant="secondary" onClick={onClose}>
           Cancel
         </Btn>
-        <Btn variant="warn" onClick={handleUpdate} loading={saving}>
+        <Btn
+          variant="warn"
+          loading={saving}
+          onClick={async () => {
+            setSaving(true);
+            await onUpdate(form);
+            setSaving(false);
+            onClose();
+          }}
+        >
           Update Log
         </Btn>
       </div>
@@ -843,16 +826,19 @@ const EditLogModal = ({ log, onClose, onUpdate }) => {
   );
 };
 
+// ─── Close Log Modal ──────────────────────────────────────────────────────────
+/**
+ * This modal is shown when admin clicks "Close" on either an "assigned" OR "pending" log.
+ * The "pending" state means the student submitted their work — admin reviews the PR and awards points.
+ */
 // ─── MODAL: Close Log ─────────────────────────────────────────────────────────
-// ✅ FIX: Now clearly handles both "assigned" and "pending" statuses with
-//    appropriate UI messaging and pre-fills student-submitted PR link/note.
 const CloseLogModal = ({ log, onClose, onCloseLog }) => {
   const isPendingReview = log.task_status === "pending";
 
   const [form, setForm] = useState({
-    // Pre-fill with whatever the student submitted (if pending)
     githubPrLink: log.githubPrLink || "",
-    contributionScore: log.assignedTaskPoints || 10,
+    // ✅ FIX: Changed from 'contributionScore' to 'pointsAwarded'
+    pointsAwarded: log.assignedTaskPoints || 10,
     closureNote: log.closureNote || "",
   });
   const [saving, setSaving] = useState(false);
@@ -892,7 +878,6 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
         )}
       </div>
 
-      {/* ✅ Contextual banner depending on status */}
       {isPendingReview ? (
         <div className="p-3.5 bg-indigo-500/10 border border-indigo-500/25 rounded-xl mb-5">
           <div className="text-[11px] text-indigo-300 font-mono font-bold mb-1">
@@ -928,12 +913,13 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
       />
       <RangeField
         label="Awarded Points"
-        value={form.contributionScore}
+        // ✅ FIX: Using pointsAwarded here
+        value={form.pointsAwarded}
         min={0}
         max={100}
         step={5}
         onChange={(e) =>
-          setForm((f) => ({ ...f, contributionScore: Number(e.target.value) }))
+          setForm((f) => ({ ...f, pointsAwarded: Number(e.target.value) }))
         }
         accent="#4ade80"
         unit=" pts"
@@ -961,24 +947,18 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
           disabled={!isValid}
           loading={saving}
         >
-          ✓ Mark Complete & Award {form.contributionScore} pts
+          {/* ✅ FIX: Displaying pointsAwarded here */}✓ Mark Complete & Award{" "}
+          {form.pointsAwarded} pts
         </Btn>
       </div>
     </Modal>
   );
 };
 
-// ─── MODAL: Terminate Log ─────────────────────────────────────────────────────
+// ─── Terminate Log Modal ──────────────────────────────────────────────────────
 const TerminateLogModal = ({ log, onClose, onTerminate }) => {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
-
-  const handle = async () => {
-    setSaving(true);
-    await onTerminate({ closureNote: note });
-    setSaving(false);
-    onClose();
-  };
 
   return (
     <Modal title="Terminate Log" onClose={onClose}>
@@ -987,8 +967,8 @@ const TerminateLogModal = ({ log, onClose, onTerminate }) => {
           {log.taskTitle}
         </div>
         <p className="text-[11px] text-red-400/70 font-mono">
-          Terminating removes the current contributor assignment and hides the
-          log. You can reopen it later.
+          Terminating removes the contributor assignment and hides the log. You
+          can reopen it later.
         </p>
       </div>
       <Field
@@ -1002,7 +982,16 @@ const TerminateLogModal = ({ log, onClose, onTerminate }) => {
         <Btn variant="secondary" onClick={onClose}>
           Cancel
         </Btn>
-        <Btn variant="danger" onClick={handle} loading={saving}>
+        <Btn
+          variant="danger"
+          loading={saving}
+          onClick={async () => {
+            setSaving(true);
+            await onTerminate({ closureNote: note });
+            setSaving(false);
+            onClose();
+          }}
+        >
           Terminate
         </Btn>
       </div>
@@ -1010,17 +999,10 @@ const TerminateLogModal = ({ log, onClose, onTerminate }) => {
   );
 };
 
-// ─── MODAL: Reopen Log ────────────────────────────────────────────────────────
+// ─── Reopen Log Modal ─────────────────────────────────────────────────────────
 const ReopenLogModal = ({ log, onClose, onReopen }) => {
   const [deadlineDays, setDeadlineDays] = useState(log.deadlineDays || 7);
   const [saving, setSaving] = useState(false);
-
-  const handle = async () => {
-    setSaving(true);
-    await onReopen({ deadlineDays });
-    setSaving(false);
-    onClose();
-  };
 
   return (
     <Modal title="Reopen Log" onClose={onClose}>
@@ -1029,7 +1011,7 @@ const ReopenLogModal = ({ log, onClose, onReopen }) => {
           {log.taskTitle}
         </div>
         <p className="text-[11px] text-emerald-400/70 font-mono">
-          Log will be published and open for contributors to self-assign again.
+          Log will be published and open for contributors to self-assign.
           Reopened {log.reopenCount || 0} time{log.reopenCount !== 1 ? "s" : ""}{" "}
           before.
         </p>
@@ -1048,7 +1030,16 @@ const ReopenLogModal = ({ log, onClose, onReopen }) => {
         <Btn variant="secondary" onClick={onClose}>
           Cancel
         </Btn>
-        <Btn variant="success" onClick={handle} loading={saving}>
+        <Btn
+          variant="success"
+          loading={saving}
+          onClick={async () => {
+            setSaving(true);
+            await onReopen({ deadlineDays });
+            setSaving(false);
+            onClose();
+          }}
+        >
           ↺ Reopen & Publish
         </Btn>
       </div>
@@ -1056,7 +1047,7 @@ const ReopenLogModal = ({ log, onClose, onReopen }) => {
   );
 };
 
-// ─── MODAL: Student Detail ────────────────────────────────────────────────────
+// ─── Student Detail Modal ─────────────────────────────────────────────────────
 const StudentModal = ({ student, projectLogs, onClose }) => {
   const studentLogs = (projectLogs || []).filter(
     (l) => l.task_contributor === student.name,
@@ -1081,7 +1072,6 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
           </div>
         </div>
       </div>
-
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
           {
@@ -1099,7 +1089,7 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
         ].map((s) => (
           <div
             key={s.label}
-            className="bg-slate-900 border border-slate-800 rounded-xl p-3.5"
+            className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 text-center"
           >
             <div
               className="text-xl font-extrabold font-display"
@@ -1113,7 +1103,6 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
           </div>
         ))}
       </div>
-
       <div className="grid grid-cols-2 gap-3 mb-5">
         {[
           ["Department", student.department],
@@ -1139,7 +1128,6 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
           </div>
         ))}
       </div>
-
       {student.githubLink && (
         <a
           href={student.githubLink}
@@ -1150,7 +1138,6 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
           ⌥ GitHub Profile ↗
         </a>
       )}
-
       {studentLogs.length > 0 && (
         <>
           <SectionLabel color="#e85d3a">Task Logs</SectionLabel>
@@ -1166,9 +1153,6 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
                   </span>
                   <StatusPill status={log.task_status} />
                 </div>
-                <p className="text-[11px] text-slate-500 font-mono line-clamp-2 mb-2">
-                  {log.description}
-                </p>
                 <div className="flex gap-4 items-center">
                   <span className="text-[10px] text-amber-400 font-mono">
                     ⬡ {log.assignedTaskPoints} pts
@@ -1176,16 +1160,6 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
                   <span className="text-[10px] text-slate-600 font-mono">
                     {fmtDate(log.createdAt)}
                   </span>
-                  {log.deadlineAt && (
-                    <span
-                      className={`text-[10px] font-mono ${daysLeft(log.deadlineAt) <= 2 ? "text-red-400" : "text-slate-500"}`}
-                    >
-                      ⏱{" "}
-                      {daysLeft(log.deadlineAt) > 0
-                        ? `${daysLeft(log.deadlineAt)}d left`
-                        : "Overdue"}
-                    </span>
-                  )}
                 </div>
               </div>
             ))}
@@ -1196,10 +1170,9 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
   );
 };
 
-// ─── LOG CARD ─────────────────────────────────────────────────────────────────
+// ─── Log Card ─────────────────────────────────────────────────────────────────
 const LogCard = ({
   log,
-  projectId,
   contributors,
   onPublish,
   onEdit,
@@ -1209,19 +1182,16 @@ const LogCard = ({
 }) => {
   const [showStudentInfo, setShowStudentInfo] = useState(false);
   const days = daysLeft(log.deadlineAt);
-
-  // ✅ FIX: "closeable" = assigned OR pending (student submitted for review)
   const isPending = log.task_status === "pending";
-  const isAssigned = log.task_status === "assigned";
-  const isCloseable = isAssigned || isPending;
-  const isOverdue = isCloseable && days !== null && days <= 0;
+  // "isActive" means the task is in a working state (assigned or submitted for review)
+  const isActive = log.task_status === "assigned" || isPending;
+  const isOverdue = isActive && days !== null && days <= 0;
 
   const statusBorder =
     {
       open: "border-l-blue-500",
       assigned: isOverdue ? "border-l-red-500" : "border-l-amber-500",
-      // ✅ Pending gets a distinct indigo left border to draw admin's attention
-      pending: "border-l-indigo-400",
+      pending: "border-l-indigo-500",
       completed: "border-l-emerald-500",
       terminated: "border-l-red-800",
     }[log.task_status] || "border-l-slate-700";
@@ -1231,7 +1201,7 @@ const LogCard = ({
       <div
         className={`bg-[#0c0f18] border border-slate-800 border-l-2 ${statusBorder} rounded-xl p-5 transition-all duration-200`}
       >
-        {/* Header row */}
+        {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
             <div
@@ -1266,21 +1236,13 @@ const LogCard = ({
                   Draft
                 </span>
               )}
-            {/* ✅ Prominent badge when student has submitted for review */}
-            {isPending && (
-              <span className="text-[9px] font-bold tracking-widest uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                Needs Review
-              </span>
-            )}
           </div>
         </div>
 
-        {/* Description */}
         <p className="text-[11px] text-slate-500 font-mono leading-relaxed mb-3 line-clamp-2 mt-2">
           {log.description}
         </p>
 
-        {/* Requirements */}
         {log.requirements && (
           <details className="mb-3 group">
             <summary className="text-[10px] text-slate-600 font-mono cursor-pointer hover:text-slate-400 transition-colors list-none flex items-center gap-1">
@@ -1295,7 +1257,7 @@ const LogCard = ({
           </details>
         )}
 
-        {/* Meta row */}
+        {/* Meta */}
         <div className="flex flex-wrap gap-3 items-center mb-3">
           <span className="text-[11px] text-amber-400 font-mono">
             ⬡ {log.assignedTaskPoints} pts
@@ -1308,19 +1270,11 @@ const LogCard = ({
               Claimed {fmtDate(log.assignedAt)}
             </span>
           )}
-          {isCloseable && log.deadlineAt && (
+          {isActive && log.deadlineAt && (
             <span
-              className={`text-[11px] font-bold font-mono ${
-                daysLeft(log.deadlineAt) <= 0
-                  ? "text-red-400"
-                  : daysLeft(log.deadlineAt) <= 2
-                    ? "text-orange-400"
-                    : "text-slate-400"
-              }`}
+              className={`text-[11px] font-bold font-mono ${days <= 0 ? "text-red-400" : days <= 2 ? "text-orange-400" : "text-slate-400"}`}
             >
-              {daysLeft(log.deadlineAt) <= 0
-                ? "⚠ Overdue"
-                : `⏳ ${daysLeft(log.deadlineAt)}d remaining`}
+              {days <= 0 ? "⚠ Overdue" : `⏳ ${days}d remaining`}
             </span>
           )}
           {log.task_status === "completed" && log.closedAt && (
@@ -1367,9 +1321,9 @@ const LogCard = ({
           )}
         </div>
 
-        {/* Actions */}
+        {/* Action buttons */}
         <div className="flex gap-2 flex-wrap pt-3 border-t border-slate-800/60">
-          {/* Student Info */}
+          {/* Contributor info */}
           <Btn variant="info" small onClick={() => setShowStudentInfo(true)}>
             👤{" "}
             {log.task_status === "open"
@@ -1388,27 +1342,26 @@ const LogCard = ({
             </Btn>
           )}
 
-          {/* Edit — only open/draft logs */}
+          {/* Edit — only unpublished open logs */}
           {log.task_status === "open" && (
             <Btn variant="secondary" small onClick={() => onEdit(log)}>
               Edit
             </Btn>
           )}
 
-          {/* ✅ FIX: Close button appears for BOTH "assigned" AND "pending" logs.
-              Pending gets a more prominent indigo variant to hint admin action needed. */}
-          {isCloseable && (
-            <Btn
-              variant={isPending ? "indigo" : "success"}
-              small
-              onClick={() => onClose(log)}
-            >
-              {isPending ? "🔍 Review & Close" : "✓ Close"}
+          {/*
+           * Close — available for BOTH "assigned" AND "pending" states.
+           * "pending" means student submitted work and is awaiting admin review.
+           * Admin reviews the PR and closes to award points.
+           */}
+          {isActive && (
+            <Btn variant="success" small onClick={() => onClose(log)}>
+              {isPending ? "✓ Review & Close" : "✓ Close"}
             </Btn>
           )}
 
-          {/* Terminate — open or closeable */}
-          {(log.task_status === "open" || isCloseable) && (
+          {/* Terminate — available for open, assigned, or pending logs */}
+          {(log.task_status === "open" || isActive) && (
             <Btn variant="danger" small onClick={() => onTerminate(log)}>
               Terminate
             </Btn>
@@ -1434,11 +1387,10 @@ const LogCard = ({
   );
 };
 
-// ─── WORKFLOW INSIGHT ─────────────────────────────────────────────────────────
+// ─── Workflow Insight ─────────────────────────────────────────────────────────
 const WorkflowInsight = ({ project }) => {
   const allLogs = project.logs ?? [];
   const completed = allLogs.filter((l) => l.task_status === "completed");
-  // ✅ Count "pending" in assigned bucket for the workflow view
   const assigned = allLogs.filter(
     (l) => l.task_status === "assigned" || l.task_status === "pending",
   );
@@ -1465,6 +1417,7 @@ const WorkflowInsight = ({ project }) => {
 
   return (
     <div className="space-y-6 mt-2">
+      {/* Summary */}
       <div className="grid grid-cols-4 gap-3">
         {[
           { label: "Total", value: allLogs.length, color: "#8892a4" },
@@ -1489,11 +1442,11 @@ const WorkflowInsight = ({ project }) => {
         ))}
       </div>
 
+      {/* Contributor lanes */}
       <div className="bg-[#0c0f18] border border-slate-800 rounded-2xl p-6">
         <SectionLabel color="#e85d3a">Contributor Lanes</SectionLabel>
         <div className="space-y-5">
           {Object.values(lanes).map((stu) => {
-            const contrib = stu.projectWiseContribution?.[0];
             const pts = stu.logs
               .filter((l) => l.task_status === "completed")
               .reduce((a, l) => a + l.assignedTaskPoints, 0);
@@ -1501,17 +1454,14 @@ const WorkflowInsight = ({ project }) => {
               <div key={stu._id}>
                 <div className="flex items-center gap-2.5 mb-2.5">
                   <Avatar name={stu.name} size={26} />
-                  <div>
-                    <span className="text-[12px] font-bold text-slate-200 font-display">
-                      {stu.name}
+                  <span className="text-[12px] font-bold text-slate-200 font-display">
+                    {stu.name}
+                  </span>
+                  {stu.phone && (
+                    <span className="text-[10px] text-slate-500 font-mono ml-1">
+                      · {stu.phone}
                     </span>
-                    {stu.phone && (
-                      <span className="text-[10px] text-slate-500 font-mono ml-2">
-                        · {stu.phone}
-                      </span>
-                    )}
-                  </div>
-                  {contrib && <Badge color="#9c3ae8">{contrib.role}</Badge>}
+                  )}
                   <span className="ml-auto text-[11px] text-amber-400 font-mono">
                     ⬡ {pts} pts
                   </span>
@@ -1535,10 +1485,10 @@ const WorkflowInsight = ({ project }) => {
                           <div className="font-bold truncate">
                             {log.task_status === "completed"
                               ? "✓ "
-                              : log.task_status === "terminated"
-                                ? "✕ "
-                                : log.task_status === "pending"
-                                  ? "🔍 "
+                              : log.task_status === "pending"
+                                ? "◈ "
+                                : log.task_status === "terminated"
+                                  ? "✕ "
                                   : "◌ "}
                             {log.taskTitle.slice(0, 22)}
                             {log.taskTitle.length > 22 ? "…" : ""}
@@ -1561,6 +1511,7 @@ const WorkflowInsight = ({ project }) => {
         </div>
       </div>
 
+      {/* Timeline */}
       <div className="bg-[#0c0f18] border border-slate-800 rounded-2xl p-6">
         <SectionLabel color="#3a9de8">Chronological Timeline</SectionLabel>
         <div className="relative pl-6">
@@ -1590,10 +1541,8 @@ const WorkflowInsight = ({ project }) => {
                           : "Unassigned"}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-slate-600 font-mono">
-                        · {fmtDate(log.createdAt)}
-                      </span>
+                    <div className="text-[10px] text-slate-600 font-mono">
+                      · {fmtDate(log.createdAt)}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -1612,12 +1561,11 @@ const WorkflowInsight = ({ project }) => {
   );
 };
 
-// ─── PROJECT VIEW ─────────────────────────────────────────────────────────────
+// ─── Project View ─────────────────────────────────────────────────────────────
 const ProjectView = ({
   project,
   onEdit,
   onCreateLog,
-  onCloseLog,
   onViewStudent,
   onLogAction,
 }) => {
@@ -1632,8 +1580,7 @@ const ProjectView = ({
 
   const filteredLogs = (project.logs || []).filter((l) => {
     if (logFilter === "all") return true;
-    // ✅ "assigned" filter bucket includes pending as well
-    if (logFilter === "assigned")
+    if (logFilter === "active")
       return l.task_status === "assigned" || l.task_status === "pending";
     return l.task_status === logFilter;
   });
@@ -1641,10 +1588,11 @@ const ProjectView = ({
   const logCounts = {
     all: (project.logs || []).length,
     open: (project.logs || []).filter((l) => l.task_status === "open").length,
-    // ✅ Assigned count includes pending
-    assigned: (project.logs || []).filter(
+    active: (project.logs || []).filter(
       (l) => l.task_status === "assigned" || l.task_status === "pending",
     ).length,
+    pending: (project.logs || []).filter((l) => l.task_status === "pending")
+      .length,
     completed: (project.logs || []).filter((l) => l.task_status === "completed")
       .length,
     terminated: (project.logs || []).filter(
@@ -1652,18 +1600,13 @@ const ProjectView = ({
     ).length,
   };
 
-  // ✅ Highlight how many need review specifically
-  const pendingReviewCount = (project.logs || []).filter(
-    (l) => l.task_status === "pending",
-  ).length;
-
   return (
     <div className="bg-[#0f1219] border border-slate-800 rounded-2xl overflow-hidden">
-      {/* ── Header ── */}
+      {/* Header */}
       <div
         className="px-7 pt-6 pb-5 relative overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, #131825 0%, #0f1219 100%)",
+          background: "linear-gradient(135deg,#131825 0%,#0f1219 100%)",
           borderBottom: "1px solid #1e2330",
         }}
       >
@@ -1671,11 +1614,6 @@ const ProjectView = ({
           className="absolute -right-5 -top-5 w-40 h-40 rounded-full"
           style={{ background: "#e85d3a08", border: "1px solid #e85d3a15" }}
         />
-        <div
-          className="absolute right-5 top-5 w-20 h-20 rounded-full"
-          style={{ background: "#e85d3a10" }}
-        />
-
         <div className="relative flex justify-between items-start gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap mb-2.5">
@@ -1687,11 +1625,17 @@ const ProjectView = ({
                 {project.problem?.problemID}
               </span>
               {project.is_blocked && <StatusPill status="blocked" />}
-              {/* ✅ Alert badge if any logs need review */}
-              {pendingReviewCount > 0 && (
-                <span className="text-[10px] font-mono font-bold text-indigo-300 bg-indigo-500/15 px-2 py-0.5 rounded border border-indigo-500/30 animate-pulse">
-                  🔍 {pendingReviewCount} need
-                  {pendingReviewCount === 1 ? "s" : ""} review
+              {/* Highlight if any tasks are pending admin review */}
+              {logCounts.pending > 0 && (
+                <span
+                  className="text-[10px] font-bold font-mono px-2.5 py-0.5 rounded-full animate-pulse"
+                  style={{
+                    background: "#818cf815",
+                    color: "#818cf8",
+                    border: "1px solid #818cf830",
+                  }}
+                >
+                  ◈ {logCounts.pending} awaiting review
                 </span>
               )}
             </div>
@@ -1718,7 +1662,7 @@ const ProjectView = ({
             </Btn>
           </div>
         </div>
-
+        {/* Stats strip */}
         <div className="flex gap-6 mt-5">
           {[
             {
@@ -1731,19 +1675,11 @@ const ProjectView = ({
               value: project.logs?.length ?? 0,
               color: "#9c3ae8",
             },
-            {
-              label: "Active",
-              value: (project.logs || []).filter(
-                (l) =>
-                  l.task_status === "assigned" || l.task_status === "pending",
-              ).length,
-              color: "#fbbf24",
-            },
+            { label: "Active", value: logCounts.active, color: "#fbbf24" },
+            { label: "Review", value: logCounts.pending, color: "#818cf8" },
             {
               label: "Completed",
-              value: (project.logs || []).filter(
-                (l) => l.task_status === "completed",
-              ).length,
+              value: logCounts.completed,
               color: "#4ade80",
             },
             {
@@ -1765,7 +1701,6 @@ const ProjectView = ({
             </div>
           ))}
         </div>
-
         {(project.resourcesLink || project.communityLink) && (
           <div className="flex gap-3 mt-4 flex-wrap">
             {project.resourcesLink && (
@@ -1792,17 +1727,13 @@ const ProjectView = ({
         )}
       </div>
 
-      {/* ── Tabs ── */}
+      {/* Tabs */}
       <div className="flex border-b border-slate-800 px-7 overflow-x-auto">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`
-              px-4 py-3.5 text-[11px] font-bold font-mono uppercase tracking-widest cursor-pointer
-              border-b-2 transition-colors whitespace-nowrap bg-transparent
-              ${tab === t ? "text-[#e85d3a] border-[#e85d3a]" : "text-slate-600 border-transparent hover:text-slate-400"}
-            `}
+            className={`px-4 py-3.5 text-[11px] font-bold font-mono uppercase tracking-widest cursor-pointer border-b-2 transition-colors whitespace-nowrap bg-transparent ${tab === t ? "text-[#e85d3a] border-[#e85d3a]" : "text-slate-600 border-transparent hover:text-slate-400"}`}
             style={{ marginBottom: -1 }}
           >
             {t}
@@ -1811,15 +1742,11 @@ const ProjectView = ({
                 ({logCounts.all})
               </span>
             )}
-            {/* ✅ Show pending review dot on logs tab */}
-            {t === "logs" && pendingReviewCount > 0 && (
-              <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-            )}
           </button>
         ))}
       </div>
 
-      {/* ── Tab Content ── */}
+      {/* Tab content */}
       <div className="p-7">
         {/* OVERVIEW */}
         {tab === "overview" && (
@@ -1833,7 +1760,7 @@ const ProjectView = ({
                   label: "GitHub Repo",
                   href: project.githubRepoLink,
                   icon: "⌥",
-                  subLabel: "View Repository ↗",
+                  sub: "View Repository ↗",
                   color: "#3a9de8",
                   active: true,
                 },
@@ -1841,7 +1768,7 @@ const ProjectView = ({
                   label: "Live Demo",
                   href: project.liveHostedLink,
                   icon: "◉",
-                  subLabel: project.liveHostedLink
+                  sub: project.liveHostedLink
                     ? "Open Live ↗"
                     : "Not deployed yet",
                   color: "#4ade80",
@@ -1865,7 +1792,7 @@ const ProjectView = ({
                         className="text-[11px] font-mono mt-0.5"
                         style={{ color: lnk.color }}
                       >
-                        {lnk.subLabel}
+                        {lnk.sub}
                       </div>
                     </div>
                   </a>
@@ -1880,61 +1807,7 @@ const ProjectView = ({
                         {lnk.label}
                       </div>
                       <div className="text-[11px] text-slate-600 font-mono mt-0.5">
-                        {lnk.subLabel}
-                      </div>
-                    </div>
-                  </div>
-                ),
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-4 mb-5">
-              {[
-                {
-                  label: "Resources",
-                  href: project.resourcesLink,
-                  icon: "📁",
-                  color: "#fbbf24",
-                },
-                {
-                  label: "Community",
-                  href: project.communityLink,
-                  icon: "💬",
-                  color: "#4ade80",
-                },
-              ].map((lnk) =>
-                lnk.href ? (
-                  <a
-                    key={lnk.label}
-                    href={lnk.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-xl p-4 no-underline hover:border-slate-700 transition-colors"
-                  >
-                    <span className="text-lg">{lnk.icon}</span>
-                    <div>
-                      <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
-                        {lnk.label}
-                      </div>
-                      <div
-                        className="text-[11px] font-mono mt-0.5"
-                        style={{ color: lnk.color }}
-                      >
-                        Open ↗
-                      </div>
-                    </div>
-                  </a>
-                ) : (
-                  <div
-                    key={lnk.label}
-                    className="flex items-center gap-3 bg-slate-900 border border-dashed border-slate-800 rounded-xl p-4 opacity-30"
-                  >
-                    <span className="text-lg">{lnk.icon}</span>
-                    <div>
-                      <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
-                        {lnk.label}
-                      </div>
-                      <div className="text-[11px] text-slate-600 font-mono mt-0.5">
-                        Not set
+                        {lnk.sub}
                       </div>
                     </div>
                   </div>
@@ -2026,7 +1899,7 @@ const ProjectView = ({
                 const contrib = stu.projectWiseContribution?.[0];
                 const stuLogs = (project.logs || []).filter(
                   (l) =>
-                    l.contributorID?._id === stu._id ||
+                    l.contributorID === stu._id ||
                     l.task_contributor === stu.name,
                 );
                 const doneCt = stuLogs.filter(
@@ -2102,22 +1975,16 @@ const ProjectView = ({
         {/* LOGS */}
         {tab === "logs" && (
           <div>
+            {/* Filter bar */}
             <div className="flex items-center justify-between gap-4 mb-5">
               <div className="flex gap-1 flex-wrap">
                 {Object.entries(logCounts).map(([key, count]) => (
                   <button
                     key={key}
                     onClick={() => setLogFilter(key)}
-                    className={`
-                      px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-widest cursor-pointer transition-all
-                      ${logFilter === key ? "bg-[#e85d3a] text-white" : "bg-slate-900 text-slate-500 border border-slate-800 hover:text-slate-300"}
-                    `}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono uppercase tracking-widest cursor-pointer transition-all ${logFilter === key ? "bg-[#e85d3a] text-white" : "bg-slate-900 text-slate-500 border border-slate-800 hover:text-slate-300"}`}
                   >
                     {key} <span className="opacity-60">({count})</span>
-                    {/* ✅ Dot on "assigned" filter if any are pending */}
-                    {key === "assigned" && pendingReviewCount > 0 && (
-                      <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-indigo-400 align-middle" />
-                    )}
                   </button>
                 ))}
               </div>
@@ -2139,7 +2006,6 @@ const ProjectView = ({
                   <LogCard
                     key={log._id}
                     log={log}
-                    projectId={project._id}
                     contributors={project.contributors || []}
                     onPublish={(logId, isPublished) =>
                       onLogAction("publish", project._id, logId, {
@@ -2155,6 +2021,7 @@ const ProjectView = ({
               </div>
             )}
 
+            {/* Sub-modals */}
             {editingLog && (
               <EditLogModal
                 log={editingLog}
@@ -2215,17 +2082,7 @@ const ProjectView = ({
   );
 };
 
-// ─── SKELETON ─────────────────────────────────────────────────────────────────
-const SkeletonCard = () => (
-  <div className="rounded-xl p-4 bg-[#0c0f18] border border-slate-800/50 mb-2.5">
-    <div className="h-2.5 w-20 bg-slate-800 rounded mb-3 animate-pulse" />
-    <div className="h-3.5 w-36 bg-slate-800 rounded mb-2 animate-pulse" />
-    <div className="h-2 w-14 bg-slate-800 rounded mb-3 animate-pulse" />
-    <div className="h-1 bg-slate-800 rounded animate-pulse" />
-  </div>
-);
-
-// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
+// ─── Main Page ─────────────────────────────────────────────────────────────────
 const ManageProjects = () => {
   const { axios, adminToken } = useAppContext();
   const navigate = useNavigate();
@@ -2236,7 +2093,6 @@ const ManageProjects = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState(null);
   const [adminProfile, setAdminProfile] = useState({ name: "", email: "" });
-
   const [editingProject, setEditingProject] = useState(null);
   const [creatingLog, setCreatingLog] = useState(null);
   const [viewingStudent, setViewingStudent] = useState(null);
@@ -2245,20 +2101,19 @@ const ManageProjects = () => {
   const showToast = (message, type = "success") => setToast({ message, type });
   const authHeader = { Authorization: `Bearer ${adminToken}` };
 
+  // Fetch admin profile
   useEffect(() => {
     if (!adminToken) return;
-    const fetchProfile = async () => {
-      try {
-        const { data } = await axios.get("/api/admin/profile", {
-          headers: authHeader,
-        });
+    axios
+      .get("/api/admin/profile", { headers: authHeader })
+      .then(({ data }) => {
         if (data.success)
           setAdminProfile({ name: data.admin.name, email: data.admin.email });
-      } catch (_) {}
-    };
-    fetchProfile();
+      })
+      .catch(() => {});
   }, [adminToken]);
 
+  // Fetch projects
   const fetchProjects = useCallback(
     async (silent = false) => {
       silent ? setRefreshing(true) : setLoading(true);
@@ -2287,6 +2142,7 @@ const ManageProjects = () => {
     if (adminToken) fetchProjects();
   }, [adminToken]);
 
+  // Refresh a single project after mutation
   const refreshProject = async (projectId) => {
     try {
       const { data } = await axios.get(`/api/admin/projects/${projectId}`, {
@@ -2364,7 +2220,7 @@ const ManageProjects = () => {
     const messages = {
       publish: "Publish state toggled.",
       update: "Log updated.",
-      close: "Log closed and points awarded.",
+      close: "Task closed and points awarded! ✓",
       terminate: "Log terminated.",
       reopen: "Log reopened and published.",
     };
@@ -2393,8 +2249,8 @@ const ManageProjects = () => {
         @keyframes slideIn { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         * { box-sizing: border-box; }
         ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: #0c0f18; }
-        ::-webkit-scrollbar-thumb { background: #2a3045; border-radius: 3px; }
+        ::-webkit-scrollbar-track  { background: #0c0f18; }
+        ::-webkit-scrollbar-thumb  { background: #2a3045; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #e85d3a; }
         input[type=range] { -webkit-appearance: none; height: 4px; border-radius: 2px; background: #1e2330; outline: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer; border: 2px solid #0c0f18; }
@@ -2405,7 +2261,7 @@ const ManageProjects = () => {
         className="min-h-screen font-mono"
         style={{ background: "#080c14", color: "#f0f4ff" }}
       >
-        {/* ── Top Nav ── */}
+        {/* Top Nav */}
         <div
           className="sticky top-0 z-[100] flex items-center justify-between px-8 h-16 border-b border-slate-800/80"
           style={{ background: "#0c0f18" }}
@@ -2453,7 +2309,7 @@ const ManageProjects = () => {
         </div>
 
         <div className="flex" style={{ height: "calc(100vh - 64px)" }}>
-          {/* ── Sidebar ── */}
+          {/* Sidebar */}
           <div
             className="w-72 flex-shrink-0 border-r border-slate-800/60 overflow-y-auto py-5 px-4"
             style={{ background: "#0c0f18" }}
@@ -2464,7 +2320,6 @@ const ManageProjects = () => {
               </span>
               {refreshing && <Spinner size={11} />}
             </div>
-
             {loading ? (
               [1, 2, 3].map((i) => <SkeletonCard key={i} />)
             ) : projects.length === 0 ? (
@@ -2480,26 +2335,18 @@ const ManageProjects = () => {
                 const done = (p.logs || []).filter(
                   (l) => l.task_status === "completed",
                 ).length;
-                const assigned = (p.logs || []).filter(
+                const active = (p.logs || []).filter(
                   (l) =>
                     l.task_status === "assigned" || l.task_status === "pending",
                 ).length;
-                // ✅ Count pending reviews for sidebar indicator
-                const pendingCount = (p.logs || []).filter(
+                const pending = (p.logs || []).filter(
                   (l) => l.task_status === "pending",
                 ).length;
                 return (
                   <div
                     key={p._id}
                     onClick={() => setActiveId(p._id)}
-                    className={`
-                      rounded-xl p-3.5 mb-2 cursor-pointer transition-all duration-150 border-l-2
-                      ${
-                        isActive
-                          ? "bg-[#131825] border border-[#e85d3a30] border-l-[#e85d3a]"
-                          : "bg-transparent border border-transparent border-l-transparent hover:bg-slate-900/40"
-                      }
-                    `}
+                    className={`rounded-xl p-3.5 mb-2 cursor-pointer transition-all duration-150 border-l-2 ${isActive ? "bg-[#131825] border border-[#e85d3a30] border-l-[#e85d3a]" : "bg-transparent border border-transparent border-l-transparent hover:bg-slate-900/40"}`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <span
@@ -2507,11 +2354,17 @@ const ManageProjects = () => {
                       >
                         {p.projectID}
                       </span>
-                      <div className="flex items-center gap-1.5">
-                        {/* ✅ Show review needed badge in sidebar */}
-                        {pendingCount > 0 && (
-                          <span className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                            {pendingCount} review
+                      <div className="flex gap-1">
+                        {pending > 0 && (
+                          <span
+                            className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded"
+                            style={{
+                              background: "#818cf815",
+                              color: "#818cf8",
+                              border: "1px solid #818cf830",
+                            }}
+                          >
+                            ◈{pending}
                           </span>
                         )}
                         {p.is_blocked && <StatusPill status="blocked" />}
@@ -2535,7 +2388,7 @@ const ManageProjects = () => {
                       <span>{p.projectProgressRate}%</span>
                       <span>
                         {done}/{(p.logs || []).length} done{" "}
-                        {assigned > 0 && `· ${assigned} active`}
+                        {active > 0 && `· ${active} active`}
                       </span>
                     </div>
                   </div>
@@ -2544,7 +2397,7 @@ const ManageProjects = () => {
             )}
           </div>
 
-          {/* ── Main ── */}
+          {/* Main */}
           <div className="flex-1 overflow-y-auto p-8">
             {loading ? (
               <div className="flex flex-col items-center justify-center h-3/4 gap-4">
@@ -2579,7 +2432,7 @@ const ManageProjects = () => {
         </div>
       </div>
 
-      {/* ── Top-level modals ── */}
+      {/* Top-level modals */}
       {editingProject && (
         <EditProjectModal
           project={editingProject}

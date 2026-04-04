@@ -16,8 +16,8 @@ const studentSchema = new mongoose.Schema(
     isBlocked: { type: Boolean, default: false },
 
     // Essential fields added
-    usn: { type: String, required: true, trim: true },
-    semester: { type: String, required: true, trim: true },
+    usn: { type: String },
+    semester: { type: String },
 
     department: { type: String, trim: true, default: "" },
     program: { type: String, trim: true, default: "" },

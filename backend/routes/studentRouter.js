@@ -16,6 +16,7 @@ import {
   getLeaderboard,
   getStudentDashboard,
   getPublishedNotifications,
+  syncAllStudentScores,
 } from "../controllers/studentController.js";
 import studentAuth from "../middlewares/studentAuth.js";
 
@@ -54,5 +55,5 @@ studentRouter.patch("/logs/:logId/complete", studentAuth, markLogComplete); // <
 // Leaderboard
 studentRouter.get("/leaderboard", studentAuth, getLeaderboard);
 studentRouter.get("/notifications", getPublishedNotifications);
-
+studentRouter.post("/sync-scores", studentAuth, syncAllStudentScores);
 export default studentRouter;
