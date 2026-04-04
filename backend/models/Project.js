@@ -22,7 +22,6 @@ const projectSchema = new mongoose.Schema(
     communityLink: { type: String, trim: true, default: "" },
     projectDescription: { type: String, required: true },
 
-    // Auto-recalculated on every log status change via syncProjectStats()
     projectProgressRate: { type: Number, default: 0, min: 0, max: 100 },
     totalTasksCreated: { type: Number, default: 0 },
     totalTasksCompleted: { type: Number, default: 0 },

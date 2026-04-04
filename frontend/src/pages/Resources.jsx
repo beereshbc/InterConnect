@@ -16,6 +16,7 @@ import {
   Layers,
   Play,
 } from "lucide-react";
+import { PDF_RESOURCES } from "../assets/assets";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const Resources = () => {
@@ -239,7 +240,10 @@ const Resources = () => {
                               <div className="flex items-start gap-3">
                                 <div
                                   className="mt-0.5 p-1.5 rounded-lg flex-shrink-0"
-                                  style={{ background: `${color}15`, color }}
+                                  style={{
+                                    background: `${color}15`,
+                                    color,
+                                  }}
                                 >
                                   {icon}
                                 </div>
@@ -301,7 +305,7 @@ const Resources = () => {
                       border: "1px solid #3a9de830",
                     }}
                   >
-                    2 Resources
+                    {PDF_RESOURCES.length + 1} Resources
                   </span>
                 </div>
 
@@ -312,7 +316,7 @@ const Resources = () => {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
-                    className="rounded-xl overflow-hidden flex flex-col"
+                    className="rounded-xl overflow-hidden flex flex-col shrink-0"
                     style={{
                       background: "#101520",
                       border: "1px solid #1e2840",
@@ -338,7 +342,7 @@ const Resources = () => {
                         </p>
                       </div>
                       <span
-                        className="shrink-0 text-[9px] uppercase tracking-widest px-2 py-0.5 rounded"
+                        className="shrink-0 text-[9px] uppercase tracking-widest px-2 py-0.5 rounded font-bold"
                         style={{
                           background: "#ff000018",
                           color: "#ff4545",
@@ -431,146 +435,139 @@ const Resources = () => {
                     </div>
                   </motion.div>
 
-                  {/* ── 2. Rulebook PDF Card ── */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="rounded-xl overflow-hidden relative pdf-shimmer flex flex-col"
-                    style={{
-                      background: "#101520",
-                      border: "1px solid #1e2840",
-                    }}
-                  >
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5">
-                      {/* PDF Icon Block */}
-                      <div
-                        className="shrink-0 w-14 h-16 sm:w-12 sm:h-14 rounded-xl flex flex-col items-center justify-center relative overflow-hidden"
-                        style={{
-                          background:
-                            "linear-gradient(145deg, #1e2840 0%, #131925 100%)",
-                          border: "1px solid #2a3a55",
-                        }}
-                      >
-                        {/* Folded corner */}
+                  {/* ── 2. Dynamic PDF Cards ── */}
+                  {PDF_RESOURCES.map((pdf, index) => (
+                    <motion.div
+                      key={pdf.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 + index * 0.1 }}
+                      className="rounded-xl overflow-hidden relative pdf-shimmer flex flex-col shrink-0"
+                      style={{
+                        background: "#101520",
+                        border: "1px solid #1e2840",
+                      }}
+                    >
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5">
+                        {/* PDF Icon Block */}
                         <div
-                          className="absolute top-0 right-0 w-4 h-4"
+                          className="shrink-0 w-14 h-16 sm:w-12 sm:h-14 rounded-xl flex flex-col items-center justify-center relative overflow-hidden"
                           style={{
-                            background: "#0c0f18",
-                            clipPath: "polygon(100% 0, 0 0, 100% 100%)",
-                            borderLeft: "1px solid #2a3a55",
-                            borderBottom: "1px solid #2a3a55",
+                            background:
+                              "linear-gradient(145deg, #1e2840 0%, #131925 100%)",
+                            border: "1px solid #2a3a55",
                           }}
-                        />
-                        <FileText size={22} className="text-[#e84040]" />
-                        <span
-                          className="text-[7px] font-bold mt-1 tracking-widest"
-                          style={{ color: "#e84040" }}
                         >
-                          PDF
-                        </span>
-                      </div>
-
-                      {/* Text Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <h3 className="font-display font-bold text-[14px] text-slate-100 leading-tight">
-                            InterConnect 26.O — Official Rulebook
-                          </h3>
-                          <span
-                            className="text-[8px] uppercase tracking-widest px-2 py-0.5 rounded font-bold"
+                          {/* Folded corner */}
+                          <div
+                            className="absolute top-0 right-0 w-4 h-4"
                             style={{
-                              background: "#e8404018",
-                              color: "#e84040",
-                              border: "1px solid #e8404030",
+                              background: "#0c0f18",
+                              clipPath: "polygon(100% 0, 0 0, 100% 100%)",
+                              borderLeft: "1px solid #2a3a55",
+                              borderBottom: "1px solid #2a3a55",
                             }}
+                          />
+                          <FileText size={22} style={{ color: pdf.color }} />
+                          <span
+                            className="text-[7px] font-bold mt-1 tracking-widest"
+                            style={{ color: pdf.color }}
                           >
-                            Rulebook
+                            PDF
                           </span>
                         </div>
-                        <p className="font-sans text-[11px] text-slate-400 leading-relaxed mb-3">
-                          The complete official guidelines, judging criteria,
-                          submission rules, and code-of-conduct for all
-                          participants of InterConnect 26.O. Read before you
-                          build.
-                        </p>
 
-                        {/* Meta Tags */}
-                        <div className="flex items-center gap-3 flex-wrap mb-4">
-                          {[
-                            { label: "Format", value: "PDF" },
-                            { label: "Edition", value: "26.O" },
-                            {
-                              label: "Status",
-                              value: "Official",
-                              highlight: true,
-                            },
-                          ].map((tag) => (
-                            <div
-                              key={tag.label}
-                              className="flex items-center gap-1"
+                        {/* Text Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <h3 className="font-display font-bold text-[14px] text-slate-100 leading-tight">
+                              {pdf.title}
+                            </h3>
+                            <span
+                              className="text-[8px] uppercase tracking-widest px-2 py-0.5 rounded font-bold"
+                              style={{
+                                background: `${pdf.color}18`,
+                                color: pdf.color,
+                                border: `1px solid ${pdf.color}30`,
+                              }}
                             >
-                              <span className="text-[9px] uppercase tracking-wider text-slate-600">
-                                {tag.label}:
-                              </span>
-                              <span
-                                className="text-[9px] font-bold tracking-wider"
-                                style={{
-                                  color: tag.highlight ? "#4ade80" : "#6b7a99",
-                                }}
-                              >
-                                {tag.value}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
+                              {pdf.badge}
+                            </span>
+                          </div>
+                          <p className="font-sans text-[11px] text-slate-400 leading-relaxed mb-3">
+                            {pdf.description}
+                          </p>
 
-                        {/* Action Buttons */}
-                        <div className="flex flex-wrap gap-2">
-                          <a
-                            href="/rulebook-interconnect-26.pdf"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg px-3 py-2 transition-opacity hover:opacity-80"
-                            style={{
-                              background: "#e8404015",
-                              color: "#e84040",
-                              border: "1px solid #e8404030",
-                            }}
-                          >
-                            <ExternalLink size={11} /> Preview
-                          </a>
-                          <a
-                            href="/rulebook-interconnect-26.pdf"
-                            download="InterConnect-26.O-Rulebook.pdf"
-                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg px-3 py-2 transition-opacity hover:opacity-80"
-                            style={{
-                              background: "#131925",
-                              color: "#6b7a99",
-                              border: "1px solid #1e2840",
-                            }}
-                          >
-                            <Download size={11} /> Download
-                          </a>
+                          {/* Meta Tags */}
+                          <div className="flex items-center gap-3 flex-wrap mb-4">
+                            {pdf.tags.map((tag) => (
+                              <div
+                                key={tag.label}
+                                className="flex items-center gap-1"
+                              >
+                                <span className="text-[9px] uppercase tracking-wider text-slate-600">
+                                  {tag.label}:
+                                </span>
+                                <span
+                                  className="text-[9px] font-bold tracking-wider"
+                                  style={{
+                                    color: tag.highlight
+                                      ? "#4ade80"
+                                      : "#6b7a99",
+                                  }}
+                                >
+                                  {tag.value}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex flex-wrap gap-2">
+                            <a
+                              href={pdf.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg px-3 py-2 transition-opacity hover:opacity-80"
+                              style={{
+                                background: `${pdf.color}15`,
+                                color: pdf.color,
+                                border: `1px solid ${pdf.color}30`,
+                              }}
+                            >
+                              <ExternalLink size={11} /> Preview
+                            </a>
+                            <a
+                              href={pdf.fileUrl}
+                              download={pdf.fileName}
+                              className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest rounded-lg px-3 py-2 transition-opacity hover:opacity-80"
+                              style={{
+                                background: "#131925",
+                                color: "#6b7a99",
+                                border: "1px solid #1e2840",
+                              }}
+                            >
+                              <Download size={11} /> Download
+                            </a>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Bottom bar with warning */}
-                    <div
-                      className="px-5 py-3 flex items-center gap-2 border-t border-slate-800/50"
-                      style={{ background: "#0c0f18" }}
-                    >
+                      {/* Bottom bar with warning/footer text */}
                       <div
-                        className="w-1.5 h-1.5 rounded-full animate-pulse"
-                        style={{ background: "#4ade80" }}
-                      />
-                      <p className="text-[10px] text-slate-500 font-sans">
-                        Carefully read all rules before starting your project
-                        submission.
-                      </p>
-                    </div>
-                  </motion.div>
+                        className="px-5 py-3 flex items-center gap-2 border-t border-slate-800/50"
+                        style={{ background: "#0c0f18" }}
+                      >
+                        <div
+                          className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
+                          style={{ background: pdf.color }}
+                        />
+                        <p className="text-[10px] text-slate-500 font-sans">
+                          {pdf.footerText}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
               </div>
             </div>
