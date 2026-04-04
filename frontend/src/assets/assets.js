@@ -2,7 +2,7 @@ import generalRulebook from "../assets/resources/GRB.pdf";
 import Contributer_owner_cordinator from "../assets/resources/InterconnectCOCRB.pdf";
 import git_rules from "../assets/resources/git.pdf";
 
-const PDF_RESOURCES = [
+export const PDF_RESOURCES = [
   {
     id: "roles-guide",
     title: "Roles & Responsibilities Guide",
