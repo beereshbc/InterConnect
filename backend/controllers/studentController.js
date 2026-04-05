@@ -285,7 +285,6 @@ export const createProblem = async (req, res) => {
   }
 };
 
-// ── FIX: Ensure robust addition to projectWiseContribution ──
 export const joinProblem = async (req, res) => {
   try {
     const { id: problemId } = req.params;
@@ -331,8 +330,6 @@ export const joinProblem = async (req, res) => {
       if (!student.projects.includes(project._id)) {
         student.projects.push(project._id);
       }
-
-      // Add object cleanly if not exists
       const exists = student.projectWiseContribution.find(
         (p) => p.project.toString() === project._id.toString(),
       );
@@ -374,11 +371,15 @@ export const getMyProjects = async (req, res) => {
       .populate({
         path: "problem",
         select:
-          "problemID title category theme description tags ownerName organization",
+          "problemID title category theme description tags ownerName organization contactInfo Phone department",
       })
       .populate({
         path: "contributors",
         select: "name email branch department",
+      })
+      .populate({
+        path: "coordinators",
+        select: "name email phone college branch department",
       })
       .populate({
         path: "logs",
@@ -559,7 +560,7 @@ export const markLogComplete = async (req, res) => {
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
-// DASHBOARD
+// DASHBOARD  —  GET /api/student/dashboard
 // ═════════════════════════════════════════════════════════════════════════════
 
 export const getStudentDashboard = async (req, res) => {
@@ -569,13 +570,23 @@ export const getStudentDashboard = async (req, res) => {
       .populate({
         path: "projects",
         select:
-          "projectID problem projectProgressRate contributors logs is_blocked resourcesLink communityLink githubRepoLink liveHostedLink",
+          "projectID problem projectProgressRate contributors coordinators logs is_blocked resourcesLink communityLink githubRepoLink liveHostedLink totalTasksCreated totalTasksCompleted totalPointsDistributed",
         populate: [
           {
             path: "problem",
-            select: "problemID title category theme tags description",
+            select:
+              "problemID title category theme tags description ownerName organization contactInfo Phone department",
           },
-          { path: "contributors", select: "name email branch" },
+          {
+            // Populate contributors with enough detail for the contributor list UI
+            path: "contributors",
+            select: "name email branch department",
+          },
+          {
+            // ── NEW: populate coordinators so the frontend can show name/email/phone ──
+            path: "coordinators",
+            select: "name email phone college branch department",
+          },
         ],
       })
       .populate({
@@ -596,8 +607,6 @@ export const getStudentDashboard = async (req, res) => {
         .json({ success: false, message: "Student not found." });
 
     const logs = student.logs || [];
-
-    // Score from Root
     const totalScore = student.totalScore || 0;
 
     const completedLogs = logs.filter((l) => l.task_status === "completed");
@@ -610,9 +619,9 @@ export const getStudentDashboard = async (req, res) => {
       0,
     );
 
+    // ── Build enriched projects with per-student contribution stats ──────────
     const projectsEnriched = (student.projects || [])
       .map((proj) => {
-        // Find this project's contribution object inside student array safely
         const contrib = student.projectWiseContribution?.find(
           (c) => c.project?.toString() === proj._id?.toString(),
         );
@@ -632,12 +641,14 @@ export const getStudentDashboard = async (req, res) => {
           myTasksActive: projLogs.filter(
             (l) => l.task_status === "assigned" || l.task_status === "pending",
           ).length,
+          // coordinators is already populated via mongoose above — included in spread
         };
       })
       .sort((a, b) => b.myScore - a.myScore);
 
     const projectIds = (student.projects || []).map((p) => p._id);
 
+    // ── Open (claimable) logs for this student's projects ────────────────────
     const openLogs = await Log.find({
       projectId: { $in: projectIds },
       isPublished: true,
@@ -653,6 +664,7 @@ export const getStudentDashboard = async (req, res) => {
       })
       .sort({ createdAt: -1 });
 
+    // ── Global ranking ────────────────────────────────────────────────────────
     const allStudents = await Student.find({ isBlocked: false })
       .select("name totalScore totalTasksCompleted department")
       .lean();
@@ -717,7 +729,6 @@ export const getLeaderboard = async (req, res) => {
 
     const totalStudents = await Student.countDocuments({ isBlocked: false });
 
-    // ── Top project this week ────────────────────────────────────────────────
     const now = new Date();
     const day = now.getDay();
     const startOfWeek = new Date(now);
@@ -754,7 +765,6 @@ export const getLeaderboard = async (req, res) => {
         };
     }
 
-    // ── Top coordinator this week ────────────────────────────────────────────
     const topCoordAgg = await Log.aggregate([
       { $match: { task_status: "completed", closedAt: { $gte: startOfWeek } } },
       {

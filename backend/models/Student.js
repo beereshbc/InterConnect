@@ -15,13 +15,14 @@ const studentSchema = new mongoose.Schema(
     image: { type: String, default: "" },
     isBlocked: { type: Boolean, default: false },
 
-    // Essential fields added
-    usn: { type: String },
-    semester: { type: String },
+    usn: { type: String, trim: true, default: "" },
+    semester: { type: String, trim: true, default: "" },
 
     department: { type: String, trim: true, default: "" },
     program: { type: String, trim: true, default: "" },
+    branch: { type: String, trim: true, default: "" }, // ← ADDED
     college: { type: String, trim: true, default: "" },
+    githubLink: { type: String, trim: true, default: "" }, // ← ADDED
 
     projects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Project" }],
 

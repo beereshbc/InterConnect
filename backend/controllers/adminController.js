@@ -58,6 +58,17 @@ const syncProjectStats = async (projectId) => {
   });
 };
 
+// ─── Deadline helper ──────────────────────────────────────────────────────────
+// All deadlines stored as hours (1–96 = max 4 days).
+// Legacy records that only have deadlineDays are handled via fallback.
+const deadlineMs = (log) => {
+  const hours =
+    log.deadlineHours != null
+      ? log.deadlineHours
+      : (log.deadlineDays || 7) * 24;
+  return hours * 3_600_000;
+};
+
 const PROJECT_POPULATE = [
   {
     path: "problem",
@@ -72,7 +83,7 @@ const PROJECT_POPULATE = [
   {
     path: "logs",
     select:
-      "taskTitle description requirements githubIssueLink githubPrLink closureNote assignedTaskPoints contributorID task_contributor task_status isPublished deadlineDays deadlineAt assignedAt closedAt reopenCount actions createdAt",
+      "taskTitle description requirements githubIssueLink githubPrLink closureNote assignedTaskPoints contributorID task_contributor task_status isPublished deadlineHours deadlineDays deadlineAt assignedAt closedAt reopenCount actions createdAt",
   },
   {
     path: "topContributors",
@@ -274,7 +285,6 @@ export const updateProject = async (req, res) => {
       resourcesLink,
       communityLink,
       is_blocked,
-      // Problem fields
       title,
       category,
       theme,
@@ -295,7 +305,6 @@ export const updateProject = async (req, res) => {
     if (is_blocked !== undefined) project.is_blocked = Boolean(is_blocked);
     await project.save();
 
-    // Update linked Problem doc
     const problemUpdates = {};
     if (title !== undefined) problemUpdates.title = title;
     if (category !== undefined) problemUpdates.category = category;
@@ -345,7 +354,7 @@ export const toggleProjectBlock = async (req, res) => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// LOGS
+// LOGS  —  deadlineHours replaces deadlineDays (1 – 96 h = max 4 days)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const createLog = async (req, res) => {
@@ -366,7 +375,7 @@ export const createLog = async (req, res) => {
       requirements,
       githubIssueLink,
       assignedTaskPoints,
-      deadlineDays,
+      deadlineHours,
     } = req.body;
 
     if (!taskTitle || !description || !githubIssueLink)
@@ -375,7 +384,11 @@ export const createLog = async (req, res) => {
         message: "taskTitle, description, and githubIssueLink are required.",
       });
 
-    const pts = Number(assignedTaskPoints) || 10;
+    // Points: 1–50 (default 10)
+    const pts = Math.min(50, Math.max(1, Number(assignedTaskPoints) || 10));
+
+    // Deadline: 1–96 hours (default 24 h)
+    const hours = Math.min(96, Math.max(1, Number(deadlineHours) || 24));
 
     const log = await Log.create({
       taskTitle,
@@ -385,7 +398,9 @@ export const createLog = async (req, res) => {
       projectId: project._id,
       githubIssueLink,
       assignedTaskPoints: pts,
-      deadlineDays: Number(deadlineDays) || 7,
+      deadlineHours: hours,
+      // keep deadlineDays for any legacy consumers
+      deadlineDays: Math.ceil(hours / 24),
       task_coordinator_id: req.adminId,
       task_status: "open",
       isPublished: false,
@@ -493,17 +508,26 @@ export const updateLog = async (req, res) => {
       requirements,
       githubIssueLink,
       assignedTaskPoints,
-      deadlineDays,
+      deadlineHours,
     } = req.body;
+
     const oldPts = log.assignedTaskPoints;
 
     if (taskTitle !== undefined) log.taskTitle = taskTitle;
     if (description !== undefined) log.description = description;
     if (requirements !== undefined) log.requirements = requirements;
     if (githubIssueLink !== undefined) log.githubIssueLink = githubIssueLink;
-    if (assignedTaskPoints !== undefined)
-      log.assignedTaskPoints = Number(assignedTaskPoints);
-    if (deadlineDays !== undefined) log.deadlineDays = Number(deadlineDays);
+    if (assignedTaskPoints !== undefined) {
+      log.assignedTaskPoints = Math.min(
+        50,
+        Math.max(1, Number(assignedTaskPoints)),
+      );
+    }
+    if (deadlineHours !== undefined) {
+      const hours = Math.min(96, Math.max(1, Number(deadlineHours)));
+      log.deadlineHours = hours;
+      log.deadlineDays = Math.ceil(hours / 24);
+    }
 
     log.actions.push({
       actionType: "updated",
@@ -512,13 +536,11 @@ export const updateLog = async (req, res) => {
     });
     await log.save();
 
-    if (
-      assignedTaskPoints !== undefined &&
-      Number(assignedTaskPoints) !== oldPts
-    )
+    if (assignedTaskPoints !== undefined && log.assignedTaskPoints !== oldPts) {
       await Admin.findByIdAndUpdate(req.adminId, {
-        $inc: { totalPointsAllocated: Number(assignedTaskPoints) - oldPts },
+        $inc: { totalPointsAllocated: log.assignedTaskPoints - oldPts },
       });
+    }
 
     res.json({ success: true, message: "Log updated.", log });
   } catch (e) {
@@ -526,10 +548,6 @@ export const updateLog = async (req, res) => {
   }
 };
 
-// ═════════════════════════════════════════════════════════════════════════════
-// ✅ FIX: ROBUST CLOSE LOG FUNCTION
-// Ensures scores are ALWAYS added properly regardless of array structure.
-// ═════════════════════════════════════════════════════════════════════════════
 export const closeLog = async (req, res) => {
   try {
     const { logId } = req.params;
@@ -540,11 +558,11 @@ export const closeLog = async (req, res) => {
         .status(400)
         .json({ success: false, message: "pointsAwarded is required." });
 
-    const points = Number(pointsAwarded);
-    if (isNaN(points) || points < 0)
+    const points = Math.min(50, Math.max(0, Number(pointsAwarded)));
+    if (isNaN(points))
       return res.status(400).json({
         success: false,
-        message: "pointsAwarded must be a non-negative number.",
+        message: "pointsAwarded must be a number between 0 and 50.",
       });
 
     const log = await Log.findById(logId);
@@ -553,7 +571,6 @@ export const closeLog = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Log not found." });
 
-    // Allow closing if assigned or pending
     if (log.task_status !== "pending" && log.task_status !== "assigned")
       return res.status(400).json({
         success: false,
@@ -573,7 +590,6 @@ export const closeLog = async (req, res) => {
     log.task_coordinator_id = req.adminId;
     if (closureNote) log.closureNote = closureNote;
 
-    // ✅ FIX 1: Use "completed" to strictly match your actionSchema enum
     log.actions.push({
       actionType: "completed",
       note: `Closed by admin. Points awarded: ${points}. ${closureNote || ""}`.trim(),
@@ -584,11 +600,9 @@ export const closeLog = async (req, res) => {
     // ── 2. Robust Student Update ──
     const student = await Student.findById(log.contributorID);
     if (student) {
-      // Safely increment global totals for Leaderboard
       student.totalScore = (student.totalScore || 0) + points;
       student.totalTasksCompleted = (student.totalTasksCompleted || 0) + 1;
 
-      // Update project-specific totals safely
       const projIndex = student.projectWiseContribution.findIndex(
         (c) => c.project && c.project.toString() === log.projectId.toString(),
       );
@@ -608,7 +622,6 @@ export const closeLog = async (req, res) => {
         });
       }
 
-      // ✅ FIX 2: Explicitly tell Mongoose to save the nested array changes
       student.markModified("projectWiseContribution");
       await student.save();
     }
@@ -697,7 +710,8 @@ export const reopenLog = async (req, res) => {
         message: "Only terminated logs can be reopened.",
       });
 
-    const { deadlineDays } = req.body;
+    const { deadlineHours } = req.body;
+
     log.task_status = "open";
     log.isPublished = true;
     log.contributorID = null;
@@ -707,11 +721,17 @@ export const reopenLog = async (req, res) => {
     log.closedAt = null;
     log.closureNote = "";
     log.githubPrLink = "";
-    if (deadlineDays) log.deadlineDays = Number(deadlineDays);
+
+    if (deadlineHours) {
+      const hours = Math.min(96, Math.max(1, Number(deadlineHours)));
+      log.deadlineHours = hours;
+      log.deadlineDays = Math.ceil(hours / 24);
+    }
+
     log.reopenCount += 1;
     log.actions.push({
       actionType: "reopened",
-      note: `Reopened. New deadline window: ${log.deadlineDays}d.`,
+      note: `Reopened. New deadline window: ${log.deadlineHours || log.deadlineDays * 24}h.`,
       by: req.adminId.toString(),
     });
     await log.save();
@@ -760,7 +780,12 @@ export const selfAssignLog = async (req, res) => {
       });
 
     const now = new Date();
-    const deadlineAt = new Date(now.getTime() + log.deadlineDays * 86_400_000);
+    // Use deadlineHours if set, fall back to deadlineDays * 24
+    const hours =
+      log.deadlineHours != null
+        ? log.deadlineHours
+        : (log.deadlineDays || 7) * 24;
+    const deadlineAt = new Date(now.getTime() + hours * 3_600_000);
 
     log.contributorID = contributorID;
     log.task_contributor = contributorName || "Contributor";
@@ -842,7 +867,7 @@ export const getOpenLogs = async (req, res) => {
       isPublished: true,
       task_status: "open",
     }).select(
-      "taskTitle description requirements githubIssueLink assignedTaskPoints deadlineDays createdAt projectId",
+      "taskTitle description requirements githubIssueLink assignedTaskPoints deadlineHours deadlineDays createdAt projectId",
     );
 
     res.json({ success: true, count: logs.length, logs });
@@ -1048,7 +1073,6 @@ export const saApproveProblem = async (req, res) => {
     });
     await problem.save();
 
-    // Sequential project ID generation
     const lastProject = await Project.findOne().sort({ _id: -1 });
     let nextIdNumber = 1;
     if (lastProject?.projectID?.startsWith("GMP-")) {
@@ -1257,7 +1281,6 @@ const broadcastEmail = async (title, message, type) => {
       Admin.find({ isBlocked: false }).select("email").lean(),
     ]);
 
-    // 1. Extract and clean emails (remove empty/null/invalid)
     const allEmails = [
       ...students.map((s) => s.email),
       ...admins.map((a) => a.email),
@@ -1286,27 +1309,21 @@ const broadcastEmail = async (title, message, type) => {
         <p style="color:#4a5568;font-size:12px;text-align:center">© InteConnect 26.0 · GMU Campus</p>
       </div>`;
 
-    // 2. Chunk the emails into batches to prevent SMTP BCC limits (Max 50 per batch)
     const BATCH_SIZE = 50;
     let batchesSent = 0;
 
     for (let i = 0; i < allEmails.length; i += BATCH_SIZE) {
       const batch = allEmails.slice(i, i + BATCH_SIZE);
-
       await mailer.sendMail({
         from: `"InterConnect 26.0" <${process.env.EMAIL_USER}>`,
-        to: process.env.EMAIL_USER, // Send to self
-        bcc: batch, // BCC the current batch of 50
+        to: process.env.EMAIL_USER,
+        bcc: batch,
         subject: `📢 Announcement: ${title}`,
         html: htmlContent,
       });
-
       batchesSent++;
-
-      // Optional: Add a small 1-second delay between batches to avoid rate-limiting
-      if (i + BATCH_SIZE < allEmails.length) {
+      if (i + BATCH_SIZE < allEmails.length)
         await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
     }
 
     console.log(
@@ -1328,7 +1345,6 @@ export const saCreateNotification = async (req, res) => {
       emailSent: Boolean(isPublished),
     });
 
-    // Fire and forget - doesn't block the API response
     if (notification.isPublished) broadcastEmail(title, message, type);
 
     res
@@ -1360,7 +1376,6 @@ export const saTogglePublishNotification = async (req, res) => {
     notification.isPublished = !notification.isPublished;
 
     if (notification.isPublished && !notification.emailSent) {
-      // Fire and forget
       broadcastEmail(
         notification.title,
         notification.message,

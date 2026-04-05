@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 const fmtDate = (d) =>
@@ -19,6 +18,20 @@ const fmtDatetime = (d) =>
     hour: "2-digit",
     minute: "2-digit",
   });
+
+// Format hours into a human-readable string: 4 → "4h", 25 → "1d 1h", 48 → "2d"
+const fmtHours = (h) => {
+  if (h == null || h === 0) return "—";
+  const n = Number(h);
+  if (n < 24) return `${n}h`;
+  const d = Math.floor(n / 24);
+  const r = n % 24;
+  return r > 0 ? `${d}d ${r}h` : `${d}d`;
+};
+
+// Resolve deadlineHours from a log (supports legacy deadlineDays)
+const logHours = (log) =>
+  log.deadlineHours != null ? log.deadlineHours : (log.deadlineDays || 7) * 24;
 
 const daysLeft = (deadlineAt) => {
   if (!deadlineAt) return null;
@@ -335,6 +348,139 @@ const RangeField = ({
   </div>
 );
 
+// ─── NEW: PointsField — custom number input 1–50 with quick presets ─────────
+const POINT_PRESETS = [5, 10, 15, 20, 25, 30, 40, 50];
+
+const PointsField = ({ value, onChange, accent = "#e85d3a" }) => {
+  const handleInput = (e) => {
+    const raw = Number(e.target.value);
+    const clamped = Math.min(50, Math.max(1, isNaN(raw) ? 1 : raw));
+    onChange(clamped);
+  };
+  return (
+    <div className="mb-4">
+      <label className="block text-[10px] font-bold text-slate-500 mb-1.5 font-mono tracking-widest uppercase">
+        Task Points <span style={{ color: accent }}>({value} pts)</span>
+      </label>
+      {/* Quick preset chips */}
+      <div className="flex gap-1.5 flex-wrap mb-2">
+        {POINT_PRESETS.map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => onChange(p)}
+            className="px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono cursor-pointer transition-all duration-100"
+            style={
+              value === p
+                ? {
+                    background: accent,
+                    color: "#fff",
+                    border: `1px solid ${accent}`,
+                  }
+                : {
+                    background: "#1e2330",
+                    color: "#8892a4",
+                    border: "1px solid #2a3045",
+                  }
+            }
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+      {/* Custom typed input */}
+      <div className="relative">
+        <input
+          type="number"
+          value={value}
+          min={1}
+          max={50}
+          onChange={handleInput}
+          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-slate-200 font-mono text-[13px] outline-none focus:border-[#e85d3a60] transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          placeholder="Enter 1 – 50"
+        />
+        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-mono pointer-events-none">
+          / 50 pts
+        </span>
+      </div>
+      <p className="text-[10px] text-slate-600 font-mono mt-1">
+        Custom value between 1 and 50 — or pick a preset above
+      </p>
+    </div>
+  );
+};
+
+// ─── NEW: DeadlineField — hours picker 1–96 (max 4 days) with presets ────────
+const DEADLINE_PRESETS = [
+  { label: "4h", hours: 4 },
+  { label: "8h", hours: 8 },
+  { label: "12h", hours: 12 },
+  { label: "1d", hours: 24 },
+  { label: "2d", hours: 48 },
+  { label: "3d", hours: 72 },
+  { label: "4d", hours: 96 },
+];
+
+const DeadlineField = ({ value, onChange, accent = "#3a9de8" }) => {
+  const handleInput = (e) => {
+    const raw = Number(e.target.value);
+    const clamped = Math.min(96, Math.max(1, isNaN(raw) ? 1 : raw));
+    onChange(clamped);
+  };
+  return (
+    <div className="mb-4">
+      <label className="block text-[10px] font-bold text-slate-500 mb-1.5 font-mono tracking-widest uppercase">
+        Deadline Window{" "}
+        <span style={{ color: accent }}>({fmtHours(value)})</span>
+      </label>
+      {/* Quick preset chips */}
+      <div className="flex gap-1.5 flex-wrap mb-2">
+        {DEADLINE_PRESETS.map((p) => (
+          <button
+            key={p.label}
+            type="button"
+            onClick={() => onChange(p.hours)}
+            className="px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono cursor-pointer transition-all duration-100"
+            style={
+              value === p.hours
+                ? {
+                    background: accent,
+                    color: "#fff",
+                    border: `1px solid ${accent}`,
+                  }
+                : {
+                    background: "#1e2330",
+                    color: "#8892a4",
+                    border: "1px solid #2a3045",
+                  }
+            }
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+      {/* Custom typed input (in hours) */}
+      <div className="relative">
+        <input
+          type="number"
+          value={value}
+          min={1}
+          max={96}
+          onChange={handleInput}
+          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3.5 py-2.5 text-slate-200 font-mono text-[13px] outline-none focus:border-[#3a9de860] transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          placeholder="Enter hours (1 – 96)"
+        />
+        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-mono pointer-events-none">
+          hrs
+        </span>
+      </div>
+      <p className="text-[10px] font-mono mt-1" style={{ color: accent }}>
+        ⏱ {fmtHours(value)} from moment of assignment — max 4 days (96h)
+      </p>
+    </div>
+  );
+};
+
 const SectionLabel = ({ children, color = "#e85d3a" }) => (
   <div className="flex items-center gap-2 mb-4">
     <span className="w-1 h-4 rounded-sm block" style={{ background: color }} />
@@ -368,9 +514,22 @@ const SkeletonCard = () => (
 );
 
 // ─── Contributor Info Modal ────────────────────────────────────────────────────
-const ContributorInfoModal = ({ log, contributors, onClose }) => {
+// Find contributor accurately by contributorID (ObjectId string) first, then fallback to name
+const ContributorInfoModal = ({ log, contributors, projectId, onClose }) => {
   const student = (contributors || []).find(
-    (c) => c._id === log.contributorID || c.name === log.task_contributor,
+    (c) =>
+      (log.contributorID &&
+        (c._id === log.contributorID ||
+          c._id?.toString() === log.contributorID?.toString())) ||
+      (log.task_contributor && c.name === log.task_contributor),
+  );
+
+  // Accurately resolve THIS project's contribution record
+  const contrib = student?.projectWiseContribution?.find(
+    (c) =>
+      c.project &&
+      (c.project === projectId ||
+        c.project?.toString() === projectId?.toString()),
   );
 
   return (
@@ -397,11 +556,7 @@ const ContributorInfoModal = ({ log, contributors, onClose }) => {
               </div>
               <div className="flex gap-2 mt-2 flex-wrap">
                 <StatusPill status={student.isBlocked ? "blocked" : "active"} />
-                {student.projectWiseContribution?.[0] && (
-                  <Badge color="#9c3ae8">
-                    {student.projectWiseContribution[0].role}
-                  </Badge>
-                )}
+                {contrib?.role && <Badge color="#9c3ae8">{contrib.role}</Badge>}
               </div>
             </div>
           </div>
@@ -409,16 +564,42 @@ const ContributorInfoModal = ({ log, contributors, onClose }) => {
             <InfoRow label="Phone" value={student.phone} color="#3a9de8" />
             <InfoRow label="USN" value={student.usn} color="#fbbf24" />
             <InfoRow label="Department" value={student.department} />
-            <InfoRow label="Branch" value={student.branch} />
+
             <InfoRow label="Program" value={student.program} />
             <InfoRow label="Semester" value={student.semester} />
             <InfoRow label="College" value={student.college} />
             <InfoRow
               label="Total Score"
-              value={`${student.totalScore || 0} pts`}
+              value={student.totalScore ? `${student.totalScore} pts` : "0 pts"}
               color="#e85d3a"
             />
           </div>
+          {/* Project-specific contribution */}
+          {contrib && (
+            <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4 mb-4">
+              <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mb-2">
+                Contribution on this project
+              </div>
+              <div className="flex gap-5">
+                <div>
+                  <div className="text-lg font-extrabold text-[#e85d3a] font-display">
+                    {contrib.contributionScore || 0}
+                  </div>
+                  <div className="text-[9px] text-slate-600 font-mono uppercase">
+                    pts earned
+                  </div>
+                </div>
+                <div>
+                  <div className="text-lg font-extrabold text-[#4ade80] font-display">
+                    {contrib.tasksCompleted || 0}
+                  </div>
+                  <div className="text-[9px] text-slate-600 font-mono uppercase">
+                    tasks done
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4 mb-4">
             <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mb-2">
               Claimed Task
@@ -633,8 +814,8 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
     description: "",
     requirements: "",
     githubIssueLink: "",
-    assignedTaskPoints: 10,
-    deadlineDays: 7,
+    assignedTaskPoints: 10, // 1–50
+    deadlineHours: 24, // 1–96
   });
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -673,35 +854,22 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
         required
         placeholder="https://github.com/.../issues/X"
       />
-      <div className="grid grid-cols-2 gap-4">
-        <RangeField
-          label="Task Points"
+
+      <div className="grid grid-cols-2 gap-6">
+        {/* Points 1–50 */}
+        <PointsField
           value={form.assignedTaskPoints}
-          min={5}
-          max={100}
-          step={5}
-          onChange={(e) =>
-            setForm((f) => ({
-              ...f,
-              assignedTaskPoints: Number(e.target.value),
-            }))
-          }
+          onChange={(v) => setForm((f) => ({ ...f, assignedTaskPoints: v }))}
           accent="#4ade80"
-          unit=" pts"
         />
-        <RangeField
-          label="Deadline Window"
-          value={form.deadlineDays}
-          min={1}
-          max={30}
-          step={1}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, deadlineDays: Number(e.target.value) }))
-          }
+        {/* Deadline in hours */}
+        <DeadlineField
+          value={form.deadlineHours}
+          onChange={(v) => setForm((f) => ({ ...f, deadlineHours: v }))}
           accent="#3a9de8"
-          unit=" days"
         />
       </div>
+
       <div className="p-3.5 bg-blue-950/30 border border-blue-500/20 rounded-xl mb-4">
         <p className="text-[11px] text-blue-400 font-mono">
           ℹ The log will be created as a <strong>draft</strong>. Publish it for
@@ -738,7 +906,7 @@ const EditLogModal = ({ log, onClose, onUpdate }) => {
     requirements: log.requirements || "",
     githubIssueLink: log.githubIssueLink || "",
     assignedTaskPoints: log.assignedTaskPoints || 10,
-    deadlineDays: log.deadlineDays || 7,
+    deadlineHours: logHours(log),
   });
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -776,35 +944,20 @@ const EditLogModal = ({ log, onClose, onUpdate }) => {
         onChange={set("githubIssueLink")}
         required
       />
-      <div className="grid grid-cols-2 gap-4">
-        <RangeField
-          label="Task Points"
+
+      <div className="grid grid-cols-2 gap-6">
+        <PointsField
           value={form.assignedTaskPoints}
-          min={5}
-          max={100}
-          step={5}
-          onChange={(e) =>
-            setForm((f) => ({
-              ...f,
-              assignedTaskPoints: Number(e.target.value),
-            }))
-          }
+          onChange={(v) => setForm((f) => ({ ...f, assignedTaskPoints: v }))}
           accent="#fbbf24"
-          unit=" pts"
         />
-        <RangeField
-          label="Deadline Window"
-          value={form.deadlineDays}
-          min={1}
-          max={30}
-          step={1}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, deadlineDays: Number(e.target.value) }))
-          }
+        <DeadlineField
+          value={form.deadlineHours}
+          onChange={(v) => setForm((f) => ({ ...f, deadlineHours: v }))}
           accent="#3a9de8"
-          unit=" days"
         />
       </div>
+
       <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
         <Btn variant="secondary" onClick={onClose}>
           Cancel
@@ -827,17 +980,10 @@ const EditLogModal = ({ log, onClose, onUpdate }) => {
 };
 
 // ─── Close Log Modal ──────────────────────────────────────────────────────────
-/**
- * This modal is shown when admin clicks "Close" on either an "assigned" OR "pending" log.
- * The "pending" state means the student submitted their work — admin reviews the PR and awards points.
- */
-// ─── MODAL: Close Log ─────────────────────────────────────────────────────────
 const CloseLogModal = ({ log, onClose, onCloseLog }) => {
   const isPendingReview = log.task_status === "pending";
-
   const [form, setForm] = useState({
     githubPrLink: log.githubPrLink || "",
-    // ✅ FIX: Changed from 'contributionScore' to 'pointsAwarded'
     pointsAwarded: log.assignedTaskPoints || 10,
     closureNote: log.closureNote || "",
   });
@@ -845,16 +991,9 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const isValid = !!form.githubPrLink;
 
-  const handleClose = async () => {
-    setSaving(true);
-    await onCloseLog(form);
-    setSaving(false);
-    onClose();
-  };
-
   return (
     <Modal title="Close Task Log" onClose={onClose}>
-      {/* Task summary card */}
+      {/* Task summary */}
       <div className="p-4 bg-slate-900 border border-slate-700 rounded-xl mb-5">
         <div className="text-[13px] font-bold text-slate-100 font-display mb-1">
           {log.taskTitle}
@@ -884,16 +1023,15 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
             🔍 Student Submitted for Review
           </div>
           <p className="text-[11px] text-indigo-400/80 font-mono leading-relaxed">
-            The contributor has marked this task as complete and submitted their
-            PR link. Review the work, adjust points if needed, and close the
-            task to award points.
+            The contributor has marked this task as complete. Review the work,
+            adjust points if needed, and close to award points.
           </p>
         </div>
       ) : (
         <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-5">
           <p className="text-[11px] text-amber-400 font-mono">
             ⚠ This task is currently <strong>assigned</strong>. You are closing
-            it manually — make sure the work is complete before proceeding.
+            it manually — make sure the work is complete.
           </p>
         </div>
       )}
@@ -911,30 +1049,20 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
             : undefined
         }
       />
-      <RangeField
-        label="Awarded Points"
-        // ✅ FIX: Using pointsAwarded here
+
+      {/* Points awarded — 0 to 50 */}
+      <PointsField
         value={form.pointsAwarded}
-        min={0}
-        max={100}
-        step={5}
-        onChange={(e) =>
-          setForm((f) => ({ ...f, pointsAwarded: Number(e.target.value) }))
-        }
+        onChange={(v) => setForm((f) => ({ ...f, pointsAwarded: v }))}
         accent="#4ade80"
-        unit=" pts"
       />
+
       <Field
         label="Closure Note"
         value={form.closureNote}
         onChange={set("closureNote")}
         type="textarea"
         placeholder="What was achieved? Any remarks for the contributor..."
-        hint={
-          isPendingReview
-            ? "Student's note shown above is pre-filled — update if needed."
-            : undefined
-        }
       />
 
       <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
@@ -943,12 +1071,16 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
         </Btn>
         <Btn
           variant="success"
-          onClick={handleClose}
+          onClick={async () => {
+            setSaving(true);
+            await onCloseLog(form);
+            setSaving(false);
+            onClose();
+          }}
           disabled={!isValid}
           loading={saving}
         >
-          {/* ✅ FIX: Displaying pointsAwarded here */}✓ Mark Complete & Award{" "}
-          {form.pointsAwarded} pts
+          ✓ Mark Complete & Award {form.pointsAwarded} pts
         </Btn>
       </div>
     </Modal>
@@ -1001,7 +1133,7 @@ const TerminateLogModal = ({ log, onClose, onTerminate }) => {
 
 // ─── Reopen Log Modal ─────────────────────────────────────────────────────────
 const ReopenLogModal = ({ log, onClose, onReopen }) => {
-  const [deadlineDays, setDeadlineDays] = useState(log.deadlineDays || 7);
+  const [deadlineHours, setDeadlineHours] = useState(logHours(log));
   const [saving, setSaving] = useState(false);
 
   return (
@@ -1016,15 +1148,10 @@ const ReopenLogModal = ({ log, onClose, onReopen }) => {
           before.
         </p>
       </div>
-      <RangeField
-        label="New Deadline Window (days after assignment)"
-        value={deadlineDays}
-        min={1}
-        max={30}
-        step={1}
-        onChange={(e) => setDeadlineDays(Number(e.target.value))}
+      <DeadlineField
+        value={deadlineHours}
+        onChange={setDeadlineHours}
         accent="#4ade80"
-        unit=" days"
       />
       <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
         <Btn variant="secondary" onClick={onClose}>
@@ -1035,7 +1162,7 @@ const ReopenLogModal = ({ log, onClose, onReopen }) => {
           loading={saving}
           onClick={async () => {
             setSaving(true);
-            await onReopen({ deadlineDays });
+            await onReopen({ deadlineHours });
             setSaving(false);
             onClose();
           }}
@@ -1048,11 +1175,22 @@ const ReopenLogModal = ({ log, onClose, onReopen }) => {
 };
 
 // ─── Student Detail Modal ─────────────────────────────────────────────────────
-const StudentModal = ({ student, projectLogs, onClose }) => {
+const StudentModal = ({ student, projectLogs, projectId, onClose }) => {
+  // Accurate lookup using contributorID or name match
   const studentLogs = (projectLogs || []).filter(
-    (l) => l.task_contributor === student.name,
+    (l) =>
+      (l.contributorID &&
+        l.contributorID?.toString() === student._id?.toString()) ||
+      l.task_contributor === student.name,
   );
-  const contrib = student.projectWiseContribution?.[0];
+
+  // Accurate project-specific contribution
+  const contrib = student.projectWiseContribution?.find(
+    (c) =>
+      c.project &&
+      (c.project === projectId ||
+        c.project?.toString() === projectId?.toString()),
+  );
 
   return (
     <Modal title={`Student · ${student.name}`} onClose={onClose} wide>
@@ -1067,21 +1205,26 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
           </div>
           <div className="flex gap-2 mt-2.5 flex-wrap">
             <StatusPill status={student.isBlocked ? "blocked" : "active"} />
-            {contrib && <Badge color="#9c3ae8">{contrib.role}</Badge>}
-            <Badge color="#3a9de8">{student.branch}</Badge>
+            {contrib?.role && <Badge color="#9c3ae8">{contrib.role}</Badge>}
           </div>
         </div>
       </div>
+
+      {/* Per-project stats */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
           {
-            label: "Score",
+            label: "Project Score",
             value: contrib?.contributionScore ?? 0,
             color: "#e85d3a",
           },
-          { label: "Tasks", value: studentLogs.length, color: "#3a9de8" },
           {
-            label: "Done",
+            label: "Tasks Assigned",
+            value: studentLogs.length,
+            color: "#3a9de8",
+          },
+          {
+            label: "Tasks Done",
             value: studentLogs.filter((l) => l.task_status === "completed")
               .length,
             color: "#4ade80",
@@ -1103,17 +1246,19 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
           </div>
         ))}
       </div>
+
+      {/* Full profile grid */}
       <div className="grid grid-cols-2 gap-3 mb-5">
         {[
           ["Department", student.department],
           ["Program", student.program],
-          ["Branch", student.branch],
+
           ["Semester", student.semester],
           ["USN", student.usn],
           ["Phone", student.phone],
           ["College", student.college],
-          ["Total Score", `${student.totalScore || 0} pts`],
-          ["Tasks Done", student.totalTasksCompleted || 0],
+          ["Overall Score", `${student.totalScore || 0} pts`],
+          ["Overall Tasks Done", student.totalTasksCompleted || 0],
         ].map(([k, v]) => (
           <div
             key={k}
@@ -1128,6 +1273,7 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
           </div>
         ))}
       </div>
+
       {student.githubLink && (
         <a
           href={student.githubLink}
@@ -1138,9 +1284,10 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
           ⌥ GitHub Profile ↗
         </a>
       )}
+
       {studentLogs.length > 0 && (
         <>
-          <SectionLabel color="#e85d3a">Task Logs</SectionLabel>
+          <SectionLabel color="#e85d3a">Task Logs on this Project</SectionLabel>
           <div className="flex flex-col gap-2.5">
             {studentLogs.map((log) => (
               <div
@@ -1156,6 +1303,9 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
                 <div className="flex gap-4 items-center">
                   <span className="text-[10px] text-amber-400 font-mono">
                     ⬡ {log.assignedTaskPoints} pts
+                  </span>
+                  <span className="text-[10px] text-slate-600 font-mono">
+                    ⏱ {fmtHours(logHours(log))} window
                   </span>
                   <span className="text-[10px] text-slate-600 font-mono">
                     {fmtDate(log.createdAt)}
@@ -1174,6 +1324,7 @@ const StudentModal = ({ student, projectLogs, onClose }) => {
 const LogCard = ({
   log,
   contributors,
+  projectId,
   onPublish,
   onEdit,
   onClose,
@@ -1183,7 +1334,6 @@ const LogCard = ({
   const [showStudentInfo, setShowStudentInfo] = useState(false);
   const days = daysLeft(log.deadlineAt);
   const isPending = log.task_status === "pending";
-  // "isActive" means the task is in a working state (assigned or submitted for review)
   const isActive = log.task_status === "assigned" || isPending;
   const isOverdue = isActive && days !== null && days <= 0;
 
@@ -1263,7 +1413,7 @@ const LogCard = ({
             ⬡ {log.assignedTaskPoints} pts
           </span>
           <span className="text-[11px] text-blue-400 font-mono">
-            ⏱ {log.deadlineDays}d window
+            ⏱ {fmtHours(logHours(log))} window
           </span>
           {log.assignedAt && (
             <span className="text-[10px] text-slate-600 font-mono">
@@ -1272,7 +1422,7 @@ const LogCard = ({
           )}
           {isActive && log.deadlineAt && (
             <span
-              className={`text-[11px] font-bold font-mono ${days <= 0 ? "text-red-400" : days <= 2 ? "text-orange-400" : "text-slate-400"}`}
+              className={`text-[11px] font-bold font-mono ${days <= 0 ? "text-red-400" : days <= 1 ? "text-orange-400" : "text-slate-400"}`}
             >
               {days <= 0 ? "⚠ Overdue" : `⏳ ${days}d remaining`}
             </span>
@@ -1323,7 +1473,6 @@ const LogCard = ({
 
         {/* Action buttons */}
         <div className="flex gap-2 flex-wrap pt-3 border-t border-slate-800/60">
-          {/* Contributor info */}
           <Btn variant="info" small onClick={() => setShowStudentInfo(true)}>
             👤{" "}
             {log.task_status === "open"
@@ -1331,7 +1480,6 @@ const LogCard = ({
               : log.task_contributor || "Student Info"}
           </Btn>
 
-          {/* Publish / Unpublish — only for open logs */}
           {log.task_status === "open" && (
             <Btn
               variant={log.isPublished ? "warn" : "blue"}
@@ -1342,32 +1490,24 @@ const LogCard = ({
             </Btn>
           )}
 
-          {/* Edit — only unpublished open logs */}
           {log.task_status === "open" && (
             <Btn variant="secondary" small onClick={() => onEdit(log)}>
               Edit
             </Btn>
           )}
 
-          {/*
-           * Close — available for BOTH "assigned" AND "pending" states.
-           * "pending" means student submitted work and is awaiting admin review.
-           * Admin reviews the PR and closes to award points.
-           */}
           {isActive && (
             <Btn variant="success" small onClick={() => onClose(log)}>
               {isPending ? "✓ Review & Close" : "✓ Close"}
             </Btn>
           )}
 
-          {/* Terminate — available for open, assigned, or pending logs */}
           {(log.task_status === "open" || isActive) && (
             <Btn variant="danger" small onClick={() => onTerminate(log)}>
               Terminate
             </Btn>
           )}
 
-          {/* Reopen — terminated only */}
           {log.task_status === "terminated" && (
             <Btn variant="success" small onClick={() => onReopen(log)}>
               ↺ Reopen
@@ -1380,6 +1520,7 @@ const LogCard = ({
         <ContributorInfoModal
           log={log}
           contributors={contributors}
+          projectId={projectId}
           onClose={() => setShowStudentInfo(false)}
         />
       )}
@@ -1398,10 +1539,16 @@ const WorkflowInsight = ({ project }) => {
 
   const lanes = {};
   project.contributors?.forEach((c) => {
-    lanes[c.name] = { ...c, logs: [] };
+    lanes[c._id] = { ...c, logs: [] };
   });
   allLogs.forEach((l) => {
-    if (lanes[l.task_contributor]) lanes[l.task_contributor].logs.push(l);
+    // Match by contributorID first, then by name
+    const key = Object.keys(lanes).find(
+      (id) =>
+        l.contributorID?.toString() === id ||
+        lanes[id].name === l.task_contributor,
+    );
+    if (key) lanes[key].logs.push(l);
   });
   const timeline = [...allLogs].sort(
     (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
@@ -1442,7 +1589,7 @@ const WorkflowInsight = ({ project }) => {
         ))}
       </div>
 
-      {/* Contributor lanes */}
+      {/* Contributor lanes — keyed by _id for accuracy */}
       <div className="bg-[#0c0f18] border border-slate-800 rounded-2xl p-6">
         <SectionLabel color="#e85d3a">Contributor Lanes</SectionLabel>
         <div className="space-y-5">
@@ -1495,7 +1642,7 @@ const WorkflowInsight = ({ project }) => {
                           </div>
                           <div className="text-[9px] opacity-60 mt-0.5">
                             {log.assignedTaskPoints}pts ·{" "}
-                            {fmtDate(log.createdAt)}
+                            {fmtHours(logHours(log))} · {fmtDate(log.createdAt)}
                           </div>
                         </div>
                         {i < stu.logs.length - 1 && (
@@ -1548,6 +1695,9 @@ const WorkflowInsight = ({ project }) => {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="text-[10px] text-amber-400 font-mono">
                       ⬡ {log.assignedTaskPoints}pt
+                    </span>
+                    <span className="text-[10px] text-blue-400 font-mono">
+                      ⏱ {fmtHours(logHours(log))}
                     </span>
                     <StatusPill status={log.task_status} />
                   </div>
@@ -1625,7 +1775,6 @@ const ProjectView = ({
                 {project.problem?.problemID}
               </span>
               {project.is_blocked && <StatusPill status="blocked" />}
-              {/* Highlight if any tasks are pending admin review */}
               {logCounts.pending > 0 && (
                 <span
                   className="text-[10px] font-bold font-mono px-2.5 py-0.5 rounded-full animate-pulse"
@@ -1896,19 +2045,30 @@ const ProjectView = ({
               }}
             >
               {project.contributors?.map((stu) => {
-                const contrib = stu.projectWiseContribution?.[0];
+                // Accurate per-project contribution lookup
+                const contrib = stu.projectWiseContribution?.find(
+                  (c) =>
+                    c.project &&
+                    (c.project === project._id ||
+                      c.project?.toString() === project._id?.toString()),
+                );
+                // Accurate log match using contributorID or name
                 const stuLogs = (project.logs || []).filter(
                   (l) =>
-                    l.contributorID === stu._id ||
+                    (l.contributorID &&
+                      l.contributorID?.toString() === stu._id?.toString()) ||
                     l.task_contributor === stu.name,
                 );
                 const doneCt = stuLogs.filter(
                   (l) => l.task_status === "completed",
                 ).length;
+
                 return (
                   <div
                     key={stu._id}
-                    onClick={() => onViewStudent(stu, project.logs ?? [])}
+                    onClick={() =>
+                      onViewStudent(stu, project.logs ?? [], project._id)
+                    }
                     className="bg-[#0c0f18] border border-slate-800 rounded-xl p-5 cursor-pointer transition-all duration-150 hover:border-[#e85d3a40] hover:-translate-y-0.5"
                   >
                     <div className="flex gap-3 items-center mb-3.5">
@@ -1925,9 +2085,14 @@ const ProjectView = ({
                         status={stu.isBlocked ? "blocked" : "active"}
                       />
                     </div>
-                    <div className="flex gap-2 flex-wrap mb-3.5">
-                      {contrib && <Badge color="#9c3ae8">{contrib.role}</Badge>}
-                      <Badge color="#3a9de8">{stu.branch}</Badge>
+                    <div className="flex gap-2 flex-wrap mb-3">
+                      {contrib?.role && (
+                        <Badge color="#9c3ae8">{contrib.role}</Badge>
+                      )}
+
+                      {stu.department && (
+                        <Badge color="#8892a4">{stu.department}</Badge>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-2 mt-2 border-t border-slate-800/60 pt-3 mb-3">
                       <div className="text-[10px] text-slate-400 font-mono truncate">
@@ -1941,6 +2106,10 @@ const ProjectView = ({
                       </div>
                       <div className="text-[10px] text-slate-400 font-mono truncate">
                         USN: {stu.usn || "—"}
+                      </div>
+
+                      <div className="text-[10px] text-slate-400 font-mono truncate">
+                        College: {stu.college || "—"}
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
@@ -1965,6 +2134,17 @@ const ProjectView = ({
                         </div>
                       ))}
                     </div>
+                    {stu.githubLink && (
+                      <a
+                        href={stu.githubLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-3 inline-flex items-center gap-1.5 text-blue-400 font-mono text-[10px] no-underline hover:text-blue-300 transition-colors"
+                      >
+                        ⌥ GitHub ↗
+                      </a>
+                    )}
                   </div>
                 );
               })}
@@ -2007,6 +2187,7 @@ const ProjectView = ({
                     key={log._id}
                     log={log}
                     contributors={project.contributors || []}
+                    projectId={project._id}
                     onPublish={(logId, isPublished) =>
                       onLogAction("publish", project._id, logId, {
                         isPublished,
@@ -2097,6 +2278,7 @@ const ManageProjects = () => {
   const [creatingLog, setCreatingLog] = useState(null);
   const [viewingStudent, setViewingStudent] = useState(null);
   const [viewingStudentLogs, setViewingStudentLogs] = useState([]);
+  const [viewingStudentProjectId, setViewingStudentProjectId] = useState(null);
 
   const showToast = (message, type = "success") => setToast({ message, type });
   const authHeader = { Authorization: `Bearer ${adminToken}` };
@@ -2252,8 +2434,6 @@ const ManageProjects = () => {
         ::-webkit-scrollbar-track  { background: #0c0f18; }
         ::-webkit-scrollbar-thumb  { background: #2a3045; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #e85d3a; }
-        input[type=range] { -webkit-appearance: none; height: 4px; border-radius: 2px; background: #1e2330; outline: none; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer; border: 2px solid #0c0f18; }
         details summary::-webkit-details-marker { display: none; }
       `}</style>
 
@@ -2418,12 +2598,10 @@ const ManageProjects = () => {
                 project={currentProject}
                 onEdit={setEditingProject}
                 onCreateLog={setCreatingLog}
-                onCloseLog={(pid, lid, form) =>
-                  handleLogAction("close", pid, lid, form)
-                }
-                onViewStudent={(s, logs) => {
+                onViewStudent={(s, logs, projectId) => {
                   setViewingStudent(s);
                   setViewingStudentLogs(logs);
+                  setViewingStudentProjectId(projectId);
                 }}
                 onLogAction={handleLogAction}
               />
@@ -2451,7 +2629,11 @@ const ManageProjects = () => {
         <StudentModal
           student={viewingStudent}
           projectLogs={viewingStudentLogs}
-          onClose={() => setViewingStudent(null)}
+          projectId={viewingStudentProjectId}
+          onClose={() => {
+            setViewingStudent(null);
+            setViewingStudentProjectId(null);
+          }}
         />
       )}
 
