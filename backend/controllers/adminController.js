@@ -1257,11 +1257,18 @@ const broadcastEmail = async (title, message, type) => {
       Admin.find({ isBlocked: false }).select("email").lean(),
     ]);
 
+    // 1. Extract and clean emails (remove empty/null/invalid)
     const allEmails = [
       ...students.map((s) => s.email),
       ...admins.map((a) => a.email),
-    ];
-    if (!allEmails.length) return;
+    ].filter(
+      (email) => email && typeof email === "string" && email.includes("@"),
+    );
+
+    if (!allEmails.length) {
+      console.log("[BROADCAST] No valid emails found to broadcast.");
+      return;
+    }
 
     const colorMap = {
       info: "#3a9de8",
@@ -1271,20 +1278,40 @@ const broadcastEmail = async (title, message, type) => {
     };
     const accentColor = colorMap[type] || colorMap.info;
 
-    await mailer.sendMail({
-      from: `"InterConnect 26.0" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER,
-      bcc: allEmails,
-      subject: `📢 Announcement: ${title}`,
-      html: `
-        <div style="font-family:monospace;background:#080c14;color:#f0f4ff;padding:32px;border-radius:12px;max-width:600px;margin:auto;border:1px solid #1e2330">
-          <h2 style="color:${accentColor};border-bottom:1px solid #1e2330;padding-bottom:12px">${title}</h2>
-          <p style="color:#8892a4;font-size:16px;line-height:1.6;white-space:pre-wrap">${message}</p>
-          <hr style="border-color:#1e2330;margin:30px 0 20px">
-          <p style="color:#4a5568;font-size:12px;text-align:center">© InteConnect 26.0 · GMU Campus</p>
-        </div>`,
-    });
-    console.log(`[BROADCAST] Sent to ${allEmails.length} users.`);
+    const htmlContent = `
+      <div style="font-family:monospace;background:#080c14;color:#f0f4ff;padding:32px;border-radius:12px;max-width:600px;margin:auto;border:1px solid #1e2330">
+        <h2 style="color:${accentColor};border-bottom:1px solid #1e2330;padding-bottom:12px">${title}</h2>
+        <p style="color:#8892a4;font-size:16px;line-height:1.6;white-space:pre-wrap">${message}</p>
+        <hr style="border-color:#1e2330;margin:30px 0 20px">
+        <p style="color:#4a5568;font-size:12px;text-align:center">© InteConnect 26.0 · GMU Campus</p>
+      </div>`;
+
+    // 2. Chunk the emails into batches to prevent SMTP BCC limits (Max 50 per batch)
+    const BATCH_SIZE = 50;
+    let batchesSent = 0;
+
+    for (let i = 0; i < allEmails.length; i += BATCH_SIZE) {
+      const batch = allEmails.slice(i, i + BATCH_SIZE);
+
+      await mailer.sendMail({
+        from: `"InterConnect 26.0" <${process.env.EMAIL_USER}>`,
+        to: process.env.EMAIL_USER, // Send to self
+        bcc: batch, // BCC the current batch of 50
+        subject: `📢 Announcement: ${title}`,
+        html: htmlContent,
+      });
+
+      batchesSent++;
+
+      // Optional: Add a small 1-second delay between batches to avoid rate-limiting
+      if (i + BATCH_SIZE < allEmails.length) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+
+    console.log(
+      `[BROADCAST] Successfully sent to ${allEmails.length} users in ${batchesSent} batches.`,
+    );
   } catch (e) {
     console.error("[BROADCAST ERROR]", e.message);
   }
@@ -1301,6 +1328,7 @@ export const saCreateNotification = async (req, res) => {
       emailSent: Boolean(isPublished),
     });
 
+    // Fire and forget - doesn't block the API response
     if (notification.isPublished) broadcastEmail(title, message, type);
 
     res
@@ -1332,6 +1360,7 @@ export const saTogglePublishNotification = async (req, res) => {
     notification.isPublished = !notification.isPublished;
 
     if (notification.isPublished && !notification.emailSent) {
+      // Fire and forget
       broadcastEmail(
         notification.title,
         notification.message,
