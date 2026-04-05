@@ -15,6 +15,7 @@ const PROGRAMS = [
   "Other",
 ];
 
+// TabSwitch component kept but will be commented out in usage
 const TabSwitch = ({ isLogin, onChange }) => (
   <div
     className="flex rounded-xl p-1 mb-8"
@@ -103,7 +104,8 @@ const AdminRegister = () => {
   const navigate = useNavigate();
   const { axios, setAdminToken } = useAppContext();
 
-  const [isLogin, setIsLogin] = useState(false);
+  // Changed default state to true to lock it to Login mode
+  const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [isForgot, setIsForgot] = useState(false);
@@ -145,7 +147,9 @@ const AdminRegister = () => {
           toast.success("Admin Authorization Granted!");
           navigate("/");
         }
-      } else {
+      }
+      // --- REGISTRATION API CALL COMMENTED OUT ---
+      /* else {
         const { data } = await axios.post("/api/admin/register", form);
         if (data.success) {
           setAdminToken(data.token);
@@ -153,6 +157,7 @@ const AdminRegister = () => {
           navigate("/");
         }
       }
+      */
     } catch (err) {
       toast.error(
         err.response?.data?.message || "Connection failed. Try again.",
@@ -275,6 +280,8 @@ const AdminRegister = () => {
                 </div>
               </div>
             </div>
+
+            {/* Conditional text simplified to always show Login variant since registration is closed */}
             <h2
               className="font-display font-extrabold leading-tight mb-5"
               style={{
@@ -283,20 +290,17 @@ const AdminRegister = () => {
                 letterSpacing: "-0.02em",
               }}
             >
-              {isForgot
-                ? "Reset\nProtocol."
-                : isLogin
-                  ? "Authorize\nAccess."
-                  : "Initialize\nCoordinator."}
+              {isForgot ? "Reset\nProtocol." : "Authorize\nAccess."}
             </h2>
             <p
               className="font-mono text-[13px] leading-relaxed max-w-xs mb-11"
               style={{ color: "#6b7a99" }}
             >
-              {isLogin
-                ? "Access the control panel, manage problem statements, and oversee student progress."
-                : "Create an admin node to issue challenges and coordinate network activities."}
+              {isForgot
+                ? "Reset your admin credentials."
+                : "Access the control panel, manage problem statements, and oversee student progress."}
             </p>
+
             <div className="flex flex-col gap-4">
               {[
                 {
@@ -508,24 +512,26 @@ const AdminRegister = () => {
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.28 }}
                 >
-                  <TabSwitch isLogin={isLogin} onChange={setIsLogin} />
+                  {/* --- REGISTRATION TOGGLE COMMENTED OUT --- */}
+                  {/* <TabSwitch isLogin={isLogin} onChange={setIsLogin} /> */}
+
+                  {/* Header text modified since it is strictly login now */}
                   <h2
                     className="font-display text-2xl font-extrabold mb-1.5"
                     style={{ color: "#f0f4ff" }}
                   >
-                    {isLogin ? "Admin Authorization" : "Coordinator Setup"}
+                    Admin Authorization
                   </h2>
                   <p
                     className="font-mono text-[12px] mb-7"
                     style={{ color: "#6b7a99" }}
                   >
-                    {isLogin
-                      ? "Enter your credentials to access the control panel."
-                      : "Fill in the details to establish your admin account."}
+                    Enter your credentials to access the control panel.
                   </p>
 
                   <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                    <AnimatePresence>
+                    {/* --- REGISTRATION FIELDS COMMENTED OUT --- */}
+                    {/* <AnimatePresence>
                       {!isLogin && (
                         <motion.div
                           key="reg-fields"
@@ -629,6 +635,7 @@ const AdminRegister = () => {
                         </motion.div>
                       )}
                     </AnimatePresence>
+                    */}
 
                     <FocusInput
                       icon="✉"
@@ -690,22 +697,21 @@ const AdminRegister = () => {
                       </div>
                     </div>
 
-                    {isLogin && (
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => setIsForgot(true)}
-                          className="font-mono text-[12px] cursor-pointer"
-                          style={{
-                            background: "none",
-                            border: "none",
-                            color: "#e85d3a",
-                          }}
-                        >
-                          Override Sequence?
-                        </button>
-                      </div>
-                    )}
+                    {/* Forgot password link is always relevant to login */}
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setIsForgot(true)}
+                        className="font-mono text-[12px] cursor-pointer"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#e85d3a",
+                        }}
+                      >
+                        Override Sequence?
+                      </button>
+                    </div>
 
                     <div className="mt-1">
                       <motion.button
@@ -731,16 +737,13 @@ const AdminRegister = () => {
                             ◌
                           </span>
                         )}
-                        {isLoading
-                          ? "Processing…"
-                          : isLogin
-                            ? "Authenticate Node →"
-                            : "Initialize Coordinator →"}
+                        {isLoading ? "Processing…" : "Authenticate Node →"}
                       </motion.button>
                     </div>
                   </form>
 
-                  <p
+                  {/* --- BOTTOM SWITCH LINK COMMENTED OUT --- */}
+                  {/* <p
                     className="text-center font-mono text-[12px] mt-6"
                     style={{ color: "#6b7a99" }}
                   >
@@ -759,6 +762,7 @@ const AdminRegister = () => {
                       {isLogin ? "Initialize Node" : "Login here"}
                     </button>
                   </p>
+                  */}
                 </motion.div>
               )}
             </AnimatePresence>
