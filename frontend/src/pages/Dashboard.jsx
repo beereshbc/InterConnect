@@ -49,6 +49,12 @@ const fmtHours = (h) => {
 const logHours = (log) =>
   log.deadlineHours != null ? log.deadlineHours : (log.deadlineDays || 7) * 24;
 
+const ensureUrl = (url) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `https://${url}`;
+};
+
 const initials = (n = "") =>
   n
     .split(" ")
@@ -757,9 +763,10 @@ const LogCard = ({
         <div className="flex gap-3 ml-auto items-center">
           {log.githubIssueLink && (
             <a
-              href={log.githubIssueLink}
+              href={ensureUrl(log.githubIssueLink)}
               target="_blank"
               rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="no-underline hover:opacity-75 transition-opacity"
               style={{ color: "#3a9de8" }}
             >
@@ -768,9 +775,10 @@ const LogCard = ({
           )}
           {log.githubPrLink && (
             <a
-              href={log.githubPrLink}
+              href={ensureUrl(log.githubPrLink)}
               target="_blank"
               rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="no-underline hover:opacity-75 transition-opacity"
               style={{ color: "#4ade80" }}
             >
@@ -916,11 +924,10 @@ const ProjCard = ({ p, onClick }) => {
         {p.myRole && <Tag color="#fbbf24">{p.myRole}</Tag>}
       </div>
 
-      {/* Quick links row */}
       <div className="flex gap-2 mb-3">
         {p.communityLink && (
           <a
-            href={p.communityLink}
+            href={ensureUrl(p.communityLink)}
             target="_blank"
             rel="noreferrer"
             onClick={(e) => e.stopPropagation()}
@@ -938,7 +945,7 @@ const ProjCard = ({ p, onClick }) => {
         )}
         {p.githubRepoLink && (
           <a
-            href={p.githubRepoLink}
+            href={ensureUrl(p.githubRepoLink)}
             target="_blank"
             rel="noreferrer"
             onClick={(e) => e.stopPropagation()}
