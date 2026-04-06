@@ -57,12 +57,6 @@ const avatarColor = (name = "") => {
   return colors[Math.abs(h) % colors.length];
 };
 
-const ensureUrl = (url) => {
-  if (!url) return "";
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  return `https://${url}`;
-};
-
 const initials = (name = "") =>
   name
     .split(" ")
@@ -623,22 +617,15 @@ const ContributorInfoModal = ({ log, contributors, projectId, onClose }) => {
                 </span>
               )}
               {log.deadlineAt && (
-                <span
-                  className={`text-[10px] font-mono ${daysLeft(log.deadlineAt) <= 0 ? "text-red-400" : "text-slate-500"}`}
-                >
-                  {daysLeft(log.deadlineAt) <= 0
-                    ? "⚠ Overdue"
-                    : `⏳ ${daysLeft(log.deadlineAt)}d remaining`}
-                </span>
+                  <LiveCountdown deadlineAt={log.deadlineAt} />
               )}
             </div>
           </div>
           {student.githubLink && (
             <a
-              href={ensureUrl(student.githubLink)}
+              href={student.githubLink}
               target="_blank"
               rel="noreferrer"
-              onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center gap-2 text-blue-400 font-mono text-[12px] no-underline hover:text-blue-300 transition-colors"
             >
               ⌥ GitHub Profile ↗
@@ -1327,6 +1314,57 @@ const StudentModal = ({ student, projectLogs, projectId, onClose }) => {
   );
 };
 
+// ─── Live Countdown ─────────────────────────────────────────────────────────────
+const LiveCountdown = ({ deadlineAt }) => {
+  const [timeLeft, setTimeLeft] = useState("");
+  const [isOverdue, setIsOverdue] = useState(false);
+
+  useEffect(() => {
+    if (!deadlineAt) return;
+
+    const updateTimer = () => {
+      const now = new Date();
+      const target = new Date(deadlineAt);
+      const diff = target - now;
+
+      if (diff <= 0) {
+        setIsOverdue(true);
+        setTimeLeft("⚠ Overdue");
+        return;
+      }
+
+      setIsOverdue(false);
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+
+      if (h >= 48) {
+        setTimeLeft(`${Math.ceil(diff / 864e5)}d remaining`);
+      } else {
+        const hh = h.toString().padStart(2, "0");
+        const mm = m.toString().padStart(2, "0");
+        const ss = s.toString().padStart(2, "0");
+        setTimeLeft(`${hh}h ${mm}m ${ss}s remaining`);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [deadlineAt]);
+
+  if (!deadlineAt) return null;
+
+  return (
+    <span
+      className={`text-[11px] font-mono ${isOverdue ? "text-red-400 font-bold" : timeLeft.includes("d remaining") ? "text-slate-400" : "text-orange-400 font-bold"}`}
+      style={{ fontVariantNumeric: "tabular-nums" }}
+    >
+      {timeLeft !== "⚠ Overdue" && "⏳ "}{timeLeft}
+    </span>
+  );
+};
+
 // ─── Log Card ─────────────────────────────────────────────────────────────────
 const LogCard = ({
   log,
@@ -1428,11 +1466,7 @@ const LogCard = ({
             </span>
           )}
           {isActive && log.deadlineAt && (
-            <span
-              className={`text-[11px] font-bold font-mono ${days <= 0 ? "text-red-400" : days <= 1 ? "text-orange-400" : "text-slate-400"}`}
-            >
-              {days <= 0 ? "⚠ Overdue" : `⏳ ${days}d remaining`}
-            </span>
+            <LiveCountdown deadlineAt={log.deadlineAt} />
           )}
           {log.task_status === "completed" && log.closedAt && (
             <span className="text-[10px] text-emerald-500 font-mono">
@@ -1450,10 +1484,9 @@ const LogCard = ({
         <div className="flex gap-4 items-center mb-4">
           {log.githubIssueLink && (
             <a
-              href={ensureUrl(log.githubIssueLink)}
+              href={log.githubIssueLink}
               target="_blank"
               rel="noreferrer"
-              onClick={(e) => e.stopPropagation()}
               className="text-[11px] text-blue-400 font-mono hover:text-blue-300 transition-colors no-underline"
             >
               ⌥ Issue ↗
@@ -1461,10 +1494,9 @@ const LogCard = ({
           )}
           {log.githubPrLink && (
             <a
-              href={ensureUrl(log.githubPrLink)}
+              href={log.githubPrLink}
               target="_blank"
               rel="noreferrer"
-              onClick={(e) => e.stopPropagation()}
               className="text-[11px] text-emerald-400 font-mono hover:text-emerald-300 transition-colors no-underline"
             >
               ⌥ PR ↗

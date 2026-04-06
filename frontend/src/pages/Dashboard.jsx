@@ -49,12 +49,6 @@ const fmtHours = (h) => {
 const logHours = (log) =>
   log.deadlineHours != null ? log.deadlineHours : (log.deadlineDays || 7) * 24;
 
-const ensureUrl = (url) => {
-  if (!url) return "";
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  return `https://${url}`;
-};
-
 const initials = (n = "") =>
   n
     .split(" ")
@@ -673,6 +667,60 @@ const CoordinatorCard = ({ coordinator }) => {
   );
 };
 
+// ─── Live Countdown ─────────────────────────────────────────────────────────────
+const LiveCountdown = ({ deadlineAt }) => {
+  const [timeLeft, setTimeLeft] = useState("");
+  const [isOverdue, setIsOverdue] = useState(false);
+
+  useEffect(() => {
+    if (!deadlineAt) return;
+
+    const updateTimer = () => {
+      const now = new Date();
+      const target = new Date(deadlineAt);
+      const diff = target - now;
+
+      if (diff <= 0) {
+        setIsOverdue(true);
+        setTimeLeft("⚠ Overdue");
+        return;
+      }
+
+      setIsOverdue(false);
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+
+      if (h >= 48) {
+        setTimeLeft(`${Math.ceil(diff / 864e5)}d left`);
+      } else {
+        const hh = h.toString().padStart(2, "0");
+        const mm = m.toString().padStart(2, "0");
+        const ss = s.toString().padStart(2, "0");
+        setTimeLeft(`${hh}h ${mm}m ${ss}s left`);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [deadlineAt]);
+
+  if (!deadlineAt) return null;
+
+  return (
+    <span
+      style={{
+        color: isOverdue ? "#f87171" : timeLeft.includes("d left") ? "#8892a4" : "#fb923c",
+        fontWeight: isOverdue || !timeLeft.includes("d left") ? "bold" : "normal",
+        fontVariantNumeric: "tabular-nums",
+      }}
+    >
+      {timeLeft}
+    </span>
+  );
+};
+
 // ─── Log Card ─────────────────────────────────────────────────────────────────
 const LogCard = ({
   log,
@@ -748,14 +796,7 @@ const LogCard = ({
         </span>
         <span style={{ color: "#6b7a99" }}>⏱ {fmtHours(logHours(log))} window</span>
         {(log.task_status === "assigned" || isPending) && log.deadlineAt && (
-          <span
-            style={{
-              color: days <= 0 ? "#f87171" : days <= 2 ? "#fb923c" : "#8892a4",
-              fontWeight: days <= 2 ? "bold" : "normal",
-            }}
-          >
-            {days <= 0 ? "⚠ Overdue" : `${days}d left`}
-          </span>
+          <LiveCountdown deadlineAt={log.deadlineAt} />
         )}
         {log.task_status === "completed" && log.closedAt && (
           <span style={{ color: "#4ade80" }}>✓ {fmtDate(log.closedAt)}</span>
@@ -763,10 +804,9 @@ const LogCard = ({
         <div className="flex gap-3 ml-auto items-center">
           {log.githubIssueLink && (
             <a
-              href={ensureUrl(log.githubIssueLink)}
+              href={log.githubIssueLink}
               target="_blank"
               rel="noreferrer"
-              onClick={(e) => e.stopPropagation()}
               className="no-underline hover:opacity-75 transition-opacity"
               style={{ color: "#3a9de8" }}
             >
@@ -775,10 +815,9 @@ const LogCard = ({
           )}
           {log.githubPrLink && (
             <a
-              href={ensureUrl(log.githubPrLink)}
+              href={log.githubPrLink}
               target="_blank"
               rel="noreferrer"
-              onClick={(e) => e.stopPropagation()}
               className="no-underline hover:opacity-75 transition-opacity"
               style={{ color: "#4ade80" }}
             >
@@ -924,10 +963,11 @@ const ProjCard = ({ p, onClick }) => {
         {p.myRole && <Tag color="#fbbf24">{p.myRole}</Tag>}
       </div>
 
+      {/* Quick links row */}
       <div className="flex gap-2 mb-3">
         {p.communityLink && (
           <a
-            href={ensureUrl(p.communityLink)}
+            href={p.communityLink}
             target="_blank"
             rel="noreferrer"
             onClick={(e) => e.stopPropagation()}
@@ -945,7 +985,7 @@ const ProjCard = ({ p, onClick }) => {
         )}
         {p.githubRepoLink && (
           <a
-            href={ensureUrl(p.githubRepoLink)}
+            href={p.githubRepoLink}
             target="_blank"
             rel="noreferrer"
             onClick={(e) => e.stopPropagation()}
