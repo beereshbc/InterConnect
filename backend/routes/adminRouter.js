@@ -25,6 +25,7 @@ import {
   saApproveProblem,
   saRejectProblem,
   saAssignCoordinator,
+  saReassignCoordinator, // <-- ADDED THIS IMPORT
   saGetAllAdmins,
   saToggleBlockAdmin,
   saDeleteAdmin,
@@ -111,6 +112,25 @@ adminRouter.patch(
   saAssignCoordinator,
 );
 
+// Create a new notification (and broadcast if published)
+adminRouter.post("/sa/notifications", superAdminAuth, saCreateNotification);
+adminRouter.get("/sa/notifications", superAdminAuth, saGetNotifications);
+adminRouter.patch(
+  "/sa/notifications/:id/publish",
+  superAdminAuth,
+  saTogglePublishNotification,
+);
+adminRouter.patch(
+  "/sa/notifications/:id/pin",
+  superAdminAuth,
+  saTogglePinNotification,
+);
+adminRouter.delete(
+  "/sa/notifications/:id",
+  superAdminAuth,
+  saDeleteNotification,
+);
+
 adminRouter.get("/sa/admins", superAdminAuth, saGetAllAdmins);
 adminRouter.patch(
   "/sa/admins/:adminId/toggle-block",
@@ -127,35 +147,11 @@ adminRouter.patch(
   saToggleBlockStudent,
 );
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// SUPER ADMIN NOTIFICATION ROUTES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// Create a new notification (and broadcast if published)
-adminRouter.post("/sa/notifications", superAdminAuth, saCreateNotification);
-
-// Get all notifications for the SA dashboard
-adminRouter.get("/sa/notifications", superAdminAuth, saGetNotifications);
-
-// Toggle Publish status (and broadcast if publishing for the first time)
-adminRouter.patch(
-  "/sa/notifications/:id/publish",
+// ─── NEW: CORRECTED REASSIGN ROUTE ──────────────────────────────────────────
+adminRouter.put(
+  "/sa/problems/:problemId/reassign-coordinator",
   superAdminAuth,
-  saTogglePublishNotification,
-);
-
-// Toggle Pin status
-adminRouter.patch(
-  "/sa/notifications/:id/pin",
-  superAdminAuth,
-  saTogglePinNotification,
-);
-
-// Delete a notification
-adminRouter.delete(
-  "/sa/notifications/:id",
-  superAdminAuth,
-  saDeleteNotification,
+  saReassignCoordinator, // <-- FIXED: Was saAssignCoordinator before
 );
 
 export default adminRouter;

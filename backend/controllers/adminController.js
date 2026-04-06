@@ -59,8 +59,6 @@ const syncProjectStats = async (projectId) => {
 };
 
 // ─── Deadline helper ──────────────────────────────────────────────────────────
-// All deadlines stored as hours (1–96 = max 4 days).
-// Legacy records that only have deadlineDays are handled via fallback.
 const deadlineMs = (log) => {
   const hours =
     log.deadlineHours != null
@@ -384,10 +382,7 @@ export const createLog = async (req, res) => {
         message: "taskTitle, description, and githubIssueLink are required.",
       });
 
-    // Points: 1–50 (default 10)
     const pts = Math.min(50, Math.max(1, Number(assignedTaskPoints) || 10));
-
-    // Deadline: 1–96 hours (default 24 h)
     const hours = Math.min(96, Math.max(1, Number(deadlineHours) || 24));
 
     const log = await Log.create({
@@ -399,7 +394,6 @@ export const createLog = async (req, res) => {
       githubIssueLink,
       assignedTaskPoints: pts,
       deadlineHours: hours,
-      // keep deadlineDays for any legacy consumers
       deadlineDays: Math.ceil(hours / 24),
       task_coordinator_id: req.adminId,
       task_status: "open",
@@ -582,7 +576,6 @@ export const closeLog = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Log has no assigned contributor." });
 
-    // ── 1. Update the Log ──
     const now = new Date();
     log.task_status = "completed";
     log.assignedTaskPoints = points;
@@ -597,7 +590,6 @@ export const closeLog = async (req, res) => {
     });
     await log.save();
 
-    // ── 2. Robust Student Update ──
     const student = await Student.findById(log.contributorID);
     if (student) {
       student.totalScore = (student.totalScore || 0) + points;
@@ -626,7 +618,6 @@ export const closeLog = async (req, res) => {
       await student.save();
     }
 
-    // ── 3. Update Project progress rate ──
     await syncProjectStats(log.projectId);
 
     res.json({
@@ -780,7 +771,6 @@ export const selfAssignLog = async (req, res) => {
       });
 
     const now = new Date();
-    // Use deadlineHours if set, fall back to deadlineDays * 24
     const hours =
       log.deadlineHours != null
         ? log.deadlineHours
@@ -1175,6 +1165,156 @@ export const saAssignCoordinator = async (req, res) => {
     res.json({
       success: true,
       message: `${coordinator.name} assigned as coordinator.`,
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+// ─── NEW: Reassign / Switch Coordinator ───────────────────────────────────────
+/**
+ * PUT /api/admin/sa/problems/:problemId/reassign-coordinator
+ *
+ * Body:
+ *   oldCoordinatorId  – the admin being replaced (required)
+ *   newCoordinatorId  – the admin taking over     (required)
+ *   reason            – optional note stored in project audit
+ *
+ * Behaviour:
+ *   1. Validates both admins exist and the project exists for this problem.
+ *   2. Removes oldCoordinator from project.coordinators and their managedProjects.
+ *   3. Adds newCoordinator to project.coordinators and their managedProjects.
+ *   4. Sends a notification email to both admins.
+ */
+export const saReassignCoordinator = async (req, res) => {
+  try {
+    const { oldCoordinatorId, newCoordinatorId, reason } = req.body;
+
+    // ── Validate inputs ──
+    if (!oldCoordinatorId || !newCoordinatorId)
+      return res.status(400).json({
+        success: false,
+        message: "Both oldCoordinatorId and newCoordinatorId are required.",
+      });
+
+    if (oldCoordinatorId.toString() === newCoordinatorId.toString())
+      return res.status(400).json({
+        success: false,
+        message: "Old and new coordinators must be different admins.",
+      });
+
+    // ── Fetch admins ──
+    const [oldAdmin, newAdmin] = await Promise.all([
+      Admin.findById(oldCoordinatorId),
+      Admin.findById(newCoordinatorId),
+    ]);
+
+    if (!oldAdmin)
+      return res.status(404).json({
+        success: false,
+        message: "Old coordinator (admin) not found.",
+      });
+    if (!newAdmin)
+      return res.status(404).json({
+        success: false,
+        message: "New coordinator (admin) not found.",
+      });
+    if (newAdmin.isBlocked)
+      return res.status(400).json({
+        success: false,
+        message: `${newAdmin.name} is blocked and cannot be assigned as coordinator.`,
+      });
+
+    // ── Fetch project linked to this problem ──
+    const project = await Project.findOne({
+      problem: req.params.problemId,
+    }).populate({ path: "problem", select: "title contactInfo" });
+
+    if (!project)
+      return res.status(404).json({
+        success: false,
+        message: "No project found for this problem.",
+      });
+
+    // ── Check old coordinator is actually on this project ──
+    const coordIds = project.coordinators.map(String);
+    if (!coordIds.includes(oldCoordinatorId.toString()))
+      return res.status(400).json({
+        success: false,
+        message: `${oldAdmin.name} is not currently a coordinator on this project.`,
+      });
+
+    // ── Perform the swap ──
+    // Remove old, add new (guard against duplicate)
+    project.coordinators = project.coordinators.filter(
+      (id) => id.toString() !== oldCoordinatorId.toString(),
+    );
+    if (
+      !project.coordinators.map(String).includes(newCoordinatorId.toString())
+    ) {
+      project.coordinators.push(newCoordinatorId);
+    }
+    await project.save();
+
+    // ── Update managedProjects on both admins ──
+    await Promise.all([
+      Admin.findByIdAndUpdate(oldCoordinatorId, {
+        $pull: { managedProjects: project._id },
+      }),
+      Admin.findByIdAndUpdate(newCoordinatorId, {
+        $addToSet: { managedProjects: project._id },
+      }),
+    ]);
+
+    // ── Email both admins ──
+    const projectTitle = project.problem?.title || project.projectID;
+    const note = reason ? `<br><br><strong>Reason:</strong> ${reason}` : "";
+
+    await Promise.all([
+      sendEmail({
+        to: oldAdmin.email,
+        subject: `🔄 Coordinator Change — ${project.projectID}`,
+        html: `<div style="font-family:monospace;background:#080c14;color:#f0f4ff;padding:32px;border-radius:12px;max-width:600px">
+          <h2 style="color:#fbbf24">Project Reassigned</h2>
+          <p>You have been <strong>removed</strong> as coordinator for project
+          <strong>${project.projectID}</strong> — <em>${projectTitle}</em>.</p>
+          <p>New coordinator: <strong>${newAdmin.name}</strong> (${newAdmin.email})${note}</p>
+          <hr style="border-color:#1e2330;margin:20px 0">
+          <p style="color:#4a5568;font-size:12px">© InteConnect 26.0 · GMU Campus</p>
+        </div>`,
+      }),
+      sendEmail({
+        to: newAdmin.email,
+        subject: `✅ You've been assigned — ${project.projectID}`,
+        html: `<div style="font-family:monospace;background:#080c14;color:#f0f4ff;padding:32px;border-radius:12px;max-width:600px">
+          <h2 style="color:#4ade80">New Project Assignment</h2>
+          <p>You have been assigned as coordinator for project
+          <strong>${project.projectID}</strong> — <em>${projectTitle}</em>.</p>
+          <p>Replacing: <strong>${oldAdmin.name}</strong> (${oldAdmin.email})${note}</p>
+          <hr style="border-color:#1e2330;margin:20px 0">
+          <p style="color:#4a5568;font-size:12px">© InteConnect 26.0 · GMU Campus</p>
+        </div>`,
+      }),
+    ]);
+
+    res.json({
+      success: true,
+      message: `Coordinator switched from ${oldAdmin.name} → ${newAdmin.name} on project ${project.projectID}.`,
+      project: {
+        _id: project._id,
+        projectID: project.projectID,
+        coordinators: project.coordinators,
+      },
+      oldCoordinator: {
+        _id: oldAdmin._id,
+        name: oldAdmin.name,
+        email: oldAdmin.email,
+      },
+      newCoordinator: {
+        _id: newAdmin._id,
+        name: newAdmin.name,
+        email: newAdmin.email,
+      },
     });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import {
   SALayout,
@@ -189,6 +189,416 @@ const RejectModal = ({ problem, onClose, onReject }) => {
   );
 };
 
+// ─── Reassign Coordinator Modal ───────────────────────────────────────────────
+const ReassignModal = ({ problem, admins, onClose, onReassign }) => {
+  const currentCoordinators = problem.project?.coordinators || [];
+  const [oldCoordinatorId, setOldCoordinatorId] = useState(
+    currentCoordinators.length === 1 ? currentCoordinators[0]._id : "",
+  );
+  const [newCoordinatorId, setNewCoordinatorId] = useState("");
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [confirmStep, setConfirmStep] = useState(false);
+
+  const selectedOld = currentCoordinators.find(
+    (c) => c._id === oldCoordinatorId,
+  );
+  const selectedNew = admins.find((a) => a._id === newCoordinatorId);
+
+  // Admins available as replacement: exclude all current coordinators
+  const availableAdmins = admins.filter(
+    (a) => !currentCoordinators.map((c) => c._id).includes(a._id),
+  );
+
+  const canProceed =
+    oldCoordinatorId &&
+    newCoordinatorId &&
+    oldCoordinatorId !== newCoordinatorId;
+
+  return (
+    <SAModal
+      title={`Reassign Coordinator · ${problem.project?.projectID || ""}`}
+      onClose={onClose}
+    >
+      {/* Project info strip */}
+      <div
+        className="rounded-xl p-3.5 mb-5"
+        style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
+      >
+        <div
+          className="font-display text-sm font-bold"
+          style={{ color: "#f0f4ff" }}
+        >
+          {problem.title}
+        </div>
+        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+          <span
+            className="font-mono text-[11px] px-2 py-0.5 rounded"
+            style={{
+              background: "#1a2a3a",
+              color: "#3a9de8",
+              border: "1px solid #3a9de820",
+            }}
+          >
+            {problem.project?.projectID}
+          </span>
+          <span className="font-mono text-[12px]" style={{ color: "#6b7a99" }}>
+            {problem.ownerName} · {problem.organization}
+          </span>
+        </div>
+      </div>
+
+      <AnimatePresence mode="wait">
+        {!confirmStep ? (
+          <motion.div
+            key="form"
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 8 }}
+          >
+            {/* Step indicator */}
+            <div
+              className="font-mono text-[11px] uppercase tracking-widest font-bold mb-5 flex items-center gap-2"
+              style={{ color: "#fbbf24" }}
+            >
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 20,
+                  height: 20,
+                  borderRadius: "50%",
+                  background: "#fbbf2420",
+                  border: "1px solid #fbbf2440",
+                  fontSize: 10,
+                }}
+              >
+                ⇄
+              </span>
+              Switch Project Coordinator
+            </div>
+
+            {/* Current coordinators */}
+            <div className="mb-1">
+              <div
+                className="font-mono text-[10px] uppercase tracking-widest mb-2"
+                style={{ color: "#6b7a99" }}
+              >
+                Current Coordinator(s) — select who to replace *
+              </div>
+              {currentCoordinators.length === 0 ? (
+                <div
+                  className="rounded-lg p-3 font-mono text-[12px]"
+                  style={{
+                    background: "#1a1a2a",
+                    color: "#f87171",
+                    border: "1px solid #f8717130",
+                  }}
+                >
+                  No coordinators assigned to this project yet.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 mb-4">
+                  {currentCoordinators.map((c) => (
+                    <button
+                      key={c._id}
+                      onClick={() => setOldCoordinatorId(c._id)}
+                      className="rounded-xl p-3 text-left cursor-pointer transition-all"
+                      style={{
+                        background:
+                          oldCoordinatorId === c._id ? "#2a1a0a" : "#060810",
+                        border: `1px solid ${oldCoordinatorId === c._id ? "#fbbf24" : "#1e2330"}`,
+                        outline: "none",
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div
+                            className="font-mono text-[13px] font-semibold"
+                            style={{
+                              color:
+                                oldCoordinatorId === c._id
+                                  ? "#fbbf24"
+                                  : "#f0f4ff",
+                            }}
+                          >
+                            {c.name}
+                          </div>
+                          <div
+                            className="font-mono text-[11px] mt-0.5"
+                            style={{ color: "#6b7a99" }}
+                          >
+                            {c.email}
+                          </div>
+                        </div>
+                        <div
+                          className="w-4 h-4 rounded-full flex-shrink-0 transition-all"
+                          style={{
+                            background:
+                              oldCoordinatorId === c._id
+                                ? "#fbbf24"
+                                : "transparent",
+                            border: `2px solid ${oldCoordinatorId === c._id ? "#fbbf24" : "#2e3444"}`,
+                          }}
+                        />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Replace with */}
+            <div className="mb-4">
+              <div
+                className="font-mono text-[10px] uppercase tracking-widest mb-2"
+                style={{ color: "#6b7a99" }}
+              >
+                Replace with — new coordinator *
+              </div>
+              <select
+                value={newCoordinatorId}
+                onChange={(e) => setNewCoordinatorId(e.target.value)}
+                className="w-full rounded-lg font-mono text-[13px] outline-none"
+                style={{
+                  background: "#060810",
+                  border: `1px solid ${newCoordinatorId ? "#3a9de8" : "#1e2330"}`,
+                  padding: "10px 14px",
+                  color: newCoordinatorId ? "#f0f4ff" : "#6b7a99",
+                  cursor: "pointer",
+                }}
+              >
+                <option value="">— Select replacement admin —</option>
+                {availableAdmins.length === 0 ? (
+                  <option disabled>No other admins available</option>
+                ) : (
+                  availableAdmins.map((a) => (
+                    <option key={a._id} value={a._id}>
+                      {a.name} · {a.email}
+                    </option>
+                  ))
+                )}
+              </select>
+              {availableAdmins.length === 0 && (
+                <p
+                  className="font-mono text-[11px] mt-1.5"
+                  style={{ color: "#f87171" }}
+                >
+                  All available admins are already coordinators on this project.
+                </p>
+              )}
+            </div>
+
+            {/* Reason */}
+            <div className="mb-5">
+              <div
+                className="font-mono text-[10px] uppercase tracking-widest mb-2"
+                style={{ color: "#6b7a99" }}
+              >
+                Reason / Note (optional — sent in email)
+              </div>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={2}
+                placeholder="e.g. Workload redistribution, unavailability…"
+                className="w-full rounded-lg font-mono text-[12px] outline-none resize-none"
+                style={{
+                  background: "#060810",
+                  border: "1px solid #1e2330",
+                  padding: "10px 14px",
+                  color: "#f0f4ff",
+                }}
+              />
+            </div>
+
+            {/* Info banner */}
+            <div
+              className="rounded-lg p-3 font-mono text-[12px] mb-5"
+              style={{
+                background: "#1a2a3a",
+                border: "1px solid #3a9de830",
+                color: "#3a9de8",
+              }}
+            >
+              ⇄ Both admins will receive an email notification about this
+              change.
+            </div>
+
+            <div className="flex gap-2.5 justify-end">
+              <SABtn variant="secondary" onClick={onClose}>
+                Cancel
+              </SABtn>
+              <SABtn
+                variant="warning"
+                disabled={!canProceed}
+                onClick={() => setConfirmStep(true)}
+              >
+                Continue →
+              </SABtn>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="confirm"
+            initial={{ opacity: 0, x: 8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+          >
+            {/* Confirm step */}
+            <div
+              className="font-mono text-[11px] uppercase tracking-widest font-bold mb-5 flex items-center gap-2"
+              style={{ color: "#f87171" }}
+            >
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 20,
+                  height: 20,
+                  borderRadius: "50%",
+                  background: "#f8717120",
+                  border: "1px solid #f8717140",
+                  fontSize: 10,
+                }}
+              >
+                !
+              </span>
+              Confirm Reassignment
+            </div>
+
+            {/* Swap visual */}
+            <div
+              className="rounded-xl p-4 mb-5"
+              style={{ background: "#060810", border: "1px solid #1e2330" }}
+            >
+              {/* Old → New */}
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex-1 rounded-lg p-3"
+                  style={{
+                    background: "#2a1a0a",
+                    border: "1px solid #fbbf2430",
+                  }}
+                >
+                  <div
+                    className="font-mono text-[9px] uppercase tracking-widest mb-1"
+                    style={{ color: "#fbbf24" }}
+                  >
+                    Removing
+                  </div>
+                  <div
+                    className="font-mono text-[13px] font-semibold"
+                    style={{ color: "#f0f4ff" }}
+                  >
+                    {selectedOld?.name || "—"}
+                  </div>
+                  <div
+                    className="font-mono text-[10px] mt-0.5"
+                    style={{ color: "#6b7a99" }}
+                  >
+                    {selectedOld?.email || "—"}
+                  </div>
+                </div>
+
+                <div
+                  className="flex-shrink-0 font-mono text-[18px]"
+                  style={{ color: "#3a9de8" }}
+                >
+                  →
+                </div>
+
+                <div
+                  className="flex-1 rounded-lg p-3"
+                  style={{
+                    background: "#1a3a2a",
+                    border: "1px solid #4ade8030",
+                  }}
+                >
+                  <div
+                    className="font-mono text-[9px] uppercase tracking-widest mb-1"
+                    style={{ color: "#4ade80" }}
+                  >
+                    Assigning
+                  </div>
+                  <div
+                    className="font-mono text-[13px] font-semibold"
+                    style={{ color: "#f0f4ff" }}
+                  >
+                    {selectedNew?.name || "—"}
+                  </div>
+                  <div
+                    className="font-mono text-[10px] mt-0.5"
+                    style={{ color: "#6b7a99" }}
+                  >
+                    {selectedNew?.email || "—"}
+                  </div>
+                </div>
+              </div>
+
+              {reason && (
+                <div
+                  className="mt-3 pt-3"
+                  style={{ borderTop: "1px solid #1e2330" }}
+                >
+                  <span
+                    className="font-mono text-[10px]"
+                    style={{ color: "#6b7a99" }}
+                  >
+                    Reason:{" "}
+                  </span>
+                  <span
+                    className="font-mono text-[12px]"
+                    style={{ color: "#c4cedf" }}
+                  >
+                    {reason}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div
+              className="rounded-lg p-3 font-mono text-[12px] mb-5"
+              style={{
+                background: "#2a1a1a",
+                border: "1px solid #f8717130",
+                color: "#f87171",
+              }}
+            >
+              ⚠ This action is immediate. The old coordinator will lose access
+              to manage this project's tasks.
+            </div>
+
+            <div className="flex gap-2.5 justify-end">
+              <SABtn variant="secondary" onClick={() => setConfirmStep(false)}>
+                ← Back
+              </SABtn>
+              <SABtn
+                variant="danger"
+                loading={saving}
+                onClick={async () => {
+                  setSaving(true);
+                  await onReassign(problem._id, {
+                    oldCoordinatorId,
+                    newCoordinatorId,
+                    reason,
+                  });
+                  setSaving(false);
+                  onClose();
+                }}
+              >
+                ✓ Confirm Switch
+              </SABtn>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </SAModal>
+  );
+};
+
 // ─── Detail Panel ──────────────────────────────────────────────────────────────
 const ProblemDetail = ({ problem, onClose }) => (
   <SAModal title={problem.problemID} onClose={onClose}>
@@ -291,6 +701,7 @@ const ProblemManagement = () => {
   const [approvingProblem, setApprovingProblem] = useState(null);
   const [rejectingProblem, setRejectingProblem] = useState(null);
   const [detailProblem, setDetailProblem] = useState(null);
+  const [reassigningProblem, setReassigningProblem] = useState(null);
 
   const showToast = (msg, type = "success") => setToast({ msg, type });
 
@@ -345,6 +756,28 @@ const ProblemManagement = () => {
     }
   };
 
+  // ── NEW: reassign handler ──
+  const handleReassign = async (
+    problemId,
+    { oldCoordinatorId, newCoordinatorId, reason },
+  ) => {
+    try {
+      const { data } = await saAxios().put(
+        `/api/admin/sa/problems/${problemId}/reassign-coordinator`,
+        { oldCoordinatorId, newCoordinatorId, reason },
+      );
+      if (data.success) {
+        showToast(data.message);
+        await fetchData();
+      }
+    } catch (err) {
+      showToast(
+        err?.response?.data?.message || "Reassignment failed.",
+        "error",
+      );
+    }
+  };
+
   const statusType = (p) => {
     if (p.project || p.is_published) return "approved";
     const last = p.actions?.[p.actions.length - 1]?.actionType;
@@ -371,7 +804,7 @@ const ProblemManagement = () => {
   return (
     <SALayout
       title="Problem Management"
-      subtitle="Approve, reject & assign coordinators"
+      subtitle="Approve, reject, reassign coordinators & manage projects"
     >
       {/* Controls */}
       <div className="flex gap-3 items-center mb-5 flex-wrap">
@@ -437,6 +870,7 @@ const ProblemManagement = () => {
         <div className="flex flex-col gap-3">
           {filtered.map((p, i) => {
             const st = statusType(p);
+            const hasProject = !!p.project;
             return (
               <motion.div
                 key={p._id}
@@ -479,6 +913,33 @@ const ProblemManagement = () => {
                     >
                       {p.ownerName} · {p.organization} · {fmtDate(p.createdAt)}
                     </div>
+
+                    {/* Coordinators strip — shown only for initiated projects */}
+                    {hasProject && p.project.coordinators?.length > 0 && (
+                      <div className="flex items-center gap-1.5 mb-2.5 flex-wrap">
+                        <span
+                          className="font-mono text-[10px] uppercase tracking-wide"
+                          style={{ color: "#6b7a99" }}
+                        >
+                          Coordinator
+                          {p.project.coordinators.length > 1 ? "s" : ""}:
+                        </span>
+                        {p.project.coordinators.map((c) => (
+                          <span
+                            key={c._id}
+                            className="font-mono text-[11px] px-2 py-0.5 rounded-md"
+                            style={{
+                              background: "#1a3a2a",
+                              border: "1px solid #4ade8025",
+                              color: "#4ade80",
+                            }}
+                          >
+                            {c.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="flex gap-1.5 flex-wrap">
                       <Badge color="#3a9de8">{p.category}</Badge>
                       <Badge color="#9c3ae8">{p.theme}</Badge>
@@ -489,7 +950,8 @@ const ProblemManagement = () => {
                       ))}
                     </div>
                   </div>
-                  <div className="flex gap-2 flex-shrink-0 flex-wrap max-w-[220px] items-start">
+
+                  <div className="flex gap-2 flex-shrink-0 flex-wrap max-w-[240px] items-start">
                     <SABtn
                       small
                       variant="ghost"
@@ -497,7 +959,9 @@ const ProblemManagement = () => {
                     >
                       View
                     </SABtn>
-                    {st !== "approved" && !p.project && (
+
+                    {/* Approve / Reject — only for non-initiated */}
+                    {st !== "approved" && !hasProject && (
                       <>
                         <SABtn
                           small
@@ -515,17 +979,28 @@ const ProblemManagement = () => {
                         </SABtn>
                       </>
                     )}
-                    {p.project && (
-                      <div
-                        className="font-mono text-[11px] px-2.5 py-1 rounded-lg"
-                        style={{
-                          background: "#1a3a2a",
-                          border: "1px solid #4ade8030",
-                          color: "#4ade80",
-                        }}
-                      >
-                        {p.project.projectID}
-                      </div>
+
+                    {/* Project ID badge + Reassign button — for initiated projects */}
+                    {hasProject && (
+                      <>
+                        <div
+                          className="font-mono text-[11px] px-2.5 py-1 rounded-lg"
+                          style={{
+                            background: "#1a3a2a",
+                            border: "1px solid #4ade8030",
+                            color: "#4ade80",
+                          }}
+                        >
+                          {p.project.projectID}
+                        </div>
+                        <SABtn
+                          small
+                          variant="warning"
+                          onClick={() => setReassigningProblem(p)}
+                        >
+                          ⇄ Reassign
+                        </SABtn>
+                      </>
                     )}
                   </div>
                 </div>
@@ -535,6 +1010,7 @@ const ProblemManagement = () => {
         </div>
       )}
 
+      {/* Modals */}
       {approvingProblem && (
         <ApproveModal
           problem={approvingProblem}
@@ -554,6 +1030,14 @@ const ProblemManagement = () => {
         <ProblemDetail
           problem={detailProblem}
           onClose={() => setDetailProblem(null)}
+        />
+      )}
+      {reassigningProblem && (
+        <ReassignModal
+          problem={reassigningProblem}
+          admins={admins}
+          onClose={() => setReassigningProblem(null)}
+          onReassign={handleReassign}
         />
       )}
       {toast && (
