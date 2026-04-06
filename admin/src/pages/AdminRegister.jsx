@@ -15,7 +15,6 @@ const PROGRAMS = [
   "Other",
 ];
 
-// TabSwitch component kept but will be commented out in usage
 const TabSwitch = ({ isLogin, onChange }) => (
   <div
     className="flex rounded-xl p-1 mb-8"
@@ -104,8 +103,8 @@ const AdminRegister = () => {
   const navigate = useNavigate();
   const { axios, setAdminToken } = useAppContext();
 
-  // Changed default state to true to lock it to Login mode
-  const [isLogin, setIsLogin] = useState(true);
+  // 1. Reset default state to false to show Registration by default (optional)
+  const [isLogin, setIsLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [isForgot, setIsForgot] = useState(false);
@@ -122,6 +121,7 @@ const AdminRegister = () => {
     githubLink: "",
     password: "",
   });
+
   const [forgotForm, setForgotForm] = useState({
     email: "",
     otp: "",
@@ -147,9 +147,8 @@ const AdminRegister = () => {
           toast.success("Admin Authorization Granted!");
           navigate("/");
         }
-      }
-      // --- REGISTRATION API CALL COMMENTED OUT ---
-      /* else {
+      } else {
+        // 2. Uncommented Registration API Call
         const { data } = await axios.post("/api/admin/register", form);
         if (data.success) {
           setAdminToken(data.token);
@@ -157,7 +156,6 @@ const AdminRegister = () => {
           navigate("/");
         }
       }
-      */
     } catch (err) {
       toast.error(
         err.response?.data?.message || "Connection failed. Try again.",
@@ -214,7 +212,7 @@ const AdminRegister = () => {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
         .font-display { font-family: 'Syne', sans-serif !important; }
-        .font-mono    { font-family: 'DM Mono', monospace !important; }
+        .font-mono     { font-family: 'DM Mono', monospace !important; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes spin { to { transform: rotate(360deg); } }
         ::-webkit-scrollbar { width: 4px; }
@@ -281,7 +279,6 @@ const AdminRegister = () => {
               </div>
             </div>
 
-            {/* Conditional text simplified to always show Login variant since registration is closed */}
             <h2
               className="font-display font-extrabold leading-tight mb-5"
               style={{
@@ -290,7 +287,11 @@ const AdminRegister = () => {
                 letterSpacing: "-0.02em",
               }}
             >
-              {isForgot ? "Reset\nProtocol." : "Authorize\nAccess."}
+              {isForgot
+                ? "Reset\nProtocol."
+                : isLogin
+                  ? "Authorize\nAccess."
+                  : "Initialize\nAdmin."}
             </h2>
             <p
               className="font-mono text-[13px] leading-relaxed max-w-xs mb-11"
@@ -512,26 +513,27 @@ const AdminRegister = () => {
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.28 }}
                 >
-                  {/* --- REGISTRATION TOGGLE COMMENTED OUT --- */}
-                  {/* <TabSwitch isLogin={isLogin} onChange={setIsLogin} /> */}
+                  {/* 3. Re-enabled Tab Switcher */}
+                  <TabSwitch isLogin={isLogin} onChange={setIsLogin} />
 
-                  {/* Header text modified since it is strictly login now */}
                   <h2
                     className="font-display text-2xl font-extrabold mb-1.5"
                     style={{ color: "#f0f4ff" }}
                   >
-                    Admin Authorization
+                    {isLogin ? "Admin Authorization" : "Initialize Admin"}
                   </h2>
                   <p
                     className="font-mono text-[12px] mb-7"
                     style={{ color: "#6b7a99" }}
                   >
-                    Enter your credentials to access the control panel.
+                    {isLogin
+                      ? "Enter your credentials to access the control panel."
+                      : "Create your administrative profile to begin management."}
                   </p>
 
                   <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                    {/* --- REGISTRATION FIELDS COMMENTED OUT --- */}
-                    {/* <AnimatePresence>
+                    {/* 4. Re-enabled Registration Fields with Animation */}
+                    <AnimatePresence>
                       {!isLogin && (
                         <motion.div
                           key="reg-fields"
@@ -635,7 +637,6 @@ const AdminRegister = () => {
                         </motion.div>
                       )}
                     </AnimatePresence>
-                    */}
 
                     <FocusInput
                       icon="✉"
@@ -649,7 +650,6 @@ const AdminRegister = () => {
                       required
                     />
 
-                    {/* Password with toggle */}
                     <div>
                       <label
                         className="block font-mono text-[10px] font-bold uppercase tracking-widest mb-1.5"
@@ -697,21 +697,22 @@ const AdminRegister = () => {
                       </div>
                     </div>
 
-                    {/* Forgot password link is always relevant to login */}
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setIsForgot(true)}
-                        className="font-mono text-[12px] cursor-pointer"
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#e85d3a",
-                        }}
-                      >
-                        Override Sequence?
-                      </button>
-                    </div>
+                    {isLogin && (
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setIsForgot(true)}
+                          className="font-mono text-[12px] cursor-pointer"
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "#e85d3a",
+                          }}
+                        >
+                          Override Sequence?
+                        </button>
+                      </div>
+                    )}
 
                     <div className="mt-1">
                       <motion.button
@@ -737,13 +738,17 @@ const AdminRegister = () => {
                             ◌
                           </span>
                         )}
-                        {isLoading ? "Processing…" : "Authenticate Node →"}
+                        {isLoading
+                          ? "Processing…"
+                          : isLogin
+                            ? "Authenticate Node →"
+                            : "Initialize Node →"}
                       </motion.button>
                     </div>
                   </form>
 
-                  {/* --- BOTTOM SWITCH LINK COMMENTED OUT --- */}
-                  {/* <p
+                  {/* 5. Re-enabled Bottom Toggle Link */}
+                  <p
                     className="text-center font-mono text-[12px] mt-6"
                     style={{ color: "#6b7a99" }}
                   >
@@ -762,7 +767,6 @@ const AdminRegister = () => {
                       {isLogin ? "Initialize Node" : "Login here"}
                     </button>
                   </p>
-                  */}
                 </motion.div>
               )}
             </AnimatePresence>
