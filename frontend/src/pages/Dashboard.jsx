@@ -37,6 +37,18 @@ const daysLeft = (deadline) => {
   return Math.ceil((new Date(deadline) - new Date()) / 864e5);
 };
 
+const fmtHours = (h) => {
+  if (h == null || h === 0) return "—";
+  const n = Number(h);
+  if (n < 24) return `${n}h`;
+  const d = Math.floor(n / 24);
+  const r = n % 24;
+  return r > 0 ? `${d}d ${r}h` : `${d}d`;
+};
+
+const logHours = (log) =>
+  log.deadlineHours != null ? log.deadlineHours : (log.deadlineDays || 7) * 24;
+
 const initials = (n = "") =>
   n
     .split(" ")
@@ -728,9 +740,7 @@ const LogCard = ({
         <span style={{ color: "#fbbf24" }}>
           ⬡ {log.assignedTaskPoints ?? 0} pts
         </span>
-        {log.deadlineDays && (
-          <span style={{ color: "#6b7a99" }}>⏱ {log.deadlineDays}d window</span>
-        )}
+        <span style={{ color: "#6b7a99" }}>⏱ {fmtHours(logHours(log))} window</span>
         {(log.task_status === "assigned" || isPending) && log.deadlineAt && (
           <span
             style={{
