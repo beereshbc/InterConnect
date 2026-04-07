@@ -154,9 +154,10 @@ const LeaderBoard = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-              {/* ── LEFT PANEL: TOP PROJECT ── */}
-              <div className="lg:col-span-1 flex flex-col gap-6">
+            // Removed the grid layout to allow the leaderboard to be a single centered element
+            <div className="w-full max-w-4xl mx-auto flex flex-col gap-6 items-center">
+              {/* ── LEFT PANEL: TOP PROJECT (COMMENTED OUT) ── */}
+              {/* <div className="lg:col-span-1 flex flex-col gap-6 w-full">
                 <div
                   className="rounded-2xl p-6"
                   style={{
@@ -220,11 +221,12 @@ const LeaderBoard = () => {
                     </div>
                   )}
                 </div>
-              </div>
+              </div> 
+              */}
 
               {/* ── CENTER PANEL: LEADERBOARD ── */}
               <div
-                className="lg:col-span-2 rounded-2xl overflow-hidden shadow-2xl"
+                className="w-full rounded-2xl overflow-hidden shadow-2xl"
                 style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
               >
                 <div
@@ -386,20 +388,20 @@ const LeaderBoard = () => {
                       <ChevronLeft size={14} /> Prev
                     </button>
                     <div className="flex gap-1">
-                      {Array.from({
-                        length: Math.min(5, pagination.totalPages),
-                      }).map((_, i) => {
-                        // Logic to show a window of pages around current page
-                        let pageNum =
-                          page <= 3
-                            ? i + 1
-                            : page > pagination.totalPages - 2
-                              ? pagination.totalPages - 4 + i
-                              : page - 2 + i;
-                        if (pageNum < 1 || pageNum > pagination.totalPages)
-                          return null;
+                      {(() => {
+                        const total = pagination.totalPages || 1;
+                        const maxVisiblePages = Math.min(5, total);
+                        let startPage = Math.max(1, page - 2);
 
-                        return (
+                        // If we're near the end, adjust the start page so we don't exceed totalPages
+                        if (startPage + maxVisiblePages - 1 > total) {
+                          startPage = Math.max(1, total - maxVisiblePages + 1);
+                        }
+
+                        return Array.from(
+                          { length: maxVisiblePages },
+                          (_, i) => startPage + i,
+                        ).map((pageNum) => (
                           <button
                             key={pageNum}
                             onClick={() => setPage(pageNum)}
@@ -414,8 +416,8 @@ const LeaderBoard = () => {
                           >
                             {pageNum}
                           </button>
-                        );
-                      })}
+                        ));
+                      })()}
                     </div>
                     <button
                       disabled={page === pagination.totalPages || loading}
@@ -430,8 +432,8 @@ const LeaderBoard = () => {
                 )}
               </div>
 
-              {/* ── RIGHT PANEL: TOP COORDINATOR ── */}
-              <div className="lg:col-span-1 flex flex-col gap-6">
+              {/* ── RIGHT PANEL: TOP COORDINATOR (COMMENTED OUT) ── */}
+              {/* <div className="lg:col-span-1 flex flex-col gap-6 w-full">
                 <div
                   className="rounded-2xl p-6"
                   style={{
@@ -496,14 +498,14 @@ const LeaderBoard = () => {
                   )}
                 </div>
 
-                {/* Additional Widget (Optional / Conceptual) */}
                 <div className="rounded-2xl p-5 border border-dashed border-slate-800/60 bg-transparent flex flex-col items-center justify-center text-center opacity-60">
                   <TrendingUp size={20} className="text-slate-600 mb-2" />
                   <p className="text-[10px] font-mono text-slate-500">
                     Stats reset every Monday at 00:00 IST. Keep building!
                   </p>
                 </div>
-              </div>
+              </div> 
+              */}
             </div>
           )}
         </div>
