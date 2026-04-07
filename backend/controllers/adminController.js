@@ -955,15 +955,143 @@ export const getSADashboard = async (req, res) => {
 
     const recentProblems = await Problem.find()
       .sort({ createdAt: -1 })
-      .limit(5)
+      .limit(15) // Enough limit for the scrolling list
       .select(
         "problemID title category theme is_published ownerName organization createdAt",
       );
 
-    const topStudents = await Student.find()
-      .sort({ totalScore: -1 })
-      .limit(5)
-      .select("name email department college totalScore totalTasksCompleted");
+    // ─── EMAILS TO COMPLETELY IGNORE ───
+    const excludedEmails = ["bcbeereshkumar@gmail.com", "yy6996843@gmail.com"];
+
+    // Fetch the specific Admin Object IDs for these emails so we can filter logs
+    const excludedAdmins = await Admin.find({
+      email: { $in: excludedEmails },
+    }).select("_id");
+    const excludedAdminIds = excludedAdmins.map((admin) => admin._id);
+
+    // ─── GLOBAL ADMIN LEADERBOARD (Dynamic Real-time Aggregation) ───
+    // 1. Aggregate ALL-TIME points & tasks closed for every admin
+    const allTimeLogStats = await Log.aggregate([
+      { $match: { task_status: "completed" } },
+      {
+        $group: {
+          _id: "$task_coordinator_id",
+          totalPointsAwarded: { $sum: "$assignedTaskPoints" },
+          totalTasksClosed: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Convert to a quick lookup map
+    const adminStatsMap = {};
+    allTimeLogStats.forEach((stat) => {
+      if (stat._id) adminStatsMap[stat._id.toString()] = stat;
+    });
+
+    // 2. Fetch valid admins (Excluding super-admins and the specific emails)
+    let topAdmins = await Admin.find({
+      role: { $ne: "super-admin" },
+      isBlocked: false,
+      email: { $nin: excludedEmails },
+    })
+      .select("name email college department branch role")
+      .lean();
+
+    // 3. Inject the real-time calculated stats and sort them
+    topAdmins = topAdmins
+      .map((admin) => {
+        const stats = adminStatsMap[admin._id.toString()] || {
+          totalPointsAwarded: 0,
+          totalTasksClosed: 0,
+        };
+        return {
+          ...admin,
+          totalPoints: stats.totalPointsAwarded,
+          totalTaskCreated: stats.totalTasksClosed, // Mapping to the frontend prop name
+        };
+      })
+      .sort(
+        (a, b) =>
+          b.totalPoints - a.totalPoints ||
+          b.totalTaskCreated - a.totalTaskCreated,
+      );
+
+    // ─── DAILY HIGHLIGHTS AGGREGATION ───
+    const now = new Date();
+    // Midnight of the current day
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+
+    // 1. Top Project of the Day
+    const topProjectAgg = await Log.aggregate([
+      { $match: { task_status: "completed", closedAt: { $gte: startOfDay } } },
+      {
+        $group: {
+          _id: "$projectId",
+          dayPoints: { $sum: "$assignedTaskPoints" },
+          tasks: { $sum: 1 },
+        },
+      },
+      { $sort: { dayPoints: -1 } },
+      { $limit: 1 },
+    ]);
+
+    let topProject = null;
+    if (topProjectAgg.length) {
+      const proj = await Project.findById(topProjectAgg[0]._id).populate(
+        "problem",
+        "title theme category",
+      );
+      if (proj) {
+        topProject = {
+          _id: proj._id,
+          projectID: proj.projectID,
+          problemTitle: proj.problem?.title,
+          theme: proj.problem?.theme,
+          dayPoints: topProjectAgg[0].dayPoints,
+          dayTasks: topProjectAgg[0].tasks,
+        };
+      }
+    }
+
+    // 2. Top Coordinator of the Day (Ignoring excluded admin IDs)
+    const topCoordAgg = await Log.aggregate([
+      {
+        $match: {
+          task_status: "completed",
+          closedAt: { $gte: startOfDay },
+          task_coordinator_id: { $nin: excludedAdminIds }, // Ignore the specific emails
+        },
+      },
+      {
+        $group: {
+          _id: "$task_coordinator_id",
+          dayPoints: { $sum: "$assignedTaskPoints" },
+          tasks: { $sum: 1 },
+        },
+      },
+      { $sort: { dayPoints: -1 } },
+      { $limit: 1 },
+    ]);
+
+    let topCoordinator = null;
+    if (topCoordAgg.length && topCoordAgg[0]._id) {
+      const admin = await Admin.findById(topCoordAgg[0]._id).select(
+        "name email college department",
+      );
+      if (admin) {
+        topCoordinator = {
+          _id: admin._id,
+          name: admin.name,
+          college: admin.college,
+          dayPoints: topCoordAgg[0].dayPoints,
+          dayTasks: topCoordAgg[0].tasks,
+        };
+      }
+    }
 
     res.json({
       success: true,
@@ -996,7 +1124,11 @@ export const getSADashboard = async (req, res) => {
         totalPointsDistributed: ptAgg[0]?.total || 0,
       },
       recentProblems,
-      topStudents,
+      topAdmins,
+      dailyHighlights: {
+        topProject,
+        topCoordinator,
+      },
     });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
