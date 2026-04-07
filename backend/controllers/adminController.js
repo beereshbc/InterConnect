@@ -71,7 +71,7 @@ const PROJECT_POPULATE = [
   {
     path: "problem",
     select:
-      "problemID title category description theme tags ownerName organization department contactInfo problem_coordinator is_published assignedStudents",
+      "problemID title category description theme tags Phone ownerName organization department contactInfo problem_coordinator is_published assignedStudents",
   },
   {
     path: "contributors",
@@ -89,7 +89,7 @@ const PROJECT_POPULATE = [
   },
   {
     path: "coordinators",
-    select: "name email phone college branch",
+    select: "name email coordinators phone college branch",
   },
 ];
 

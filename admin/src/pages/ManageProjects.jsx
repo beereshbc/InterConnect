@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 
@@ -19,7 +19,6 @@ const fmtDatetime = (d) =>
     minute: "2-digit",
   });
 
-// Format hours into a human-readable string: 4 → "4h", 25 → "1d 1h", 48 → "2d"
 const fmtHours = (h) => {
   if (h == null || h === 0) return "—";
   const n = Number(h);
@@ -29,7 +28,6 @@ const fmtHours = (h) => {
   return r > 0 ? `${d}d ${r}h` : `${d}d`;
 };
 
-// Resolve deadlineHours from a log (supports legacy deadlineDays)
 const logHours = (log) =>
   log.deadlineHours != null ? log.deadlineHours : (log.deadlineDays || 7) * 24;
 
@@ -64,6 +62,12 @@ const initials = (name = "") =>
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+const stripHtml = (html = "") =>
+  html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_MAP = {
@@ -237,7 +241,13 @@ const ToastBar = ({ message, type = "success", onDone }) => {
   );
 };
 
-const Modal = ({ title, onClose, children, wide = false }) => (
+const Modal = ({
+  title,
+  onClose,
+  children,
+  wide = false,
+  extraWide = false,
+}) => (
   <div
     onClick={onClose}
     className="fixed inset-0 z-[1000] flex items-center justify-center p-5"
@@ -245,7 +255,7 @@ const Modal = ({ title, onClose, children, wide = false }) => (
   >
     <div
       onClick={(e) => e.stopPropagation()}
-      className={`relative bg-[#0f1219] border border-slate-700/60 rounded-2xl w-full overflow-y-auto shadow-2xl ${wide ? "max-w-3xl" : "max-w-2xl"}`}
+      className={`relative bg-[#0f1219] border border-slate-700/60 rounded-2xl w-full overflow-y-auto shadow-2xl ${extraWide ? "max-w-4xl" : wide ? "max-w-3xl" : "max-w-2xl"}`}
       style={{
         maxHeight: "88vh",
         boxShadow: "0 40px 100px rgba(0,0,0,0.85), 0 0 0 1px #ffffff08",
@@ -348,21 +358,17 @@ const RangeField = ({
   </div>
 );
 
-// ─── NEW: PointsField — custom number input 1–50 with quick presets ─────────
 const POINT_PRESETS = [5, 10, 15, 20, 25, 30, 40, 50];
-
 const PointsField = ({ value, onChange, accent = "#e85d3a" }) => {
   const handleInput = (e) => {
     const raw = Number(e.target.value);
-    const clamped = Math.min(50, Math.max(1, isNaN(raw) ? 1 : raw));
-    onChange(clamped);
+    onChange(Math.min(50, Math.max(1, isNaN(raw) ? 1 : raw)));
   };
   return (
     <div className="mb-4">
       <label className="block text-[10px] font-bold text-slate-500 mb-1.5 font-mono tracking-widest uppercase">
         Task Points <span style={{ color: accent }}>({value} pts)</span>
       </label>
-      {/* Quick preset chips */}
       <div className="flex gap-1.5 flex-wrap mb-2">
         {POINT_PRESETS.map((p) => (
           <button
@@ -388,7 +394,6 @@ const PointsField = ({ value, onChange, accent = "#e85d3a" }) => {
           </button>
         ))}
       </div>
-      {/* Custom typed input */}
       <div className="relative">
         <input
           type="number"
@@ -403,14 +408,10 @@ const PointsField = ({ value, onChange, accent = "#e85d3a" }) => {
           / 50 pts
         </span>
       </div>
-      <p className="text-[10px] text-slate-600 font-mono mt-1">
-        Custom value between 1 and 50 — or pick a preset above
-      </p>
     </div>
   );
 };
 
-// ─── NEW: DeadlineField — hours picker 1–96 (max 4 days) with presets ────────
 const DEADLINE_PRESETS = [
   { label: "4h", hours: 4 },
   { label: "8h", hours: 8 },
@@ -420,12 +421,10 @@ const DEADLINE_PRESETS = [
   { label: "3d", hours: 72 },
   { label: "4d", hours: 96 },
 ];
-
 const DeadlineField = ({ value, onChange, accent = "#3a9de8" }) => {
   const handleInput = (e) => {
     const raw = Number(e.target.value);
-    const clamped = Math.min(96, Math.max(1, isNaN(raw) ? 1 : raw));
-    onChange(clamped);
+    onChange(Math.min(96, Math.max(1, isNaN(raw) ? 1 : raw)));
   };
   return (
     <div className="mb-4">
@@ -433,7 +432,6 @@ const DeadlineField = ({ value, onChange, accent = "#3a9de8" }) => {
         Deadline Window{" "}
         <span style={{ color: accent }}>({fmtHours(value)})</span>
       </label>
-      {/* Quick preset chips */}
       <div className="flex gap-1.5 flex-wrap mb-2">
         {DEADLINE_PRESETS.map((p) => (
           <button
@@ -459,7 +457,6 @@ const DeadlineField = ({ value, onChange, accent = "#3a9de8" }) => {
           </button>
         ))}
       </div>
-      {/* Custom typed input (in hours) */}
       <div className="relative">
         <input
           type="number"
@@ -513,8 +510,288 @@ const SkeletonCard = () => (
   </div>
 );
 
+// ─── Copy to Clipboard helper ─────────────────────────────────────────────────
+const CopyBtn = ({ text }) => {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={() => {
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+      className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+    >
+      {copied ? "✓" : "copy"}
+    </button>
+  );
+};
+
+// ─── Rich Text Editor ─────────────────────────────────────────────────────────
+const RTB = ({ cmd, val, icon, title, editorRef, onUpdate }) => (
+  <button
+    type="button"
+    title={title}
+    onMouseDown={(e) => {
+      e.preventDefault();
+      document.execCommand(cmd, false, val || null);
+      editorRef.current?.focus();
+      onUpdate();
+    }}
+    className="w-7 h-7 rounded flex items-center justify-center text-[11px] font-bold transition-colors"
+    style={{
+      background: "transparent",
+      color: "#8892a4",
+      border: "1px solid transparent",
+    }}
+  >
+    {icon}
+  </button>
+);
+
+const RichTextEditor = ({
+  value,
+  onChange,
+  placeholder = "Write here…",
+  minHeight = 120,
+}) => {
+  const editorRef = useRef(null);
+  const [, forceRender] = useState(0);
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML !== value) {
+      editorRef.current.innerHTML = value || "";
+    }
+  }, []);
+  const update = () => {
+    onChange(editorRef.current?.innerHTML || "");
+    forceRender((n) => n + 1);
+  };
+  const insertLink = () => {
+    const url = prompt("Enter URL:");
+    if (url) {
+      document.execCommand("createLink", false, url);
+      update();
+    }
+  };
+  const commonProps = { editorRef, onUpdate: update };
+  const toolGroups = [
+    [
+      { cmd: "bold", icon: <strong>B</strong>, title: "Bold" },
+      { cmd: "italic", icon: <em>I</em>, title: "Italic" },
+      { cmd: "underline", icon: <u>U</u>, title: "Underline" },
+      { cmd: "strikeThrough", icon: <s>S</s>, title: "Strike" },
+    ],
+    [
+      { cmd: "insertUnorderedList", icon: "≡", title: "Bullet list" },
+      { cmd: "insertOrderedList", icon: "1.", title: "Numbered list" },
+      { cmd: "indent", icon: "→", title: "Indent" },
+      { cmd: "outdent", icon: "←", title: "Outdent" },
+    ],
+    [
+      { cmd: "justifyLeft", icon: "L", title: "Align left" },
+      { cmd: "justifyCenter", icon: "C", title: "Align center" },
+      { cmd: "justifyRight", icon: "R", title: "Align right" },
+    ],
+    [
+      { cmd: "formatBlock", val: "h3", icon: "H3", title: "Heading" },
+      { cmd: "formatBlock", val: "p", icon: "¶", title: "Paragraph" },
+      { cmd: "removeFormat", icon: "✕", title: "Clear formatting" },
+    ],
+  ];
+  return (
+    <div className="mb-4">
+      <div
+        className="flex items-center gap-1 flex-wrap px-2.5 py-2 bg-[#0c0f18] border border-slate-700 rounded-t-lg"
+        style={{ borderBottom: "1px solid #1e2330" }}
+      >
+        {toolGroups.map((grp, gi) => (
+          <React.Fragment key={gi}>
+            {gi > 0 && (
+              <span className="w-px h-4 bg-slate-700 mx-1 flex-shrink-0" />
+            )}
+            {grp.map((t) => (
+              <RTB key={t.cmd + (t.val || "")} {...t} {...commonProps} />
+            ))}
+          </React.Fragment>
+        ))}
+        <span className="w-px h-4 bg-slate-700 mx-1 flex-shrink-0" />
+        <button
+          type="button"
+          title="Insert link"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            insertLink();
+          }}
+          className="w-7 h-7 rounded flex items-center justify-center text-[11px] transition-colors"
+          style={{
+            background: "transparent",
+            color: "#8892a4",
+            border: "1px solid transparent",
+          }}
+        >
+          🔗
+        </button>
+      </div>
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={update}
+        onKeyUp={update}
+        onMouseUp={() => forceRender((n) => n + 1)}
+        className="outline-none bg-slate-900 border border-slate-700 border-t-0 rounded-b-lg px-4 py-3 text-slate-200 text-[13px] transition-colors focus:border-[#e85d3a60]"
+        style={{
+          minHeight,
+          fontFamily: "'DM Mono', monospace",
+          lineHeight: 1.7,
+        }}
+        data-placeholder={placeholder}
+      />
+      <p className="text-[10px] text-slate-700 font-mono mt-1 text-right">
+        {stripHtml(value).split(/\s+/).filter(Boolean).length} words
+      </p>
+    </div>
+  );
+};
+
+// ─── Problem Owner Card (ENHANCED with phone) ─────────────────────────────────
+const ProblemOwnerCard = ({ problem }) => {
+  if (!problem) return null;
+  const details = [
+    { icon: "🏢", label: "Organization", value: problem.organization },
+    { icon: "🏬", label: "Department", value: problem.department },
+    {
+      icon: "📧",
+      label: "Email",
+      value: problem.contactInfo,
+      href: problem.contactInfo ? `mailto:${problem.contactInfo}` : null,
+      copyable: true,
+    },
+    {
+      icon: "📞",
+      label: "Phone",
+      value: problem.Phone,
+      href: problem.Phone ? `tel:${problem.Phone}` : null,
+      copyable: true,
+      highlight: true,
+    },
+    { icon: "🎓", label: "Coordinator", value: problem.problem_coordinator },
+  ].filter((d) => d.value);
+
+  return (
+    <div
+      className="rounded-2xl p-5 mb-5"
+      style={{
+        background: "linear-gradient(135deg,#131825 0%,#0f1420 100%)",
+        border: "1px solid #9c3ae830",
+        boxShadow: "0 0 40px #9c3ae808",
+      }}
+    >
+      <div className="flex items-center gap-3 mb-4">
+        <div
+          className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+          style={{ background: "#9c3ae820", border: "1px solid #9c3ae840" }}
+        >
+          👤
+        </div>
+        <div>
+          <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mb-0.5">
+            Problem Owner
+          </div>
+          <div className="text-[16px] font-extrabold text-slate-100 font-display">
+            {problem.ownerName || "—"}
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2.5">
+        {details.map((d) => (
+          <div
+            key={d.label}
+            className={`bg-[#0c0f18] border rounded-xl p-3 group ${d.highlight ? "border-emerald-500/20 bg-emerald-950/10" : "border-slate-800"}`}
+          >
+            <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest mb-1 flex items-center justify-between gap-1.5">
+              <span className="flex items-center gap-1.5">
+                <span>{d.icon}</span> {d.label}
+              </span>
+              {d.copyable && d.value && <CopyBtn text={d.value} />}
+            </div>
+            {d.href ? (
+              <a
+                href={d.href}
+                className="text-[12px] font-mono font-semibold no-underline transition-colors"
+                style={{ color: d.highlight ? "#4ade80" : "#3a9de8" }}
+              >
+                {d.value} ↗
+              </a>
+            ) : (
+              <div className="text-[12px] font-mono font-semibold text-slate-300">
+                {d.value}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ─── Quick Stats Bar ──────────────────────────────────────────────────────────
+const QuickStatsBar = ({ project }) => {
+  const logs = project.logs || [];
+  const open = logs.filter((l) => l.task_status === "open").length;
+  const assigned = logs.filter((l) => l.task_status === "assigned").length;
+  const pending = logs.filter((l) => l.task_status === "pending").length;
+  const completed = logs.filter((l) => l.task_status === "completed").length;
+  const terminated = logs.filter((l) => l.task_status === "terminated").length;
+  const pts = totalPoints(logs);
+  const overdue = logs.filter((l) => {
+    const isActive =
+      l.task_status === "assigned" || l.task_status === "pending";
+    return isActive && l.deadlineAt && daysLeft(l.deadlineAt) <= 0;
+  }).length;
+
+  const stats = [
+    { label: "Open", value: open, color: "#3a9de8" },
+    { label: "Assigned", value: assigned, color: "#fbbf24" },
+    { label: "Review", value: pending, color: "#818cf8" },
+    { label: "Done", value: completed, color: "#4ade80" },
+    { label: "Terminated", value: terminated, color: "#f87171" },
+    {
+      label: "Overdue",
+      value: overdue,
+      color: overdue > 0 ? "#ef4444" : "#374151",
+    },
+    { label: "Points", value: pts, color: "#e85d3a" },
+    {
+      label: "Contributors",
+      value: project.contributors?.length ?? 0,
+      color: "#9c3ae8",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-4 gap-2 mb-5">
+      {stats.map((s) => (
+        <div
+          key={s.label}
+          className="bg-[#0c0f18] border border-slate-800 rounded-xl p-3 text-center"
+        >
+          <div
+            className="text-lg font-extrabold font-display"
+            style={{ color: s.color }}
+          >
+            {s.value}
+          </div>
+          <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest mt-0.5">
+            {s.label}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // ─── Contributor Info Modal ────────────────────────────────────────────────────
-// Find contributor accurately by contributorID (ObjectId string) first, then fallback to name
 const ContributorInfoModal = ({ log, contributors, projectId, onClose }) => {
   const student = (contributors || []).find(
     (c) =>
@@ -523,8 +800,6 @@ const ContributorInfoModal = ({ log, contributors, projectId, onClose }) => {
           c._id?.toString() === log.contributorID?.toString())) ||
       (log.task_contributor && c.name === log.task_contributor),
   );
-
-  // Accurately resolve THIS project's contribution record
   const contrib = student?.projectWiseContribution?.find(
     (c) =>
       c.project &&
@@ -561,10 +836,19 @@ const ContributorInfoModal = ({ log, contributors, projectId, onClose }) => {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <InfoRow label="Phone" value={student.phone} color="#3a9de8" />
+            <div className="bg-[#0c0f18] border border-emerald-500/20 rounded-lg p-3">
+              <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest flex items-center justify-between">
+                Phone <CopyBtn text={student.phone || ""} />
+              </div>
+              <a
+                href={`tel:${student.phone}`}
+                className="text-[12px] font-mono font-semibold text-emerald-400 no-underline"
+              >
+                {student.phone || "—"} ↗
+              </a>
+            </div>
             <InfoRow label="USN" value={student.usn} color="#fbbf24" />
             <InfoRow label="Department" value={student.department} />
-
             <InfoRow label="Program" value={student.program} />
             <InfoRow label="Semester" value={student.semester} />
             <InfoRow label="College" value={student.college} />
@@ -574,7 +858,6 @@ const ContributorInfoModal = ({ log, contributors, projectId, onClose }) => {
               color="#e85d3a"
             />
           </div>
-          {/* Project-specific contribution */}
           {contrib && (
             <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4 mb-4">
               <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mb-2">
@@ -660,20 +943,26 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
     ownerName: project.problem?.ownerName || "",
     organization: project.problem?.organization || "",
     contactInfo: project.problem?.contactInfo || "",
+    ownerPhone: project.problem?.Phone || "",
+    department: project.problem?.department || "",
     problem_coordinator: project.problem?.problem_coordinator || "",
   });
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   return (
-    <Modal title={`Edit · ${project.projectID}`} onClose={onClose} wide>
+    <Modal title={`Edit · ${project.projectID}`} onClose={onClose} extraWide>
       <SectionLabel color="#e85d3a">Project Data</SectionLabel>
-      <Field
-        label="Project Description"
+      <div className="mb-1">
+        <label className="block text-[10px] font-bold text-slate-500 mb-1.5 font-mono tracking-widest uppercase">
+          Project Description <span className="text-[#e85d3a]">*</span>
+        </label>
+      </div>
+      <RichTextEditor
         value={form.projectDescription}
-        onChange={set("projectDescription")}
-        type="textarea"
-        required
+        onChange={(v) => setForm((f) => ({ ...f, projectDescription: v }))}
+        placeholder="Describe the project goals, tech stack, and context…"
+        minHeight={140}
       />
       <Field
         label="GitHub Repository"
@@ -693,14 +982,14 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           label="Resources Link"
           value={form.resourcesLink}
           onChange={set("resourcesLink")}
-          placeholder="Drive / Notion / Figma..."
+          placeholder="Drive / Notion / Figma…"
           hint="External docs, design files"
         />
         <Field
           label="Community Link"
           value={form.communityLink}
           onChange={set("communityLink")}
-          placeholder="WhatsApp / Discord..."
+          placeholder="WhatsApp / Discord…"
           hint="Team communication"
         />
       </div>
@@ -731,6 +1020,7 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           Block this project — disables contributor access
         </label>
       </div>
+
       <SectionLabel color="#3a9de8">Problem Data</SectionLabel>
       <Field
         label="Problem Title"
@@ -752,13 +1042,19 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           required
         />
       </div>
-      <Field
-        label="Description"
+      <div className="mb-1">
+        <label className="block text-[10px] font-bold text-slate-500 mb-1.5 font-mono tracking-widest uppercase">
+          Problem Description <span className="text-[#e85d3a]">*</span>
+        </label>
+      </div>
+      <RichTextEditor
         value={form.description}
-        onChange={set("description")}
-        type="textarea"
-        required
+        onChange={(v) => setForm((f) => ({ ...f, description: v }))}
+        placeholder="Describe the problem statement in detail…"
+        minHeight={120}
       />
+
+      <SectionLabel color="#9c3ae8">Problem Owner</SectionLabel>
       <div className="grid grid-cols-2 gap-4">
         <Field
           label="Owner Name"
@@ -775,10 +1071,25 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Field
-          label="Contact Info"
+          label="Contact Email"
           value={form.contactInfo}
           onChange={set("contactInfo")}
-          placeholder="email or phone"
+          placeholder="owner@company.com"
+        />
+        <Field
+          label="Phone Number"
+          value={form.ownerPhone}
+          onChange={set("ownerPhone")}
+          placeholder="+91 98765 43210"
+          hint="Direct line to problem owner"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <Field
+          label="Department"
+          value={form.department}
+          onChange={set("department")}
+          placeholder="e.g. IT / R&D"
         />
         <Field
           label="Coordinator"
@@ -787,6 +1098,7 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           required
         />
       </div>
+
       <div className="flex gap-3 justify-end mt-2 pt-4 border-t border-slate-800">
         <Btn variant="secondary" onClick={onClose}>
           Cancel
@@ -795,7 +1107,7 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
           loading={saving}
           onClick={async () => {
             setSaving(true);
-            await onSave(form);
+            await onSave({ ...form, Phone: form.ownerPhone });
             setSaving(false);
             onClose();
           }}
@@ -814,8 +1126,8 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
     description: "",
     requirements: "",
     githubIssueLink: "",
-    assignedTaskPoints: 10, // 1–50
-    deadlineHours: 24, // 1–96
+    assignedTaskPoints: 10,
+    deadlineHours: 24,
   });
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -854,22 +1166,18 @@ const CreateLogModal = ({ project, onClose, onCreate }) => {
         required
         placeholder="https://github.com/.../issues/X"
       />
-
       <div className="grid grid-cols-2 gap-6">
-        {/* Points 1–50 */}
         <PointsField
           value={form.assignedTaskPoints}
           onChange={(v) => setForm((f) => ({ ...f, assignedTaskPoints: v }))}
           accent="#4ade80"
         />
-        {/* Deadline in hours */}
         <DeadlineField
           value={form.deadlineHours}
           onChange={(v) => setForm((f) => ({ ...f, deadlineHours: v }))}
           accent="#3a9de8"
         />
       </div>
-
       <div className="p-3.5 bg-blue-950/30 border border-blue-500/20 rounded-xl mb-4">
         <p className="text-[11px] text-blue-400 font-mono">
           ℹ The log will be created as a <strong>draft</strong>. Publish it for
@@ -944,7 +1252,6 @@ const EditLogModal = ({ log, onClose, onUpdate }) => {
         onChange={set("githubIssueLink")}
         required
       />
-
       <div className="grid grid-cols-2 gap-6">
         <PointsField
           value={form.assignedTaskPoints}
@@ -957,7 +1264,6 @@ const EditLogModal = ({ log, onClose, onUpdate }) => {
           accent="#3a9de8"
         />
       </div>
-
       <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
         <Btn variant="secondary" onClick={onClose}>
           Cancel
@@ -989,11 +1295,9 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
   });
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const isValid = !!form.githubPrLink;
 
   return (
     <Modal title="Close Task Log" onClose={onClose}>
-      {/* Task summary */}
       <div className="p-4 bg-slate-900 border border-slate-700 rounded-xl mb-5">
         <div className="text-[13px] font-bold text-slate-100 font-display mb-1">
           {log.taskTitle}
@@ -1016,26 +1320,23 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
           </div>
         )}
       </div>
-
       {isPendingReview ? (
         <div className="p-3.5 bg-indigo-500/10 border border-indigo-500/25 rounded-xl mb-5">
           <div className="text-[11px] text-indigo-300 font-mono font-bold mb-1">
             🔍 Student Submitted for Review
           </div>
           <p className="text-[11px] text-indigo-400/80 font-mono leading-relaxed">
-            The contributor has marked this task as complete. Review the work,
-            adjust points if needed, and close to award points.
+            Review the work, adjust points if needed, and close to award points.
           </p>
         </div>
       ) : (
         <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-5">
           <p className="text-[11px] text-amber-400 font-mono">
             ⚠ This task is currently <strong>assigned</strong>. You are closing
-            it manually — make sure the work is complete.
+            it manually.
           </p>
         </div>
       )}
-
       <SectionLabel color="#4ade80">Completion Credentials</SectionLabel>
       <Field
         label="GitHub PR / Commit Link"
@@ -1049,14 +1350,11 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
             : undefined
         }
       />
-
-      {/* Points awarded — 0 to 50 */}
       <PointsField
         value={form.pointsAwarded}
         onChange={(v) => setForm((f) => ({ ...f, pointsAwarded: v }))}
         accent="#4ade80"
       />
-
       <Field
         label="Closure Note"
         value={form.closureNote}
@@ -1064,21 +1362,20 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
         type="textarea"
         placeholder="What was achieved? Any remarks for the contributor..."
       />
-
       <div className="flex gap-3 justify-end pt-4 border-t border-slate-800">
         <Btn variant="secondary" onClick={onClose}>
           Cancel
         </Btn>
         <Btn
           variant="success"
+          disabled={!form.githubPrLink}
+          loading={saving}
           onClick={async () => {
             setSaving(true);
             await onCloseLog(form);
             setSaving(false);
             onClose();
           }}
-          disabled={!isValid}
-          loading={saving}
         >
           ✓ Mark Complete & Award {form.pointsAwarded} pts
         </Btn>
@@ -1091,7 +1388,6 @@ const CloseLogModal = ({ log, onClose, onCloseLog }) => {
 const TerminateLogModal = ({ log, onClose, onTerminate }) => {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
-
   return (
     <Modal title="Terminate Log" onClose={onClose}>
       <div className="p-4 bg-red-950/40 border border-red-500/20 rounded-xl mb-5">
@@ -1135,7 +1431,6 @@ const TerminateLogModal = ({ log, onClose, onTerminate }) => {
 const ReopenLogModal = ({ log, onClose, onReopen }) => {
   const [deadlineHours, setDeadlineHours] = useState(logHours(log));
   const [saving, setSaving] = useState(false);
-
   return (
     <Modal title="Reopen Log" onClose={onClose}>
       <div className="p-4 bg-emerald-950/30 border border-emerald-500/20 rounded-xl mb-5">
@@ -1176,15 +1471,12 @@ const ReopenLogModal = ({ log, onClose, onReopen }) => {
 
 // ─── Student Detail Modal ─────────────────────────────────────────────────────
 const StudentModal = ({ student, projectLogs, projectId, onClose }) => {
-  // Accurate lookup using contributorID or name match
   const studentLogs = (projectLogs || []).filter(
     (l) =>
       (l.contributorID &&
         l.contributorID?.toString() === student._id?.toString()) ||
       l.task_contributor === student.name,
   );
-
-  // Accurate project-specific contribution
   const contrib = student.projectWiseContribution?.find(
     (c) =>
       c.project &&
@@ -1209,8 +1501,6 @@ const StudentModal = ({ student, projectLogs, projectId, onClose }) => {
           </div>
         </div>
       </div>
-
-      {/* Per-project stats */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
           {
@@ -1246,34 +1536,44 @@ const StudentModal = ({ student, projectLogs, projectId, onClose }) => {
           </div>
         ))}
       </div>
-
-      {/* Full profile grid */}
       <div className="grid grid-cols-2 gap-3 mb-5">
-        {[
-          ["Department", student.department],
-          ["Program", student.program],
-
-          ["Semester", student.semester],
-          ["USN", student.usn],
-          ["Phone", student.phone],
-          ["College", student.college],
-          ["Overall Score", `${student.totalScore || 0} pts`],
-          ["Overall Tasks Done", student.totalTasksCompleted || 0],
-        ].map(([k, v]) => (
-          <div
-            key={k}
-            className="bg-slate-900 border border-slate-800 rounded-lg p-3"
-          >
-            <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
-              {k}
-            </div>
-            <div className="text-[12px] text-slate-300 font-mono mt-1">
-              {v || "—"}
-            </div>
+        <div className="bg-[#0c0f18] border border-emerald-500/20 rounded-lg p-3">
+          <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest flex items-center justify-between">
+            Phone <CopyBtn text={student.phone || ""} />
           </div>
-        ))}
+          <a
+            href={`tel:${student.phone}`}
+            className="text-[12px] font-mono font-semibold text-emerald-400 no-underline"
+          >
+            {student.phone || "—"} ↗
+          </a>
+        </div>
+        {[
+          ["Department", "department"],
+          ["Program", "program"],
+          ["Semester", "semester"],
+          ["USN", "usn"],
+          ["College", "college"],
+          ["Overall Score", "totalScore"],
+          ["Overall Tasks Done", "totalTasksCompleted"],
+        ].map(([k, field]) => {
+          let v = student[field];
+          if (k === "Overall Score") v = `${v || 0} pts`;
+          return (
+            <div
+              key={k}
+              className="bg-slate-900 border border-slate-800 rounded-lg p-3"
+            >
+              <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+                {k}
+              </div>
+              <div className="text-[12px] text-slate-300 font-mono mt-1">
+                {v || "—"}
+              </div>
+            </div>
+          );
+        })}
       </div>
-
       {student.githubLink && (
         <a
           href={student.githubLink}
@@ -1284,7 +1584,6 @@ const StudentModal = ({ student, projectLogs, projectId, onClose }) => {
           ⌥ GitHub Profile ↗
         </a>
       )}
-
       {studentLogs.length > 0 && (
         <>
           <SectionLabel color="#e85d3a">Task Logs on this Project</SectionLabel>
@@ -1332,6 +1631,7 @@ const LogCard = ({
   onReopen,
 }) => {
   const [showStudentInfo, setShowStudentInfo] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const days = daysLeft(log.deadlineAt);
   const isPending = log.task_status === "pending";
   const isActive = log.task_status === "assigned" || isPending;
@@ -1351,7 +1651,6 @@ const LogCard = ({
       <div
         className={`bg-[#0c0f18] border border-slate-800 border-l-2 ${statusBorder} rounded-xl p-5 transition-all duration-200`}
       >
-        {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
             <div
@@ -1407,7 +1706,6 @@ const LogCard = ({
           </details>
         )}
 
-        {/* Meta */}
         <div className="flex flex-wrap gap-3 items-center mb-3">
           <span className="text-[11px] text-amber-400 font-mono">
             ⬡ {log.assignedTaskPoints} pts
@@ -1439,7 +1737,6 @@ const LogCard = ({
           )}
         </div>
 
-        {/* Links */}
         <div className="flex gap-4 items-center mb-4">
           {log.githubIssueLink && (
             <a
@@ -1471,7 +1768,6 @@ const LogCard = ({
           )}
         </div>
 
-        {/* Action buttons */}
         <div className="flex gap-2 flex-wrap pt-3 border-t border-slate-800/60">
           <Btn variant="info" small onClick={() => setShowStudentInfo(true)}>
             👤{" "}
@@ -1479,7 +1775,6 @@ const LogCard = ({
               ? "Unassigned"
               : log.task_contributor || "Student Info"}
           </Btn>
-
           {log.task_status === "open" && (
             <Btn
               variant={log.isPublished ? "warn" : "blue"}
@@ -1489,25 +1784,21 @@ const LogCard = ({
               {log.isPublished ? "Unpublish" : "↑ Publish"}
             </Btn>
           )}
-
           {log.task_status === "open" && (
             <Btn variant="secondary" small onClick={() => onEdit(log)}>
               Edit
             </Btn>
           )}
-
           {isActive && (
             <Btn variant="success" small onClick={() => onClose(log)}>
               {isPending ? "✓ Review & Close" : "✓ Close"}
             </Btn>
           )}
-
           {(log.task_status === "open" || isActive) && (
             <Btn variant="danger" small onClick={() => onTerminate(log)}>
               Terminate
             </Btn>
           )}
-
           {log.task_status === "terminated" && (
             <Btn variant="success" small onClick={() => onReopen(log)}>
               ↺ Reopen
@@ -1515,7 +1806,6 @@ const LogCard = ({
           )}
         </div>
       </div>
-
       {showStudentInfo && (
         <ContributorInfoModal
           log={log}
@@ -1542,7 +1832,6 @@ const WorkflowInsight = ({ project }) => {
     lanes[c._id] = { ...c, logs: [] };
   });
   allLogs.forEach((l) => {
-    // Match by contributorID first, then by name
     const key = Object.keys(lanes).find(
       (id) =>
         l.contributorID?.toString() === id ||
@@ -1553,7 +1842,6 @@ const WorkflowInsight = ({ project }) => {
   const timeline = [...allLogs].sort(
     (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
   );
-
   const statusColor = {
     open: "#3a9de8",
     assigned: "#fbbf24",
@@ -1564,7 +1852,6 @@ const WorkflowInsight = ({ project }) => {
 
   return (
     <div className="space-y-6 mt-2">
-      {/* Summary */}
       <div className="grid grid-cols-4 gap-3">
         {[
           { label: "Total", value: allLogs.length, color: "#8892a4" },
@@ -1588,8 +1875,6 @@ const WorkflowInsight = ({ project }) => {
           </div>
         ))}
       </div>
-
-      {/* Contributor lanes — keyed by _id for accuracy */}
       <div className="bg-[#0c0f18] border border-slate-800 rounded-2xl p-6">
         <SectionLabel color="#e85d3a">Contributor Lanes</SectionLabel>
         <div className="space-y-5">
@@ -1657,8 +1942,6 @@ const WorkflowInsight = ({ project }) => {
           })}
         </div>
       </div>
-
-      {/* Timeline */}
       <div className="bg-[#0c0f18] border border-slate-800 rounded-2xl p-6">
         <SectionLabel color="#3a9de8">Chronological Timeline</SectionLabel>
         <div className="relative pl-6">
@@ -1711,6 +1994,390 @@ const WorkflowInsight = ({ project }) => {
   );
 };
 
+// ─── Overview Tab ─────────────────────────────────────────────────────────────
+const OverviewTab = ({ project }) => {
+  return (
+    <div>
+      {/* Quick Stats */}
+      <QuickStatsBar project={project} />
+
+      {/* External Links — Community & Resources FIRST, prominent */}
+      {(project.resourcesLink ||
+        project.communityLink ||
+        project.githubRepoLink ||
+        project.liveHostedLink) && (
+        <div className="mb-6">
+          <SectionLabel color="#fbbf24">Project Links</SectionLabel>
+          <div className="grid grid-cols-2 gap-3">
+            {project.githubRepoLink && (
+              <a
+                href={project.githubRepoLink}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 bg-[#0c0f18] border border-blue-500/20 rounded-xl p-4 no-underline hover:border-blue-500/40 transition-colors group"
+              >
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                  style={{
+                    background: "#3a9de820",
+                    border: "1px solid #3a9de840",
+                  }}
+                >
+                  ⌥
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
+                    GitHub Repo
+                  </div>
+                  <div className="text-[11px] text-blue-400 font-mono mt-0.5 truncate group-hover:text-blue-300 transition-colors">
+                    View Repository ↗
+                  </div>
+                </div>
+              </a>
+            )}
+            {project.liveHostedLink ? (
+              <a
+                href={project.liveHostedLink}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 bg-[#0c0f18] border border-emerald-500/20 rounded-xl p-4 no-underline hover:border-emerald-500/40 transition-colors group"
+              >
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                  style={{
+                    background: "#4ade8020",
+                    border: "1px solid #4ade8040",
+                  }}
+                >
+                  ◉
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
+                    Live Demo
+                  </div>
+                  <div className="text-[11px] text-emerald-400 font-mono mt-0.5 truncate group-hover:text-emerald-300 transition-colors">
+                    Open Live ↗
+                  </div>
+                </div>
+              </a>
+            ) : (
+              <div className="flex items-center gap-3 bg-[#0c0f18] border border-dashed border-slate-800 rounded-xl p-4 opacity-40">
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                  style={{ background: "#1e2330" }}
+                >
+                  ◉
+                </div>
+                <div>
+                  <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
+                    Live Demo
+                  </div>
+                  <div className="text-[11px] text-slate-600 font-mono mt-0.5">
+                    Not deployed yet
+                  </div>
+                </div>
+              </div>
+            )}
+            {project.resourcesLink ? (
+              <a
+                href={project.resourcesLink}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 bg-[#0c0f18] border border-amber-500/25 rounded-xl p-4 no-underline hover:border-amber-500/50 transition-colors group"
+                style={{ boxShadow: "0 0 20px #fbbf2408" }}
+              >
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                  style={{
+                    background: "#fbbf2420",
+                    border: "1px solid #fbbf2440",
+                  }}
+                >
+                  📁
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
+                    Resources
+                  </div>
+                  <div className="text-[11px] text-amber-400 font-mono mt-0.5 truncate group-hover:text-amber-300 transition-colors">
+                    Drive / Notion / Figma ↗
+                  </div>
+                  <div className="text-[9px] text-slate-600 font-mono mt-0.5 truncate">
+                    {project.resourcesLink.replace(/^https?:\/\//, "")}
+                  </div>
+                </div>
+              </a>
+            ) : (
+              <div className="flex items-center gap-3 bg-[#0c0f18] border border-dashed border-slate-800 rounded-xl p-4 opacity-40">
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                  style={{ background: "#1e2330" }}
+                >
+                  📁
+                </div>
+                <div>
+                  <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
+                    Resources
+                  </div>
+                  <div className="text-[11px] text-slate-600 font-mono mt-0.5">
+                    No link added yet
+                  </div>
+                </div>
+              </div>
+            )}
+            {project.communityLink ? (
+              <a
+                href={project.communityLink}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 bg-[#0c0f18] border border-violet-500/25 rounded-xl p-4 no-underline hover:border-violet-500/50 transition-colors group"
+                style={{ boxShadow: "0 0 20px #7c3aed08" }}
+              >
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                  style={{
+                    background: "#7c3aed20",
+                    border: "1px solid #7c3aed40",
+                  }}
+                >
+                  💬
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
+                    Community
+                  </div>
+                  <div className="text-[11px] text-violet-400 font-mono mt-0.5 truncate group-hover:text-violet-300 transition-colors">
+                    WhatsApp / Discord ↗
+                  </div>
+                  <div className="text-[9px] text-slate-600 font-mono mt-0.5 truncate">
+                    {project.communityLink.replace(/^https?:\/\//, "")}
+                  </div>
+                </div>
+              </a>
+            ) : (
+              <div className="flex items-center gap-3 bg-[#0c0f18] border border-dashed border-slate-800 rounded-xl p-4 opacity-40">
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                  style={{ background: "#1e2330" }}
+                >
+                  💬
+                </div>
+                <div>
+                  <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
+                    Community
+                  </div>
+                  <div className="text-[11px] text-slate-600 font-mono mt-0.5">
+                    No link added yet
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Project Description */}
+      <div className="mb-6">
+        <SectionLabel color="#e85d3a">Project Description</SectionLabel>
+        {project.projectDescription ? (
+          <div
+            className="rich-content text-[13px] text-slate-300 leading-relaxed bg-[#0c0f18] border border-slate-800 rounded-xl p-5"
+            dangerouslySetInnerHTML={{ __html: project.projectDescription }}
+          />
+        ) : (
+          <p className="text-[13px] text-slate-600 font-mono italic">
+            No description added yet.
+          </p>
+        )}
+      </div>
+
+      {/* Problem Owner */}
+      <SectionLabel color="#9c3ae8">Problem Owner</SectionLabel>
+      <ProblemOwnerCard problem={project.problem} />
+
+      <p className="text-[10px] text-slate-700 font-mono">
+        Created {fmtDate(project.createdAt)} · {project.contributors?.length}{" "}
+        contributors · {project.logs?.length} task logs
+      </p>
+    </div>
+  );
+};
+
+// ─── Problem Tab (ENHANCED with full owner details including phone) ────────────
+const ProblemTab = ({ project }) => {
+  return (
+    <div>
+      {/* Problem Metadata */}
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        {[
+          ["Problem ID", project.problem?.problemID, "#e85d3a"],
+          ["Title", project.problem?.title, "#f0f4ff"],
+          ["Category", project.problem?.category, "#3a9de8"],
+          ["Theme", project.problem?.theme, "#9c3ae8"],
+          [
+            "Published",
+            project.problem?.is_published ? "Yes ✓" : "No ✗",
+            project.problem?.is_published ? "#4ade80" : "#f87171",
+          ],
+          [
+            "Coordinators",
+            project.coordinators
+              ?.map((c) => `${c.name} (${c.phone || "N/A"})`)
+              .join(", ") || project.problem?.problem_coordinator,
+            "#4ade80",
+          ],
+        ].map(([k, v, c]) => (
+          <div
+            key={k}
+            className="bg-[#0c0f18] border border-slate-800 rounded-xl p-3.5"
+          >
+            <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
+              {k}
+            </div>
+            <div
+              className="text-[12px] font-semibold font-mono mt-1"
+              style={{ color: c }}
+            >
+              {v || "—"}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Problem Owner Section — FULL with phone prominently displayed */}
+      <div className="mb-5">
+        <SectionLabel color="#9c3ae8">Problem Owner Details</SectionLabel>
+        <div
+          className="rounded-2xl p-5"
+          style={{
+            background: "linear-gradient(135deg,#131825 0%,#0f1420 100%)",
+            border: "1px solid #9c3ae830",
+          }}
+        >
+          {/* Owner header */}
+          <div className="flex items-center gap-3 mb-4">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+              style={{ background: "#9c3ae820", border: "1px solid #9c3ae840" }}
+            >
+              👤
+            </div>
+            <div>
+              <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mb-0.5">
+                Owner
+              </div>
+              <div className="text-[17px] font-extrabold text-slate-100 font-display">
+                {project.problem?.ownerName || "—"}
+              </div>
+            </div>
+          </div>
+
+          {/* Owner details grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Organization */}
+            <div className="bg-[#0c0f18] border border-slate-800 rounded-xl p-3.5">
+              <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest mb-1">
+                🏢 Organization
+              </div>
+              <div className="text-[12px] font-semibold font-mono text-slate-300">
+                {project.problem?.organization || "—"}
+              </div>
+            </div>
+            {/* Department */}
+            <div className="bg-[#0c0f18] border border-slate-800 rounded-xl p-3.5">
+              <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest mb-1">
+                🏬 Department
+              </div>
+              <div className="text-[12px] font-semibold font-mono text-slate-300">
+                {project.problem?.department || "—"}
+              </div>
+            </div>
+            {/* Email — full width */}
+            <div className="bg-[#0c0f18] border border-blue-500/20 rounded-xl p-3.5 col-span-2">
+              <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest mb-1 flex items-center justify-between">
+                <span>📧 Email</span>
+                {project.problem?.contactInfo && (
+                  <CopyBtn text={project.problem.contactInfo} />
+                )}
+              </div>
+              {project.problem?.contactInfo ? (
+                <a
+                  href={`mailto:${project.problem.contactInfo}`}
+                  className="text-[13px] font-semibold font-mono text-blue-400 no-underline hover:text-blue-300 transition-colors"
+                >
+                  {project.problem.contactInfo} ↗
+                </a>
+              ) : (
+                <div className="text-[12px] font-mono text-slate-500">—</div>
+              )}
+            </div>
+            {/* Phone — highlighted prominently */}
+            <div
+              className="bg-[#0c0f18] rounded-xl p-3.5 col-span-2"
+              style={{
+                border: "1px solid #4ade8040",
+                boxShadow: "0 0 20px #4ade8010",
+              }}
+            >
+              <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest mb-1 flex items-center justify-between">
+                <span className="text-emerald-400 font-bold">
+                  📞 Phone Number
+                </span>
+                {project.problem?.Phone && (
+                  <CopyBtn text={project.problem.Phone} />
+                )}
+              </div>
+              {project.problem?.Phone ? (
+                <div className="flex items-center gap-3">
+                  <a
+                    href={`tel:${project.problem.Phone}`}
+                    className="text-[16px] font-extrabold font-display text-emerald-400 no-underline hover:text-emerald-300 transition-colors"
+                  >
+                    {project.problem.Phone} ↗
+                  </a>
+                  <span className="text-[9px] text-slate-600 font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                    Direct line
+                  </span>
+                </div>
+              ) : (
+                <div className="text-[13px] font-mono text-slate-500 italic">
+                  No phone number on record
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Problem Description */}
+      <div className="bg-[#0c0f18] border border-slate-800 rounded-xl p-5 mb-4">
+        <div className="text-[10px] text-slate-600 font-mono uppercase tracking-widest mb-3">
+          Description
+        </div>
+        {project.problem?.description ? (
+          <div
+            className="rich-content text-[12px] text-slate-400 leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: project.problem.description }}
+          />
+        ) : (
+          <p className="text-[12px] text-slate-600 font-mono italic">
+            No description.
+          </p>
+        )}
+      </div>
+
+      {/* Tags */}
+      <div className="flex gap-2 flex-wrap">
+        {project.problem?.tags?.map((t) => (
+          <Badge key={t} color="#3a9de8">
+            {t}
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ─── Project View ─────────────────────────────────────────────────────────────
 const ProjectView = ({
   project,
@@ -1725,15 +2392,9 @@ const ProjectView = ({
   const [closingLog, setClosingLog] = useState(null);
   const [terminatingLog, setTerminatingLog] = useState(null);
   const [reopeningLog, setReopeningLog] = useState(null);
+  const [logSearch, setLogSearch] = useState("");
 
   const TABS = ["overview", "problem", "students", "logs", "workflow"];
-
-  const filteredLogs = (project.logs || []).filter((l) => {
-    if (logFilter === "all") return true;
-    if (logFilter === "active")
-      return l.task_status === "assigned" || l.task_status === "pending";
-    return l.task_status === logFilter;
-  });
 
   const logCounts = {
     all: (project.logs || []).length,
@@ -1749,6 +2410,21 @@ const ProjectView = ({
       (l) => l.task_status === "terminated",
     ).length,
   };
+
+  const filteredLogs = (project.logs || []).filter((l) => {
+    const matchFilter =
+      logFilter === "all"
+        ? true
+        : logFilter === "active"
+          ? l.task_status === "assigned" || l.task_status === "pending"
+          : l.task_status === logFilter;
+    const matchSearch =
+      !logSearch ||
+      l.taskTitle?.toLowerCase().includes(logSearch.toLowerCase()) ||
+      l.task_contributor?.toLowerCase().includes(logSearch.toLowerCase()) ||
+      l.description?.toLowerCase().includes(logSearch.toLowerCase());
+    return matchFilter && matchSearch;
+  });
 
   return (
     <div className="bg-[#0f1219] border border-slate-800 rounded-2xl overflow-hidden">
@@ -1802,7 +2478,7 @@ const ProjectView = ({
             </div>
             <ProgressBar value={project.projectProgressRate} />
           </div>
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="flex gap-2 flex-shrink-0 flex-wrap justify-end">
             <Btn variant="secondary" small onClick={() => onCreateLog(project)}>
               + Log
             </Btn>
@@ -1811,8 +2487,7 @@ const ProjectView = ({
             </Btn>
           </div>
         </div>
-        {/* Stats strip */}
-        <div className="flex gap-6 mt-5">
+        <div className="flex gap-6 mt-5 flex-wrap">
           {[
             {
               label: "Contributors",
@@ -1850,30 +2525,6 @@ const ProjectView = ({
             </div>
           ))}
         </div>
-        {(project.resourcesLink || project.communityLink) && (
-          <div className="flex gap-3 mt-4 flex-wrap">
-            {project.resourcesLink && (
-              <a
-                href={project.resourcesLink}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-950/40 border border-amber-500/20 rounded-lg text-[11px] text-amber-400 font-mono hover:bg-amber-950/60 transition-colors no-underline"
-              >
-                📁 Resources ↗
-              </a>
-            )}
-            {project.communityLink && (
-              <a
-                href={project.communityLink}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-950/40 border border-emerald-500/20 rounded-lg text-[11px] text-emerald-400 font-mono hover:bg-emerald-950/60 transition-colors no-underline"
-              >
-                💬 Community ↗
-              </a>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Tabs */}
@@ -1897,141 +2548,9 @@ const ProjectView = ({
 
       {/* Tab content */}
       <div className="p-7">
-        {/* OVERVIEW */}
-        {tab === "overview" && (
-          <div>
-            <p className="text-[13px] text-slate-400 font-mono leading-relaxed mb-6">
-              {project.projectDescription}
-            </p>
-            <div className="grid grid-cols-2 gap-4 mb-5">
-              {[
-                {
-                  label: "GitHub Repo",
-                  href: project.githubRepoLink,
-                  icon: "⌥",
-                  sub: "View Repository ↗",
-                  color: "#3a9de8",
-                  active: true,
-                },
-                {
-                  label: "Live Demo",
-                  href: project.liveHostedLink,
-                  icon: "◉",
-                  sub: project.liveHostedLink
-                    ? "Open Live ↗"
-                    : "Not deployed yet",
-                  color: "#4ade80",
-                  active: !!project.liveHostedLink,
-                },
-              ].map((lnk) =>
-                lnk.active ? (
-                  <a
-                    key={lnk.label}
-                    href={lnk.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-xl p-4 no-underline hover:border-slate-700 transition-colors"
-                  >
-                    <span className="text-lg">{lnk.icon}</span>
-                    <div>
-                      <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
-                        {lnk.label}
-                      </div>
-                      <div
-                        className="text-[11px] font-mono mt-0.5"
-                        style={{ color: lnk.color }}
-                      >
-                        {lnk.sub}
-                      </div>
-                    </div>
-                  </a>
-                ) : (
-                  <div
-                    key={lnk.label}
-                    className="flex items-center gap-3 bg-slate-900 border border-dashed border-slate-800 rounded-xl p-4 opacity-40"
-                  >
-                    <span className="text-lg">{lnk.icon}</span>
-                    <div>
-                      <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
-                        {lnk.label}
-                      </div>
-                      <div className="text-[11px] text-slate-600 font-mono mt-0.5">
-                        {lnk.sub}
-                      </div>
-                    </div>
-                  </div>
-                ),
-              )}
-            </div>
-            <p className="text-[10px] text-slate-700 font-mono">
-              Created {fmtDate(project.createdAt)} ·{" "}
-              {project.contributors?.length} contributors ·{" "}
-              {project.logs?.length} task logs
-            </p>
-          </div>
-        )}
+        {tab === "overview" && <OverviewTab project={project} />}
+        {tab === "problem" && <ProblemTab project={project} />}
 
-        {/* PROBLEM */}
-        {tab === "problem" && (
-          <div>
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              {[
-                ["Problem ID", project.problem?.problemID, "#e85d3a"],
-                ["Title", project.problem?.title, "#f0f4ff"],
-                ["Category", project.problem?.category, "#3a9de8"],
-                ["Theme", project.problem?.theme, "#9c3ae8"],
-                ["Owner", project.problem?.ownerName, "#f0f4ff"],
-                ["Organization", project.problem?.organization, "#f0f4ff"],
-                ["Department", project.problem?.department || "—", "#c4cedf"],
-                ["Contact", project.problem?.contactInfo || "—", "#3a9de8"],
-                [
-                  "Coordinators",
-                  project.coordinators
-                    ?.map((c) => `${c.name} (${c.phone || "N/A"})`)
-                    .join(", ") || project.problem?.problem_coordinator,
-                  "#4ade80",
-                ],
-                [
-                  "Published",
-                  project.problem?.is_published ? "Yes" : "No",
-                  project.problem?.is_published ? "#4ade80" : "#f87171",
-                ],
-              ].map(([k, v, c]) => (
-                <div
-                  key={k}
-                  className="bg-[#0c0f18] border border-slate-800 rounded-xl p-3.5"
-                >
-                  <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
-                    {k}
-                  </div>
-                  <div
-                    className="text-[12px] font-semibold font-mono mt-1"
-                    style={{ color: c }}
-                  >
-                    {v}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="bg-[#0c0f18] border border-slate-800 rounded-xl p-5 mb-4">
-              <div className="text-[10px] text-slate-600 font-mono uppercase tracking-widest mb-2">
-                Description
-              </div>
-              <p className="text-[12px] text-slate-400 font-mono leading-relaxed">
-                {project.problem?.description}
-              </p>
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {project.problem?.tags?.map((t) => (
-                <Badge key={t} color="#3a9de8">
-                  {t}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* STUDENTS */}
         {tab === "students" && (
           <div>
             <p className="text-[11px] text-slate-600 font-mono mb-4">
@@ -2041,18 +2560,16 @@ const ProjectView = ({
             <div
               className="grid grid-cols-1 gap-4"
               style={{
-                gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fill,minmax(270px,1fr))",
               }}
             >
               {project.contributors?.map((stu) => {
-                // Accurate per-project contribution lookup
                 const contrib = stu.projectWiseContribution?.find(
                   (c) =>
                     c.project &&
                     (c.project === project._id ||
                       c.project?.toString() === project._id?.toString()),
                 );
-                // Accurate log match using contributorID or name
                 const stuLogs = (project.logs || []).filter(
                   (l) =>
                     (l.contributorID &&
@@ -2062,7 +2579,6 @@ const ProjectView = ({
                 const doneCt = stuLogs.filter(
                   (l) => l.task_status === "completed",
                 ).length;
-
                 return (
                   <div
                     key={stu._id}
@@ -2089,28 +2605,45 @@ const ProjectView = ({
                       {contrib?.role && (
                         <Badge color="#9c3ae8">{contrib.role}</Badge>
                       )}
-
                       {stu.department && (
                         <Badge color="#8892a4">{stu.department}</Badge>
                       )}
                     </div>
+                    {/* Phone highlighted in student card */}
+                    {stu.phone && (
+                      <div
+                        className="mb-3 p-2 rounded-lg"
+                        style={{
+                          background: "#4ade8010",
+                          border: "1px solid #4ade8020",
+                        }}
+                      >
+                        <div className="text-[9px] text-slate-600 font-mono uppercase tracking-widest mb-0.5">
+                          📞 Phone
+                        </div>
+                        <a
+                          href={`tel:${stu.phone}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[11px] font-mono font-bold text-emerald-400 no-underline hover:text-emerald-300 transition-colors"
+                        >
+                          {stu.phone} ↗
+                        </a>
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-2 mt-2 border-t border-slate-800/60 pt-3 mb-3">
-                      <div className="text-[10px] text-slate-400 font-mono truncate">
-                        Dept: {stu.department || "—"}
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-mono truncate">
-                        Sem: {stu.semester || "—"}
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-mono truncate">
-                        Phone: {stu.phone || "—"}
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-mono truncate">
-                        USN: {stu.usn || "—"}
-                      </div>
-
-                      <div className="text-[10px] text-slate-400 font-mono truncate">
-                        College: {stu.college || "—"}
-                      </div>
+                      {[
+                        ["Dept", stu.department],
+                        ["Sem", stu.semester],
+                        ["USN", stu.usn],
+                        ["College", stu.college],
+                      ].map(([k, v]) => (
+                        <div
+                          key={k}
+                          className="text-[10px] text-slate-400 font-mono truncate"
+                        >
+                          {k}: {v || "—"}
+                        </div>
+                      ))}
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       {[
@@ -2152,11 +2685,9 @@ const ProjectView = ({
           </div>
         )}
 
-        {/* LOGS */}
         {tab === "logs" && (
           <div>
-            {/* Filter bar */}
-            <div className="flex items-center justify-between gap-4 mb-5">
+            <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
               <div className="flex gap-1 flex-wrap">
                 {Object.entries(logCounts).map(([key, count]) => (
                   <button
@@ -2172,12 +2703,34 @@ const ProjectView = ({
                 + New Log
               </Btn>
             </div>
-
+            {/* Search */}
+            <div className="relative mb-4">
+              <input
+                type="text"
+                value={logSearch}
+                onChange={(e) => setLogSearch(e.target.value)}
+                placeholder="Search logs by title, contributor, description…"
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 font-mono text-[12px] outline-none focus:border-[#e85d3a60] transition-colors placeholder:text-slate-600 pl-9"
+              />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-[12px]">
+                ⌕
+              </span>
+              {logSearch && (
+                <button
+                  onClick={() => setLogSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 text-[12px] cursor-pointer"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
             {filteredLogs.length === 0 ? (
               <div className="text-center py-16">
                 <div className="text-4xl opacity-20 mb-3">◌</div>
                 <p className="text-[12px] text-slate-700 font-mono">
-                  No logs in this category.
+                  {logSearch
+                    ? `No logs match "${logSearch}"`
+                    : "No logs in this category."}
                 </p>
               </div>
             ) : (
@@ -2201,8 +2754,6 @@ const ProjectView = ({
                 ))}
               </div>
             )}
-
-            {/* Sub-modals */}
             {editingLog && (
               <EditLogModal
                 log={editingLog}
@@ -2256,7 +2807,6 @@ const ProjectView = ({
           </div>
         )}
 
-        {/* WORKFLOW */}
         {tab === "workflow" && <WorkflowInsight project={project} />}
       </div>
     </div>
@@ -2279,11 +2829,11 @@ const ManageProjects = () => {
   const [viewingStudent, setViewingStudent] = useState(null);
   const [viewingStudentLogs, setViewingStudentLogs] = useState([]);
   const [viewingStudentProjectId, setViewingStudentProjectId] = useState(null);
+  const [sidebarSearch, setSidebarSearch] = useState("");
 
   const showToast = (message, type = "success") => setToast({ message, type });
   const authHeader = { Authorization: `Bearer ${adminToken}` };
 
-  // Fetch admin profile
   useEffect(() => {
     if (!adminToken) return;
     axios
@@ -2295,7 +2845,6 @@ const ManageProjects = () => {
       .catch(() => {});
   }, [adminToken]);
 
-  // Fetch projects
   const fetchProjects = useCallback(
     async (silent = false) => {
       silent ? setRefreshing(true) : setLoading(true);
@@ -2324,7 +2873,6 @@ const ManageProjects = () => {
     if (adminToken) fetchProjects();
   }, [adminToken]);
 
-  // Refresh a single project after mutation
   const refreshProject = async (projectId) => {
     try {
       const { data } = await axios.get(`/api/admin/projects/${projectId}`, {
@@ -2421,6 +2969,29 @@ const ManageProjects = () => {
   };
 
   const currentProject = projects.find((p) => p._id === activeId);
+  const filteredProjects = projects.filter(
+    (p) =>
+      !sidebarSearch ||
+      p.projectID?.toLowerCase().includes(sidebarSearch.toLowerCase()) ||
+      p.problem?.title?.toLowerCase().includes(sidebarSearch.toLowerCase()),
+  );
+
+  // Global overdue count for nav badge
+  const overdueCount = projects.reduce(
+    (acc, p) =>
+      acc +
+      (p.logs || []).filter((l) => {
+        const isActive =
+          l.task_status === "assigned" || l.task_status === "pending";
+        return isActive && l.deadlineAt && daysLeft(l.deadlineAt) <= 0;
+      }).length,
+    0,
+  );
+  const pendingReviewCount = projects.reduce(
+    (acc, p) =>
+      acc + (p.logs || []).filter((l) => l.task_status === "pending").length,
+    0,
+  );
 
   return (
     <>
@@ -2435,6 +3006,24 @@ const ManageProjects = () => {
         ::-webkit-scrollbar-thumb  { background: #2a3045; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #e85d3a; }
         details summary::-webkit-details-marker { display: none; }
+
+        .rich-content h1,.rich-content h2,.rich-content h3 { font-family:'Syne',sans-serif; font-weight:800; color:#f0f4ff; margin:0.9em 0 0.4em; }
+        .rich-content h3 { font-size:1.05em; color:#e85d3a; }
+        .rich-content p  { margin:0.5em 0; }
+        .rich-content strong { color:#fbbf24; }
+        .rich-content em     { color:#818cf8; font-style:italic; }
+        .rich-content u      { text-decoration:underline; text-underline-offset:3px; }
+        .rich-content s      { text-decoration:line-through; opacity:0.6; }
+        .rich-content a      { color:#3a9de8; text-underline-offset:3px; }
+        .rich-content ul,.rich-content ol { padding-left:1.4em; margin:0.5em 0; display:flex; flex-direction:column; gap:0.25em; }
+        .rich-content ul li { list-style:disc; }
+        .rich-content ol li { list-style:decimal; }
+
+        [contenteditable]:empty:before { content: attr(data-placeholder); color: #3a4255; pointer-events: none; }
+        [contenteditable] a { color:#3a9de8; }
+        [contenteditable] ul { padding-left:1.4em; }
+        [contenteditable] ol { padding-left:1.4em; }
+        [contenteditable] h3 { font-size:1.05em; font-weight:700; color:#f0f4ff; }
       `}</style>
 
       <div
@@ -2460,6 +3049,30 @@ const ManageProjects = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {overdueCount > 0 && (
+              <div
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono animate-pulse"
+                style={{
+                  background: "#ef444420",
+                  border: "1px solid #ef444440",
+                  color: "#ef4444",
+                }}
+              >
+                ⚠ {overdueCount} overdue
+              </div>
+            )}
+            {pendingReviewCount > 0 && (
+              <div
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono animate-pulse"
+                style={{
+                  background: "#818cf815",
+                  border: "1px solid #818cf830",
+                  color: "#818cf8",
+                }}
+              >
+                ◈ {pendingReviewCount} to review
+              </div>
+            )}
             <button
               onClick={() => navigate("/")}
               className="px-3.5 py-1.5 rounded-lg text-[11px] font-mono text-slate-500 border border-slate-800 hover:text-slate-300 hover:border-slate-700 transition-colors bg-transparent cursor-pointer"
@@ -2491,90 +3104,136 @@ const ManageProjects = () => {
         <div className="flex" style={{ height: "calc(100vh - 64px)" }}>
           {/* Sidebar */}
           <div
-            className="w-72 flex-shrink-0 border-r border-slate-800/60 overflow-y-auto py-5 px-4"
+            className="w-72 flex-shrink-0 border-r border-slate-800/60 overflow-y-auto flex flex-col"
             style={{ background: "#0c0f18" }}
           >
-            <div className="flex items-center justify-between px-2 mb-4">
-              <span className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
-                Assigned ({projects.length})
-              </span>
-              {refreshing && <Spinner size={11} />}
-            </div>
-            {loading ? (
-              [1, 2, 3].map((i) => <SkeletonCard key={i} />)
-            ) : projects.length === 0 ? (
-              <div className="text-center py-10 px-4">
-                <div className="text-3xl opacity-10 mb-2">◌</div>
-                <p className="text-[11px] text-slate-700 font-mono">
-                  No projects assigned.
-                </p>
+            <div className="px-4 pt-5 pb-3">
+              <div className="flex items-center justify-between px-2 mb-3">
+                <span className="text-[9px] text-slate-600 font-mono uppercase tracking-widest">
+                  Assigned ({projects.length})
+                </span>
+                {refreshing && <Spinner size={11} />}
               </div>
-            ) : (
-              projects.map((p) => {
-                const isActive = p._id === activeId;
-                const done = (p.logs || []).filter(
-                  (l) => l.task_status === "completed",
-                ).length;
-                const active = (p.logs || []).filter(
-                  (l) =>
-                    l.task_status === "assigned" || l.task_status === "pending",
-                ).length;
-                const pending = (p.logs || []).filter(
-                  (l) => l.task_status === "pending",
-                ).length;
-                return (
-                  <div
-                    key={p._id}
-                    onClick={() => setActiveId(p._id)}
-                    className={`rounded-xl p-3.5 mb-2 cursor-pointer transition-all duration-150 border-l-2 ${isActive ? "bg-[#131825] border border-[#e85d3a30] border-l-[#e85d3a]" : "bg-transparent border border-transparent border-l-transparent hover:bg-slate-900/40"}`}
+              {/* Sidebar Search */}
+              <div className="relative mb-3">
+                <input
+                  type="text"
+                  value={sidebarSearch}
+                  onChange={(e) => setSidebarSearch(e.target.value)}
+                  placeholder="Search projects…"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 font-mono text-[11px] outline-none focus:border-[#e85d3a60] transition-colors placeholder:text-slate-600 pl-7"
+                />
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600 text-[11px]">
+                  ⌕
+                </span>
+                {sidebarSearch && (
+                  <button
+                    onClick={() => setSidebarSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 text-[10px] cursor-pointer"
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <span
-                        className={`text-[10px] font-mono ${isActive ? "text-[#e85d3a]" : "text-slate-600"}`}
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="px-4 pb-5 flex-1 overflow-y-auto">
+              {loading ? (
+                [1, 2, 3].map((i) => <SkeletonCard key={i} />)
+              ) : filteredProjects.length === 0 ? (
+                <div className="text-center py-10 px-4">
+                  <div className="text-3xl opacity-10 mb-2">◌</div>
+                  <p className="text-[11px] text-slate-700 font-mono">
+                    {sidebarSearch
+                      ? "No projects found."
+                      : "No projects assigned."}
+                  </p>
+                </div>
+              ) : (
+                filteredProjects.map((p) => {
+                  const isActive = p._id === activeId;
+                  const done = (p.logs || []).filter(
+                    (l) => l.task_status === "completed",
+                  ).length;
+                  const active = (p.logs || []).filter(
+                    (l) =>
+                      l.task_status === "assigned" ||
+                      l.task_status === "pending",
+                  ).length;
+                  const pending = (p.logs || []).filter(
+                    (l) => l.task_status === "pending",
+                  ).length;
+                  const overdue = (p.logs || []).filter((l) => {
+                    const isAct =
+                      l.task_status === "assigned" ||
+                      l.task_status === "pending";
+                    return isAct && l.deadlineAt && daysLeft(l.deadlineAt) <= 0;
+                  }).length;
+                  return (
+                    <div
+                      key={p._id}
+                      onClick={() => setActiveId(p._id)}
+                      className={`rounded-xl p-3.5 mb-2 cursor-pointer transition-all duration-150 border-l-2 ${isActive ? "bg-[#131825] border border-[#e85d3a30] border-l-[#e85d3a]" : "bg-transparent border border-transparent border-l-transparent hover:bg-slate-900/40"}`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <span
+                          className={`text-[10px] font-mono ${isActive ? "text-[#e85d3a]" : "text-slate-600"}`}
+                        >
+                          {p.projectID}
+                        </span>
+                        <div className="flex gap-1 flex-wrap justify-end">
+                          {overdue > 0 && (
+                            <span
+                              className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded"
+                              style={{
+                                background: "#ef444420",
+                                color: "#ef4444",
+                                border: "1px solid #ef444430",
+                              }}
+                            >
+                              ⚠{overdue}
+                            </span>
+                          )}
+                          {pending > 0 && (
+                            <span
+                              className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded"
+                              style={{
+                                background: "#818cf815",
+                                color: "#818cf8",
+                                border: "1px solid #818cf830",
+                              }}
+                            >
+                              ◈{pending}
+                            </span>
+                          )}
+                          {p.is_blocked && <StatusPill status="blocked" />}
+                        </div>
+                      </div>
+                      <div
+                        className={`text-[12px] font-bold font-display mb-2.5 leading-tight ${isActive ? "text-slate-100" : "text-slate-400"}`}
                       >
-                        {p.projectID}
-                      </span>
-                      <div className="flex gap-1">
-                        {pending > 0 && (
-                          <span
-                            className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded"
-                            style={{
-                              background: "#818cf815",
-                              color: "#818cf8",
-                              border: "1px solid #818cf830",
-                            }}
-                          >
-                            ◈{pending}
-                          </span>
-                        )}
-                        {p.is_blocked && <StatusPill status="blocked" />}
+                        {p.problem?.title}
+                      </div>
+                      <div className="h-1 bg-slate-800 rounded-full mb-1.5 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${p.projectProgressRate}%`,
+                            background: isActive ? "#e85d3a" : "#3a9de8",
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[9px] text-slate-700 font-mono">
+                        <span>{p.projectProgressRate}%</span>
+                        <span>
+                          {done}/{(p.logs || []).length} done{" "}
+                          {active > 0 && `· ${active} active`}
+                        </span>
                       </div>
                     </div>
-                    <div
-                      className={`text-[12px] font-bold font-display mb-2.5 leading-tight ${isActive ? "text-slate-100" : "text-slate-400"}`}
-                    >
-                      {p.problem?.title}
-                    </div>
-                    <div className="h-1 bg-slate-800 rounded-full mb-1.5 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${p.projectProgressRate}%`,
-                          background: isActive ? "#e85d3a" : "#3a9de8",
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-[9px] text-slate-700 font-mono">
-                      <span>{p.projectProgressRate}%</span>
-                      <span>
-                        {done}/{(p.logs || []).length} done{" "}
-                        {active > 0 && `· ${active} active`}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+                  );
+                })
+              )}
+            </div>
           </div>
 
           {/* Main */}
@@ -2636,7 +3295,6 @@ const ManageProjects = () => {
           }}
         />
       )}
-
       {toast && (
         <ToastBar
           message={toast.message}

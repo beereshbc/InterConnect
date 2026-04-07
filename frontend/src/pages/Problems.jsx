@@ -428,6 +428,7 @@ const Problems = () => {
         `/api/student/problems/${problemId}/join`,
       );
       if (data.success) {
+        navigate("/dashboard");
         toast.success("Successfully joined the project!");
         setSelectedProblem(null);
       }
