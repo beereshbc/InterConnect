@@ -99,41 +99,69 @@ export const loginStudent = async (req, res) => {
   }
 };
 
+import bcrypt from "bcryptjs";
+// Ensure transporter is imported/configured correctly
+
 export const sendResetOtp = async (req, res) => {
   try {
-    const student = await Student.findOne({ email: req.body.email });
-    if (!student)
+    const { email } = req.body;
+    if (!email) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is required." });
+    }
+
+    const student = await Student.findOne({
+      email: email.toLowerCase().trim(),
+    });
+
+    // Security Tip: In production, some prefer to return 'success' even if user isn't found
+    // to prevent email enumeration. Here we'll stick to your logic but sanitize the email.
+    if (!student) {
       return res
         .status(404)
         .json({ success: false, message: "No account found with that email." });
+    }
 
+    // 1. Generate a secure 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    student.resetPasswordOtp = await bcrypt.hash(otp, 10);
+
+    // 2. Hash OTP and set expiry (10 mins)
+    const hashedOtp = await bcrypt.hash(otp, 10);
+    student.resetPasswordOtp = hashedOtp;
     student.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
     await student.save();
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    // 3. Send Email with Error Handling
+    const mailOptions = {
+      from: `"InterConnect Support" <${process.env.EMAIL_USER}>`,
       to: student.email,
-      subject: "InterConnect — Password Reset OTP",
+      subject: "Your Password Reset OTP",
       html: `
-        <div style="font-family:monospace;background:#080c14;color:#f0f4ff;padding:32px;border-radius:12px;max-width:600px">
-          <h2 style="color:#3a9de8">Password Reset Request</h2>
-          <p style="color:#8892a4">Hello ${student.name}, use the OTP below to reset your password. Valid for 10 minutes.</p>
-          <div style="background:#0c0f18;border:1px solid #3a9de830;border-radius:8px;padding:24px;text-align:center;margin:20px 0">
-            <h1 style="color:#3a9de8;letter-spacing:10px;margin:0">${otp}</h1>
+        <div style="font-family: sans-serif; background:#f4f7f6; padding:20px; border-radius:10px;">
+          <div style="max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; border-top: 4px solid #3a9de8;">
+            <h2 style="color: #333;">Password Reset</h2>
+            <p>Hi ${student.name || "there"},</p>
+            <p>You requested a password reset. Use the code below to proceed:</p>
+            <div style="background: #f0f7ff; padding: 15px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #3a9de8; margin: 20px 0;">
+              ${otp}
+            </div>
+            <p style="font-size: 12px; color: #666;">This code expires in 10 minutes. If you didn't request this, please secure your account.</p>
           </div>
-          <p style="color:#6b7a99;font-size:12px">If you did not request this, please ignore this email.</p>
-          <hr style="border-color:#1e2330;margin:20px 0">
-          <p style="color:#4a5568;font-size:10px">© InteConnect 26.0</p>
         </div>`,
-    });
+    };
 
-    res.json({ success: true, message: "OTP sent to your email." });
-  } catch (e) {
-    res.status(500).json({
+    await transporter.sendMail(mailOptions);
+
+    return res.status(200).json({
+      success: true,
+      message: "A reset code has been sent to your email.",
+    });
+  } catch (error) {
+    console.error("OTP SEND ERROR:", error); // Vital for debugging production
+    return res.status(500).json({
       success: false,
-      message: "Failed to send OTP. Try again later.",
+      message: "Internal server error. Please try again later.",
     });
   }
 };
@@ -141,30 +169,54 @@ export const sendResetOtp = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
-    const student = await Student.findOne({ email });
-    if (!student)
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
-    if (student.resetPasswordExpires < Date.now())
-      return res.status(400).json({
-        success: false,
-        message: "OTP expired. Please request a new one.",
-      });
-    if (!(await bcrypt.compare(otp, student.resetPasswordOtp)))
-      return res.status(400).json({ success: false, message: "Invalid OTP." });
 
+    if (!email || !otp || !newPassword) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields." });
+    }
+
+    const student = await Student.findOne({
+      email: email.toLowerCase().trim(),
+    });
+
+    if (!student || !student.resetPasswordOtp) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid request or OTP expired." });
+    }
+
+    // 1. Check Expiry
+    if (student.resetPasswordExpires < Date.now()) {
+      return res
+        .status(400)
+        .json({ success: false, message: "OTP has expired." });
+    }
+
+    // 2. Verify OTP
+    const isMatch = await bcrypt.compare(otp, student.resetPasswordOtp);
+    if (!isMatch) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid OTP code." });
+    }
+
+    // 3. Update Password & Clear OTP Fields
     student.password = await bcrypt.hash(newPassword, 10);
     student.resetPasswordOtp = undefined;
     student.resetPasswordExpires = undefined;
+
     await student.save();
 
-    res.json({
+    return res.status(200).json({
       success: true,
-      message: "Password reset successfully! You can now login.",
+      message: "Password updated successfully. You can now log in.",
     });
-  } catch (e) {
-    res.status(500).json({ success: false, message: "Something went wrong." });
+  } catch (error) {
+    console.error("RESET PASSWORD ERROR:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "An error occurred during reset." });
   }
 };
 
