@@ -99,7 +99,6 @@ export const loginStudent = async (req, res) => {
   }
 };
 
-import bcrypt from "bcryptjs";
 // Ensure transporter is imported/configured correctly
 
 export const sendResetOtp = async (req, res) => {
