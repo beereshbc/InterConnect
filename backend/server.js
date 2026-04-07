@@ -16,6 +16,7 @@ const allowedOrigins = [
   "http://localhost:5174", // Admin Portal
   "https://inter-connect-self.vercel.app",
   "https://inter-connect-admins.vercel.app",
+  "https://interconnect-hif9.onrender.com",
 ].filter(Boolean); // filter(Boolean) removes undefined values if FRONTEND_URL is not set
 
 app.use(
