@@ -80,6 +80,7 @@ const logSchema = new mongoose.Schema(
 
     isPublished: { type: Boolean, default: false },
 
+    deadlineHours: { type: Number, default: 24, min: 1 },
     deadlineDays: { type: Number, default: 7, min: 1 },
     deadlineAt: { type: Date, default: null },
     assignedAt: { type: Date, default: null },
