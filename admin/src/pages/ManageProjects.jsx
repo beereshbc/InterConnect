@@ -900,13 +900,7 @@ const ContributorInfoModal = ({ log, contributors, projectId, onClose }) => {
                 </span>
               )}
               {log.deadlineAt && (
-                <span
-                  className={`text-[10px] font-mono ${daysLeft(log.deadlineAt) <= 0 ? "text-red-400" : "text-slate-500"}`}
-                >
-                  {daysLeft(log.deadlineAt) <= 0
-                    ? "⚠ Overdue"
-                    : `⏳ ${daysLeft(log.deadlineAt)}d remaining`}
-                </span>
+                  <LiveCountdown deadlineAt={log.deadlineAt} />
               )}
             </div>
           </div>
@@ -1619,6 +1613,57 @@ const StudentModal = ({ student, projectLogs, projectId, onClose }) => {
   );
 };
 
+// ─── Live Countdown ─────────────────────────────────────────────────────────────
+const LiveCountdown = ({ deadlineAt }) => {
+  const [timeLeft, setTimeLeft] = useState("");
+  const [isOverdue, setIsOverdue] = useState(false);
+
+  useEffect(() => {
+    if (!deadlineAt) return;
+
+    const updateTimer = () => {
+      const now = new Date();
+      const target = new Date(deadlineAt);
+      const diff = target - now;
+
+      if (diff <= 0) {
+        setIsOverdue(true);
+        setTimeLeft("⚠ Overdue");
+        return;
+      }
+
+      setIsOverdue(false);
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+
+      if (h >= 48) {
+        setTimeLeft(`${Math.ceil(diff / 864e5)}d remaining`);
+      } else {
+        const hh = h.toString().padStart(2, "0");
+        const mm = m.toString().padStart(2, "0");
+        const ss = s.toString().padStart(2, "0");
+        setTimeLeft(`${hh}h ${mm}m ${ss}s remaining`);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [deadlineAt]);
+
+  if (!deadlineAt) return null;
+
+  return (
+    <span
+      className={`text-[11px] font-mono ${isOverdue ? "text-red-400 font-bold" : timeLeft.includes("d remaining") ? "text-slate-400" : "text-orange-400 font-bold"}`}
+      style={{ fontVariantNumeric: "tabular-nums" }}
+    >
+      {timeLeft !== "⚠ Overdue" && "⏳ "}{timeLeft}
+    </span>
+  );
+};
+
 // ─── Log Card ─────────────────────────────────────────────────────────────────
 const LogCard = ({
   log,
@@ -1719,11 +1764,7 @@ const LogCard = ({
             </span>
           )}
           {isActive && log.deadlineAt && (
-            <span
-              className={`text-[11px] font-bold font-mono ${days <= 0 ? "text-red-400" : days <= 1 ? "text-orange-400" : "text-slate-400"}`}
-            >
-              {days <= 0 ? "⚠ Overdue" : `⏳ ${days}d remaining`}
-            </span>
+            <LiveCountdown deadlineAt={log.deadlineAt} />
           )}
           {log.task_status === "completed" && log.closedAt && (
             <span className="text-[10px] text-emerald-500 font-mono">
