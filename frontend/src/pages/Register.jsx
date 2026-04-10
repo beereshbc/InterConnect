@@ -23,7 +23,10 @@ import {
   Users,
   Lightbulb,
   Trophy,
-  Briefcase, // Added for Department
+  Briefcase,
+  Clock,
+  Calendar,
+  Code, // Added for Department
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -56,9 +59,26 @@ const SEMESTERS = [
 ];
 
 const TIMELINE = [
-  { label: "Registration Closes", date: "April 10, 2026", icon: CalendarDays },
-  { label: "Development Phase", date: "Till April 17", icon: Cpu },
-  { label: "Final Presentation", date: "April 18, 2026", icon: Trophy },
+  {
+    label: "Registration Opens",
+    date: "Now Open",
+    icon: Calendar, // or whichever icon you're using
+  },
+  {
+    label: "Registration Closes",
+    date: "April 12, 2026",
+    icon: Clock,
+  },
+  {
+    label: "Development Phase",
+    date: "Till April 20, 2026",
+    icon: Code,
+  },
+  {
+    label: "Final Presentation",
+    date: "April 21, 2026",
+    icon: Trophy,
+  },
 ];
 
 const WHY_PARTICIPATE = [

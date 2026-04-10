@@ -1191,7 +1191,7 @@ const Hero = () => {
                   {
                     phase: "Deadline",
                     label: "Registration Closes",
-                    date: "April 10, 2026",
+                    date: "April 12, 2026",
                     color: "#fbbf24",
                     dot: "#fbbf24",
                     status: "upcoming",
@@ -1199,7 +1199,7 @@ const Hero = () => {
                   {
                     phase: "Phase 2",
                     label: "Development Phase",
-                    date: "Till April 17, 2026",
+                    date: "Till April 20, 2026",
                     color: "#6080f5",
                     dot: "#6080f5",
                     status: "upcoming",
@@ -1207,7 +1207,7 @@ const Hero = () => {
                   {
                     phase: "Final",
                     label: "Presentation & Event",
-                    date: "April 18, 2026",
+                    date: "April 21, 2026",
                     color: "#e85d3a",
                     dot: "#e85d3a",
                     status: "upcoming",
@@ -1294,13 +1294,12 @@ const Hero = () => {
                     </p>
                     <p className="font-sans text-xs text-[#8899cc] leading-relaxed">
                       Present your completed project at GM University on April
-                      18th. Top teams win cash prizes and excellence awards.
+                      21st. Top teams win cash prizes and excellence awards.
                     </p>
                   </div>
                 </div>
               </div>
             </motion.div>
-
             {/* Card 5: CTA Card */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}

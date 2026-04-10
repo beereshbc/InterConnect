@@ -382,20 +382,31 @@ const Problems = () => {
     }
     setIsCreateOpen(true);
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.description || formData.description === "<p><br></p>")
+
+    // Check for empty description
+    if (!formData.description || formData.description === "<p><br></p>") {
       return toast.error("Description cannot be empty.");
+    }
+
     setSubmitting(true);
+
     try {
       const { data } = await axios.post(
         "/api/student/problems/create",
         formData,
       );
+
       if (data.success) {
-        toast.success(data.message);
+        // Updated toast message as requested
+        toast.success(
+          "Problem submitted! It will be reviewed by the admin and published after approval.",
+        );
+
         setIsCreateOpen(false);
+
+        // Resetting the form to initial state
         setFormData({
           title: "",
           category: "",
