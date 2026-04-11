@@ -1085,7 +1085,7 @@ const About = () => {
                   ))}
                 </ul>
                 <div className="ab-why-bottom font-mono">
-                  🚀 Build. Learn. Lead.{" "}
+                  🚀 Build. Learn. Lead.
                   <span>— Your ideas can create real impact.</span>
                 </div>
               </div>
@@ -1164,7 +1164,7 @@ const About = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.55 }}
             >
-              <SectionLabel color="#9c3ae8">Official Promo</SectionLabel>
+              <SectionLabel color="#9c3ae8">Official Promo of IC</SectionLabel>
               <h2
                 className="font-display uppercase leading-[0.9] tracking-tight"
                 style={{
