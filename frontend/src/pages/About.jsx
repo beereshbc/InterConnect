@@ -2,6 +2,14 @@ import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import ranjitha from "../../public/ranjitha.png";
 import shiv from "../../public/shivanagowda.png";
+import ramya from "../../public/ramya11.jpeg";
+import pallavi from "../../public/pallavi.jpeg";
+import prateeksha from "../../public/prateeksha11.jpeg";
+import giresh from "../../public/giresh11.jpeg";
+import beeresh from "../../public/Beeresh.jpeg";
+import yashwanth from "../../public/yashwanth.jpeg";
+import pratham from "../../public/pratham.png";
+import adi from "../../public/adi.png";
 import { User, Phone, Mail } from "lucide-react";
 
 /* ─── animation variants ─── */
@@ -39,72 +47,97 @@ const Pillar = ({ icon, label, color, bg, border, delay }) => (
 );
 
 /* ─── Faculty card ─── */
-const FacultyCard = ({ img, name, role, email, delay }) => (
-  <motion.div
-    variants={fadeUp}
-    initial="hidden"
-    whileInView="show"
-    custom={delay}
-    viewport={{ once: true }}
-    className="ab-person-card ab-person-card--faculty"
-  >
-    <div className="ab-person-card__img-wrap">
-      <img src={img} alt={name} className="ab-person-card__img" />
-      <div className="ab-person-card__img-ring" />
-    </div>
-    <div className="ab-person-card__body">
-      <p className="ab-person-card__eyebrow">Faculty</p>
-      <h3 className="ab-person-card__name">{name}</h3>
-      <p className="ab-person-card__role">{role}</p>
-      <a href={`mailto:${email}`} className="ab-person-card__contact">
-        <span className="ab-person-card__contact-icon">✉</span>
-        {email}
-      </a>
-    </div>
-  </motion.div>
-);
-
-const StudentCard = ({ name, phone, email, delay }) => {
+const FacultyCard = ({ img, name, role, email, delay }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 25 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
       transition={{ duration: 0.5, delay }}
-      className="backdrop-blur-sm bg-[#131824]/50 border border-[#1e2330] rounded-2xl p-6 text-center hover:border-[#3a9de850] transition-all group hover:-translate-y-1 shadow-xl"
+      viewport={{ once: true }}
+      className="relative flex items-center gap-6 p-6 rounded-2xl bg-[#0c0f18] border border-[#1e2330] overflow-hidden group hover:border-[#3a9de850] hover:shadow-[0_10px_40px_rgba(58,157,232,0.15)] transition-all"
     >
-      {/* Profile Icon Wrapper (Replaces the broken <img> tag) */}
-      <div className="w-20 h-20 mx-auto mb-5 bg-gradient-to-br from-[#1e2330] to-[#0c0f18] border border-[#3a9de830] rounded-full flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(58,157,232,0.2)] transition-all duration-300">
-        <User
-          size={40}
-          className="text-[#3a9de8] opacity-80"
-          strokeWidth={1.5}
+      {/* Gradient Glow */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500 bg-gradient-to-r from-[#3a9de810] to-[#6080f510]" />
+
+      {/* IMAGE */}
+      <div className="relative w-20 h-20 flex-shrink-0">
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#3a9de8] to-[#6080f5] blur-md opacity-30 group-hover:opacity-60 transition" />
+        <img
+          src={img}
+          alt={name}
+          className="relative w-full h-full object-cover rounded-xl border border-[#1e2330]"
         />
       </div>
 
-      <h3 className="font-display font-bold text-lg text-[#f0f4ff] mb-4 tracking-tight">
-        {name}
-      </h3>
+      {/* CONTENT */}
+      <div className="relative z-10 flex-1 min-w-0">
+        <p className="text-xs font-mono text-[#3a9de8] uppercase tracking-wider mb-1">
+          Faculty
+        </p>
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-center gap-2.5 text-[#8892a4] text-sm">
-          <div className="p-1.5 bg-[#3a9de810] rounded-lg">
-            <Phone size={14} className="text-[#3a9de8]" />
-          </div>
-          <span className="font-mono">{phone}</span>
+        <h3 className="font-display text-lg font-bold text-white truncate">
+          {name}
+        </h3>
+
+        <p className="text-sm text-[#8892a4] mb-2">{role}</p>
+
+        <a
+          href={`mailto:${email}`}
+          className="text-xs text-[#3a9de8] hover:text-[#8bb8ff] transition"
+        >
+          ✉ {email}
+        </a>
+      </div>
+    </motion.div>
+  );
+};
+
+const StudentCard = ({ img, name, phone, email, delay }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay }}
+      viewport={{ once: true }}
+      className="relative p-[1px] rounded-2xl bg-gradient-to-br from-[#3a9de8]/30 to-[#6080f5]/20 hover:from-[#3a9de8] hover:to-[#6080f5] transition-all"
+    >
+      <div className="bg-[#0c0f18]/90 backdrop-blur-xl rounded-2xl p-6 text-center group hover:shadow-[0_20px_50px_rgba(58,157,232,0.15)] transition-all">
+        {/* IMAGE */}
+        <div className="relative w-24 h-24 mx-auto mb-5 overflow-hidden rounded-xl">
+          <img
+            src={img}
+            alt={name}
+            className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
         </div>
 
-        <div className="flex items-center justify-center gap-2.5 text-[#8892a4] text-sm">
-          <div className="p-1.5 bg-[#3a9de810] rounded-lg">
-            <Mail size={14} className="text-[#3a9de8]" />
+        {/* NAME */}
+        <h3 className="font-display text-lg font-semibold text-white mb-2 tracking-tight">
+          {name}
+        </h3>
+
+        {/* ROLE TAG */}
+        <p className="text-[10px] uppercase tracking-widest text-[#3a9de8] font-mono mb-4">
+          Student Coordinator
+        </p>
+
+        {/* CONTACT */}
+        <div className="space-y-2 text-sm text-[#8892a4]">
+          <div className="flex justify-center items-center gap-2">
+            <Phone size={14} className="text-[#3a9de8]" />
+            <span className="font-mono">{phone}</span>
           </div>
-          <span className="truncate max-w-[180px] font-sans">{email}</span>
+
+          <div className="flex justify-center items-center gap-2">
+            <Mail size={14} className="text-[#3a9de8]" />
+            <span className="truncate max-w-[180px]">{email}</span>
+          </div>
         </div>
       </div>
     </motion.div>
   );
 };
-StudentCard;
 /* ─── Section label ─── */
 const SectionLabel = ({ color = "#3a9de8", children }) => (
   <p
@@ -114,6 +147,79 @@ const SectionLabel = ({ color = "#3a9de8", children }) => (
     ✦ {children}
   </p>
 );
+
+const creativeTeam = [
+  {
+    name: "Ramya S",
+    phone: "8073114564",
+    email: "ramyas5188@gmail.com",
+    role: "Creative Team",
+    image: ramya,
+  },
+  {
+    name: "Pallavi D S",
+    phone: "9611185331",
+    email: "pallavids359@gmail.com",
+    role: "Creative Team",
+    image: pallavi,
+  },
+  {
+    name: "Prateeksha D G",
+    phone: "9483743743",
+    email: "dgprateeksha01@gmail.com",
+    role: "Creative Team",
+    image: prateeksha,
+  },
+  {
+    name: "Pratham Bhavi",
+    phone: "+91 91086 70736",
+    email: "prathambhavi@gmail.com",
+    role: "Media Team",
+    image: pratham,
+  },
+  {
+    name: "GIREESH L P",
+    phone: "77950 65290",
+    email: "gireeshlp1@gmail.com",
+    role: "Creative Team",
+    image: giresh,
+  },
+
+  {
+    name: "Aditya R H",
+    phone: "87626 22221",
+    email: "adityarh2020@gmail.com",
+    role: "Creative Team",
+    image: adi,
+  },
+];
+
+const CreativeCard = ({ member }) => {
+  return (
+    <motion.div
+      whileHover={{ rotateY: 10, rotateX: -10, scale: 1.05 }}
+      transition={{ type: "spring", stiffness: 200, damping: 15 }}
+      className="w-60 h-80 bg-[#0c0f18] rounded-xl overflow-hidden relative shadow-2xl"
+      style={{ perspective: 800 }}
+    >
+      {/* IMAGE */}
+      <img
+        src={member.image}
+        alt={member.name}
+        className="w-full h-full object-cover"
+      />
+
+      {/* OVERLAY */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent p-4 flex flex-col justify-end">
+        <h3 className="text-white font-bold text-lg">{member.name}</h3>
+        <p className="text-sm text-gray-300">{member.role}</p>
+
+        <div className="mt-2 text-xs text-gray-400">📞 {member.phone}</div>
+        <div className="text-xs text-gray-400 truncate">✉ {member.email}</div>
+      </div>
+    </motion.div>
+  );
+};
 
 /* ═══════════════════════════════════════════
    MAIN COMPONENT
@@ -875,7 +981,7 @@ const About = () => {
         ══════════════════════════════ */}
         <section
           className="ab-section"
-          style={{ paddingTop: 48, paddingBottom: 80 }}
+          style={{ paddingTop: 48, paddingBottom: 48 }}
         >
           <div className="ab-team-header">
             <div>
@@ -889,17 +995,43 @@ const About = () => {
 
           <div className="ab-cards-grid">
             <StudentCard
+              img={beeresh}
               name="Beeresh Kumar B C"
               phone="6360995219"
               email="bcbeereshkumar@gmail.com"
               delay={0.05}
             />
             <StudentCard
+              img={yashwanth}
               name="Yashwanth M"
               phone="7795817114"
               email="yy6996843@gmail.com"
               delay={0.12}
             />
+          </div>
+        </section>
+
+        {/* ══════════════════════════════
+            5. CREATIVE TEAM (3D STYLE)
+        ══════════════════════════════ */}
+        <section
+          className="ab-section"
+          style={{ paddingTop: 40, paddingBottom: 80 }}
+        >
+          <div className="ab-team-header">
+            <div>
+              <SectionLabel color="#ec4899">Creative Team</SectionLabel>
+              <h2 className="ab-team-header__title font-display">
+                Our Creative Team
+              </h2>
+            </div>
+            <div className="ab-team-header__rule" />
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-6 mt-8">
+            {creativeTeam.map((member, i) => (
+              <CreativeCard key={i} member={member} />
+            ))}
           </div>
 
           {/* ── Bottom CTA ── */}
