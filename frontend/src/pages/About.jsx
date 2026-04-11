@@ -9,7 +9,7 @@ import giresh from "../../public/giresh11.jpeg";
 import beeresh from "../../public/Beeresh.jpeg";
 import yashwanth from "../../public/yashwanth.jpeg";
 import pratham from "../../public/pratham.png";
-import adi from "../../public/adi.png";
+import adi from "../../public/adi.jpeg";
 import promo from "../../public/promo.mp4";
 import { User, Phone, Mail, Volume2, VolumeX } from "lucide-react";
 
