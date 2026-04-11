@@ -24,7 +24,7 @@ import pushpa from "../../public/pushpakc.jpeg";
 import usha from "../../public/ushab.png";
 import ruchitha from "../../public/ruchitharaju.jpeg";
 import vaibhavi from "../../public/vibhavi.jpeg";
-import junaid from "../../public/junaid.jpeg";
+import junaid from "../../public/junaid.png";
 import maqsood from "../../public/MaqsoodMD.jpeg";
 import khaderouse from "../../public/gouse.jpeg";
 import manasa from "../../public/manasahmata.png";
