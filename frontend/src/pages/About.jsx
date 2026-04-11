@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import ranjitha from "../../public/ranjitha.png";
 import shiv from "../../public/shivanagowda.png";
@@ -10,7 +10,8 @@ import beeresh from "../../public/Beeresh.jpeg";
 import yashwanth from "../../public/yashwanth.jpeg";
 import pratham from "../../public/pratham.png";
 import adi from "../../public/adi.png";
-import { User, Phone, Mail } from "lucide-react";
+import promo from "../../public/promo.mp4";
+import { User, Phone, Mail, Volume2, VolumeX } from "lucide-react";
 
 /* ─── animation variants ─── */
 const fadeUp = {
@@ -92,7 +93,15 @@ const FacultyCard = ({ img, name, role, email, delay }) => {
   );
 };
 
-const StudentCard = ({ img, name, phone, email, delay }) => {
+/* Added dynamic role prop for StudentCard */
+const StudentCard = ({
+  img,
+  name,
+  role = "Student Coordinator",
+  phone,
+  email,
+  delay,
+}) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -119,7 +128,7 @@ const StudentCard = ({ img, name, phone, email, delay }) => {
 
         {/* ROLE TAG */}
         <p className="text-[10px] uppercase tracking-widest text-[#3a9de8] font-mono mb-4">
-          Student Coordinator
+          {role}
         </p>
 
         {/* CONTACT */}
@@ -138,6 +147,7 @@ const StudentCard = ({ img, name, phone, email, delay }) => {
     </motion.div>
   );
 };
+
 /* ─── Section label ─── */
 const SectionLabel = ({ color = "#3a9de8", children }) => (
   <p
@@ -184,7 +194,6 @@ const creativeTeam = [
     role: "Creative Team",
     image: giresh,
   },
-
   {
     name: "Aditya R H",
     phone: "87626 22221",
@@ -232,6 +241,31 @@ const About = () => {
   });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 60]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+
+  // Video State & Handlers
+  const videoRef = useRef(null);
+  const [muted, setMuted] = useState(true);
+  const [videoProgress, setVideoProgress] = useState(0);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(() => {});
+    }
+  }, []);
+
+  const toggleMute = () => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = !muted;
+    setMuted(!muted);
+  };
+
+  const handleTimeUpdate = () => {
+    if (!videoRef.current) return;
+    setVideoProgress(
+      (videoRef.current.currentTime / videoRef.current.duration) * 100,
+    );
+  };
 
   return (
     <>
@@ -725,6 +759,12 @@ const About = () => {
           border-radius: 50%;
           z-index: 0;
         }
+          
+        /* video corner brackets */
+        .ab-tl{top:12px;left:12px;border-top:1.5px solid rgba(58,157,232,0.55);border-left:1.5px solid rgba(58,157,232,0.55);}
+        .ab-tr{top:12px;right:12px;border-top:1.5px solid rgba(58,157,232,0.55);border-right:1.5px solid rgba(58,157,232,0.55);}
+        .ab-bl{bottom:12px;left:12px;border-bottom:1.5px solid rgba(58,157,232,0.55);border-left:1.5px solid rgba(58,157,232,0.55);}
+        .ab-br{bottom:12px;right:12px;border-bottom:1.5px solid rgba(58,157,232,0.55);border-right:1.5px solid rgba(58,157,232,0.55);}
       `}</style>
 
       {/* Ambient glows */}
@@ -942,7 +982,164 @@ const About = () => {
         <div className="ab-rule" />
 
         {/* ══════════════════════════════
-            3. FACULTY COORDINATORS
+            3. VIDEO PROMO
+        ══════════════════════════════ */}
+        <section
+          className="ab-section"
+          style={{ paddingTop: 80, paddingBottom: 40 }}
+        >
+          {/* Header */}
+          <div className="mb-10 text-center sm:text-left">
+            <motion.div
+              initial={{ opacity: 0, y: 22 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.55 }}
+            >
+              <SectionLabel color="#9c3ae8">Official Promo</SectionLabel>
+              <h2
+                className="font-display uppercase leading-[0.9] tracking-tight"
+                style={{
+                  fontSize: "clamp(36px,5vw,64px)",
+                  color: "rgba(255,255,255,0.9)",
+                }}
+              >
+                Feel the{" "}
+                <span
+                  style={{
+                    background:
+                      "linear-gradient(110deg, #3a9de8, #6080f5, #9c3ae8)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  Energy.
+                </span>
+                <br />
+                Join the movement.
+              </h2>
+              <p
+                className="mt-3 font-sans"
+                style={{ fontSize: 14, color: "rgba(255,255,255,0.4)" }}
+              >
+                Witness the innovation, the community, and the future.
+              </p>
+            </motion.div>
+          </div>
+
+          {/* Video Container */}
+          <motion.div
+            initial={{ opacity: 0, y: 36 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div
+              className="relative overflow-hidden bg-[#0c0f18] mx-auto rounded-3xl"
+              style={{
+                width: "min(100%, 900px)",
+                height: "50vh",
+                boxShadow:
+                  "0 16px 64px rgba(0,0,0,0.55), 0 2px 12px rgba(58,157,232,0.15)",
+                border: "1px solid rgba(255,255,255,0.05)",
+              }}
+            >
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover block"
+                src={promo}
+                muted
+                loop
+                playsInline
+                autoPlay
+                onTimeUpdate={handleTimeUpdate}
+              />
+
+              {/* Gradient Overlay */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    "linear-gradient(to bottom,rgba(0,0,0,0.01) 0%,rgba(0,0,0,0.5) 100%)",
+                }}
+              />
+
+              {/* Corner Accents */}
+              {["ab-tl", "ab-tr", "ab-bl", "ab-br"].map((c) => (
+                <div
+                  key={c}
+                  className={`absolute w-6 h-6 z-30 pointer-events-none ${c}`}
+                />
+              ))}
+
+              {/* Top Label */}
+              <div
+                className="absolute top-4 left-5 flex items-center gap-2 z-20 px-3 py-[6px] rounded-lg border border-white/5"
+                style={{
+                  background: "rgba(0,0,0,0.45)",
+                  backdropFilter: "blur(8px)",
+                }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full ab-hero__dot" />
+                <span
+                  className="font-mono"
+                  style={{
+                    fontSize: 9,
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.7)",
+                  }}
+                >
+                  InterConnect 26.0 — Official Promo
+                </span>
+              </div>
+
+              {/* Controls */}
+              <div
+                className="absolute bottom-0 left-0 right-0 flex items-center gap-3 px-6 py-5 z-20"
+                style={{
+                  background:
+                    "linear-gradient(to top,rgba(0,0,0,0.82) 0%,transparent 100%)",
+                }}
+              >
+                {/* Progress Bar */}
+                <div
+                  className="flex-1 h-[2px] rounded overflow-hidden"
+                  style={{ background: "rgba(255,255,255,0.15)" }}
+                >
+                  <div
+                    className="h-full rounded transition-[width] duration-300 ease-linear"
+                    style={{
+                      width: `${videoProgress}%`,
+                      background: "#3a9de8",
+                    }}
+                  />
+                </div>
+
+                {/* Mute Button */}
+                <button
+                  onClick={toggleMute}
+                  aria-label="Mute"
+                  className="flex items-center justify-center w-9 h-9 rounded-full cursor-pointer transition-all duration-150 hover:scale-110"
+                  style={{
+                    background: "rgba(255,255,255,0.1)",
+                    backdropFilter: "blur(6px)",
+                    color: "rgba(255,255,255,0.65)",
+                    border: "none",
+                  }}
+                >
+                  {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        <div className="ab-rule" />
+
+        {/* ══════════════════════════════
+            4. FACULTY COORDINATORS
         ══════════════════════════════ */}
         <section
           className="ab-section"
@@ -977,7 +1174,7 @@ const About = () => {
         </section>
 
         {/* ══════════════════════════════
-            4. STUDENT COORDINATORS
+            5. STUDENT COORDINATORS
         ══════════════════════════════ */}
         <section
           className="ab-section"
@@ -997,6 +1194,7 @@ const About = () => {
             <StudentCard
               img={beeresh}
               name="Beeresh Kumar B C"
+              role="Technical Lead & Coordinator"
               phone="6360995219"
               email="bcbeereshkumar@gmail.com"
               delay={0.05}
@@ -1004,6 +1202,7 @@ const About = () => {
             <StudentCard
               img={yashwanth}
               name="Yashwanth M"
+              role="Student Coordinator"
               phone="7795817114"
               email="yy6996843@gmail.com"
               delay={0.12}
@@ -1012,7 +1211,7 @@ const About = () => {
         </section>
 
         {/* ══════════════════════════════
-            5. CREATIVE TEAM (3D STYLE)
+            6. CREATIVE TEAM (3D STYLE)
         ══════════════════════════════ */}
         <section
           className="ab-section"
