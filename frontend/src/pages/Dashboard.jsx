@@ -16,13 +16,139 @@ import {
   Trophy,
   CheckCircle,
   Clock,
-  AlertTriangle,
   ChevronRight,
   Star,
   Activity,
+  RefreshCw,
+  LogIn,
+  Target,
+  Layers,
+  BarChart2,
+  Flame,
+  ArrowUpRight,
+  Shield,
+  Bell,
+  X,
+  FileText,
+  Calendar,
+  Award,
+  GitPullRequest,
+  AlertCircle,
 } from "lucide-react";
 
-// ─── Utils ────────────────────────────────────────────────────────────────────
+// ─── GLOBAL STYLES ─────────────────────────────────────────────────────────────
+const GLOBAL_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+  :root {
+    --bg: #060810;
+    --surface: #0d1117;
+    --surface2: #131924;
+    --surface3: #1a2235;
+    --border: #1e2d42;
+    --border2: #243348;
+    --text: #e8edf5;
+    --text2: #8b96aa;
+    --text3: #4a5568;
+    --accent: #4f8ef7;
+    --accent2: #7c5cfc;
+    --green: #22d3a0;
+    --amber: #f5a623;
+    --red: #f05252;
+    --orange: #f97316;
+    --font-d: 'Outfit', sans-serif;
+    --font-m: 'JetBrains Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); }
+
+  ::-webkit-scrollbar { width: 3px; height: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes glow { 0%,100% { opacity:.6; } 50% { opacity:1; } }
+  @keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(20px) scale(.94); } to { opacity:1; transform:translateX(-50%) translateY(0) scale(1); } }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+  .animate-spin { animation: spin 1s linear infinite; }
+
+  .glass {
+    background: rgba(6,8,16,.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .card-tap { -webkit-tap-highlight-color: transparent; }
+
+  /* Rich text styles */
+  .rt p { margin: 0 0 8px 0; font-family: var(--font-m); font-size: 11px; color: var(--text2); line-height: 1.75; }
+  .rt p:last-child { margin: 0; }
+  .rt strong, .rt b { color: var(--text); font-weight: 700; }
+  .rt em, .rt i { font-style: italic; color: var(--text2); }
+  .rt ul, .rt ol { margin: 6px 0 8px 18px; padding: 0; }
+  .rt li { margin-bottom: 5px; font-family: var(--font-m); font-size: 11px; color: var(--text2); line-height: 1.65; }
+  .rt a { color: #4f8ef7; text-decoration: underline; }
+  .rt h1, .rt h2, .rt h3 { color: var(--text); font-family: var(--font-d); margin: 10px 0 5px; font-weight: 700; }
+  .rt h1 { font-size: 15px; }
+  .rt h2 { font-size: 13px; }
+  .rt h3 { font-size: 12px; }
+  .rt br { display: block; content: ""; margin: 4px 0; }
+  .rt amp { display: none; }
+  .rt &amp; { display: none; }
+
+  /* Mobile: sheet slides up, Desktop: panel from right */
+  @media (max-width: 639px) {
+    .proj-drawer {
+      position: fixed !important;
+      bottom: 0 !important; left: 0 !important; right: 0 !important;
+      top: auto !important; width: 100% !important;
+      max-height: 93dvh !important;
+      border-radius: 22px 22px 0 0 !important;
+      border-top: 1px solid var(--border) !important;
+      border-left: none !important;
+    }
+    .log-detail-drawer {
+      position: fixed !important;
+      bottom: 0 !important; left: 0 !important; right: 0 !important;
+      top: auto !important; width: 100% !important;
+      max-height: 95dvh !important;
+      border-radius: 24px 24px 0 0 !important;
+      border-top: 1px solid var(--border) !important;
+      border-left: none !important;
+    }
+  }
+  @media (min-width: 640px) {
+    .proj-drawer {
+      position: fixed !important;
+      top: 0 !important; right: 0 !important; bottom: 0 !important;
+      left: auto !important; width: min(460px,100vw) !important;
+      max-height: 100dvh !important;
+      border-radius: 0 !important;
+      border-left: 1px solid var(--border) !important;
+      border-top: none !important;
+    }
+    .log-detail-drawer {
+      position: fixed !important;
+      top: 0 !important; right: 0 !important; bottom: 0 !important;
+      left: auto !important; width: min(500px,100vw) !important;
+      max-height: 100dvh !important;
+      border-radius: 0 !important;
+      border-left: 1px solid var(--border) !important;
+      border-top: none !important;
+    }
+    .sm-tabs { display: flex !important; }
+    .sm-live { display: flex !important; }
+    .sm-name { display: block !important; }
+    .sm-hide-mobile { display: none !important; }
+  }
+`;
+
+// ─── Utils ──────────────────────────────────────────────────────────────────────
 const fmtDate = (d) =>
   d
     ? new Date(d).toLocaleDateString("en-IN", {
@@ -31,12 +157,8 @@ const fmtDate = (d) =>
         year: "numeric",
       })
     : "—";
-
-const daysLeft = (deadline) => {
-  if (!deadline) return null;
-  return Math.ceil((new Date(deadline) - new Date()) / 864e5);
-};
-
+const daysLeft = (deadline) =>
+  deadline ? Math.ceil((new Date(deadline) - new Date()) / 864e5) : null;
 const initials = (n = "") =>
   n
     .split(" ")
@@ -44,16 +166,15 @@ const initials = (n = "") =>
     .join("")
     .toUpperCase()
     .slice(0, 2);
-
 const PALETTE = [
-  "#e85d3a",
-  "#3a9de8",
-  "#9c3ae8",
-  "#e8a33a",
-  "#3ae87c",
-  "#e83a8c",
-  "#3ae8d4",
-  "#e8d43a",
+  "#4f8ef7",
+  "#7c5cfc",
+  "#22d3a0",
+  "#f5a623",
+  "#f05252",
+  "#f97316",
+  "#06b6d4",
+  "#ec4899",
 ];
 const avatarBg = (n = "") => {
   let h = 0;
@@ -61,55 +182,77 @@ const avatarBg = (n = "") => {
   return PALETTE[Math.abs(h) % PALETTE.length];
 };
 
-// ─── Status tokens ────────────────────────────────────────────────────────────
+// Detect if a string contains HTML tags
+const isRichText = (str) => /<[a-z][\s\S]*>/i.test(str);
+
+// Sanitize and render rich text safely (basic allow-list)
+const sanitizeHtml = (html) => {
+  if (!html) return "";
+  // Decode &amp; -> & for display
+  return html
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+};
+
+// ─── Status ─────────────────────────────────────────────────────────────────────
 const ST = {
   open: {
-    bg: "#0d1f3c",
-    txt: "#3a9de8",
-    border: "#3a9de835",
-    dot: "#3a9de8",
+    bg: "#0d1a2e",
+    txt: "#4f8ef7",
+    border: "#4f8ef730",
+    dot: "#4f8ef7",
     label: "Open",
   },
   assigned: {
-    bg: "#2a1c08",
-    txt: "#fbbf24",
-    border: "#fbbf2435",
-    dot: "#fbbf24",
+    bg: "#1c1508",
+    txt: "#f5a623",
+    border: "#f5a62330",
+    dot: "#f5a623",
     label: "Assigned",
   },
   pending: {
-    bg: "#1e1b4b",
-    txt: "#818cf8",
-    border: "#818cf835",
-    dot: "#818cf8",
-    label: "Pending Review",
+    bg: "#160d28",
+    txt: "#a78bfa",
+    border: "#a78bfa30",
+    dot: "#a78bfa",
+    label: "In Review",
   },
   completed: {
-    bg: "#08271a",
-    txt: "#4ade80",
-    border: "#4ade8035",
-    dot: "#4ade80",
+    bg: "#071c14",
+    txt: "#22d3a0",
+    border: "#22d3a030",
+    dot: "#22d3a0",
     label: "Completed",
   },
   terminated: {
-    bg: "#280a0a",
-    txt: "#f87171",
-    border: "#f8717135",
-    dot: "#f87171",
+    bg: "#200808",
+    txt: "#f05252",
+    border: "#f0525230",
+    dot: "#f05252",
     label: "Terminated",
   },
 };
 
-// ─── Primitives ───────────────────────────────────────────────────────────────
+// ─── Primitives ─────────────────────────────────────────────────────────────────
 const Av = ({ name = "", size = 36 }) => (
   <div
-    className="rounded-full flex items-center justify-center font-bold text-white flex-shrink-0"
     style={{
       width: size,
       height: size,
-      background: avatarBg(name),
-      fontSize: size * 0.34,
-      fontFamily: "'DM Mono', monospace",
+      borderRadius: "50%",
+      flexShrink: 0,
+      background: `linear-gradient(135deg,${avatarBg(name)},${avatarBg(name + "x")})`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontFamily: "var(--font-m)",
+      fontWeight: 700,
+      color: "#fff",
+      fontSize: size * 0.35,
+      boxShadow: `0 0 0 2px #0d1117,0 0 0 3px ${avatarBg(name)}40`,
     }}
   >
     {initials(name)}
@@ -120,113 +263,210 @@ const Chip = ({ status }) => {
   const s = ST[status] || ST.open;
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-bold uppercase tracking-widest whitespace-nowrap"
       style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        padding: "3px 10px",
+        borderRadius: 100,
         background: s.bg,
         color: s.txt,
         border: `1px solid ${s.border}`,
-        fontSize: 9,
-        fontFamily: "'DM Mono', monospace",
+        fontSize: 10,
+        fontFamily: "var(--font-m)",
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+        whiteSpace: "nowrap",
       }}
     >
       <span
-        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-        style={{ background: s.dot }}
+        style={{
+          width: 5,
+          height: 5,
+          borderRadius: "50%",
+          background: s.dot,
+          flexShrink: 0,
+          boxShadow: `0 0 6px ${s.dot}`,
+        }}
       />
       {s.label}
     </span>
   );
 };
 
-const Tag = ({ children, color = "#3a9de8" }) => (
+const Tag = ({ children, color = "#4f8ef7" }) => (
   <span
-    className="inline-block rounded px-2.5 py-px font-bold uppercase tracking-widest"
     style={{
+      display: "inline-block",
+      padding: "2px 9px",
+      borderRadius: 6,
       color,
-      background: `${color}18`,
-      border: `1px solid ${color}38`,
-      fontSize: 9,
-      fontFamily: "'DM Mono', monospace",
+      background: `${color}15`,
+      border: `1px solid ${color}30`,
+      fontSize: 10,
+      fontFamily: "var(--font-m)",
+      fontWeight: 600,
+      letterSpacing: "0.05em",
+      textTransform: "uppercase",
     }}
   >
     {children}
   </span>
 );
 
-const ToastBar = ({ message, type, onDone }) => {
-  useEffect(() => {
-    const t = setTimeout(onDone, 3400);
-    return () => clearTimeout(t);
-  }, [onDone]);
-  const c =
-    { success: "#4ade80", error: "#f87171", warn: "#fbbf24" }[type] ||
-    "#4ade80";
+// ─── Rich Text Renderer ──────────────────────────────────────────────────────────
+const RichText = ({ html, clamp }) => {
+  const clean = sanitizeHtml(html || "");
   return (
     <div
-      className="fixed z-[9999] flex items-center gap-2.5 px-4 py-3 rounded-xl"
+      className="rt"
+      dangerouslySetInnerHTML={{ __html: clean }}
+      style={
+        clamp
+          ? {
+              display: "-webkit-box",
+              WebkitLineClamp: clamp,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }
+          : undefined
+      }
+    />
+  );
+};
+
+// ─── Plain or Rich Text auto-renderer ────────────────────────────────────────────
+const SmartText = ({ text, clamp, style = {} }) => {
+  if (!text) return null;
+  if (isRichText(text)) return <RichText html={text} clamp={clamp} />;
+  return (
+    <p
       style={{
-        bottom: "calc(env(safe-area-inset-bottom, 0px) + 80px)",
+        fontFamily: "var(--font-m)",
+        fontSize: 11,
+        color: "var(--text2)",
+        lineHeight: 1.75,
+        margin: 0,
+        ...(clamp
+          ? {
+              display: "-webkit-box",
+              WebkitLineClamp: clamp,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }
+          : {}),
+        ...style,
+      }}
+    >
+      {text}
+    </p>
+  );
+};
+
+const ToastBar = ({ message, type, onDone }) => {
+  useEffect(() => {
+    const t = setTimeout(onDone, 3500);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  const colors = { success: "#22d3a0", error: "#f05252", warn: "#f5a623" };
+  const c = colors[type] || colors.success;
+  return (
+    <div
+      style={{
+        position: "fixed",
+        bottom: "calc(env(safe-area-inset-bottom,0px) + 88px)",
         left: "50%",
         transform: "translateX(-50%)",
         width: "calc(100% - 32px)",
         maxWidth: 420,
-        background: "#0c0f18",
-        border: `1px solid ${c}38`,
+        zIndex: 9999,
+        background: "#0d1117",
+        border: `1px solid ${c}40`,
         borderLeft: `3px solid ${c}`,
-        color: "#f0f4ff",
-        boxShadow: "0 10px 40px rgba(0,0,0,.8)",
-        animation: "slideUp .25s ease",
-        fontSize: 12,
-        fontFamily: "'DM Mono', monospace",
+        borderRadius: 14,
+        padding: "12px 16px",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        color: "var(--text)",
+        boxShadow: `0 20px 60px rgba(0,0,0,.8)`,
+        animation: "toastIn .3s cubic-bezier(.175,.885,.32,1.275) both",
+        fontSize: 13,
+        fontFamily: "var(--font-d)",
       }}
     >
-      <span style={{ color: c }}>
+      <span style={{ color: c, fontSize: 16 }}>
         {type === "error" ? "✕" : type === "warn" ? "⚠" : "✓"}
       </span>
-      <span className="flex-1 truncate">{message}</span>
+      <span
+        style={{
+          flex: 1,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {message}
+      </span>
     </div>
   );
 };
 
-const SH = ({ title, accent = "#3a9de8", count, action, actionLabel }) => (
-  <div className="flex items-center gap-3 mb-4">
+const SH = ({ title, accent = "#4f8ef7", count, action, actionLabel }) => (
+  <div
+    style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}
+  >
     <div
-      className="w-[3px] h-5 rounded-sm flex-shrink-0"
-      style={{ background: accent }}
+      style={{
+        width: 3,
+        height: 18,
+        borderRadius: 3,
+        background: accent,
+        flexShrink: 0,
+      }}
     />
     <span
-      className="font-extrabold"
       style={{
-        color: "#f0f4ff",
-        fontSize: 13,
-        fontFamily: "'Syne', sans-serif",
+        fontFamily: "var(--font-d)",
+        fontWeight: 700,
+        color: "var(--text)",
+        fontSize: "clamp(13px,3.5vw,15px)",
+        letterSpacing: "-0.01em",
       }}
     >
       {title}
     </span>
     {count !== undefined && (
       <span
-        className="px-2 py-px rounded"
         style={{
+          padding: "1px 8px",
+          borderRadius: 100,
           background: `${accent}18`,
           color: accent,
           border: `1px solid ${accent}28`,
-          fontSize: 10,
-          fontFamily: "'DM Mono', monospace",
+          fontSize: 11,
+          fontFamily: "var(--font-m)",
+          fontWeight: 600,
         }}
       >
         {count}
       </span>
     )}
-    <div className="flex-1 h-px" style={{ background: "#1e2330" }} />
+    <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
     {action && (
       <button
         onClick={action}
-        className="cursor-pointer bg-transparent border-none whitespace-nowrap"
         style={{
+          background: "none",
+          border: "none",
+          cursor: "pointer",
           color: accent,
-          fontSize: 10,
-          fontFamily: "'DM Mono', monospace",
+          fontSize: 11,
+          fontFamily: "var(--font-m)",
+          fontWeight: 600,
+          whiteSpace: "nowrap",
+          padding: 0,
         }}
       >
         {actionLabel || "View all →"}
@@ -235,53 +475,80 @@ const SH = ({ title, accent = "#3a9de8", count, action, actionLabel }) => (
   </div>
 );
 
-const Brick = ({ icon, label, value, accent, sub }) => (
+const Brick = ({ icon, label, value, accent, sub, delay = 0 }) => (
   <motion.div
-    initial={{ opacity: 0, y: 10 }}
+    initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.35 }}
-    className="relative rounded-2xl overflow-hidden"
+    transition={{ duration: 0.4, delay }}
     style={{
-      background: "#0c0f18",
-      border: `1px solid ${accent}1a`,
-      padding: "14px 16px",
+      background: "var(--surface)",
+      border: `1px solid var(--border)`,
+      borderRadius: 16,
+      padding: 16,
+      position: "relative",
+      overflow: "hidden",
     }}
   >
     <div
-      className="absolute -top-6 -right-6 w-16 h-16 rounded-full pointer-events-none"
-      style={{ background: `${accent}0c`, filter: "blur(16px)" }}
+      style={{
+        position: "absolute",
+        top: -30,
+        right: -30,
+        width: 80,
+        height: 80,
+        borderRadius: "50%",
+        background: `${accent}0a`,
+        filter: "blur(20px)",
+        pointerEvents: "none",
+      }}
     />
-    <div className="relative z-10">
-      <div className="text-base mb-2" style={{ color: accent }}>
+    <div style={{ position: "relative" }}>
+      <div
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          marginBottom: 10,
+          background: `${accent}18`,
+          border: `1px solid ${accent}28`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: accent,
+        }}
+      >
         {icon}
       </div>
       <div
-        className="font-extrabold leading-none mb-1"
         style={{
-          fontSize: 22,
-          color: "#f0f4ff",
-          fontFamily: "'Syne', sans-serif",
+          fontFamily: "var(--font-d)",
+          fontWeight: 800,
+          color: "var(--text)",
+          fontSize: "clamp(20px,5vw,26px)",
+          lineHeight: 1,
+          marginBottom: 4,
         }}
       >
-        {value}
+        {value ?? 0}
       </div>
       <div
-        className="uppercase tracking-widest"
         style={{
-          fontSize: 9,
-          color: "#6b7a99",
-          fontFamily: "'DM Mono', monospace",
+          fontFamily: "var(--font-m)",
+          fontSize: 10,
+          color: "var(--text3)",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
         }}
       >
         {label}
       </div>
       {sub && (
         <div
-          className="mt-0.5"
           style={{
-            fontSize: 9,
+            marginTop: 3,
+            fontSize: 10,
             color: accent,
-            fontFamily: "'DM Mono', monospace",
+            fontFamily: "var(--font-m)",
           }}
         >
           {sub}
@@ -291,53 +558,654 @@ const Brick = ({ icon, label, value, accent, sub }) => (
   </motion.div>
 );
 
-// ─── Modal ────────────────────────────────────────────────────────────────────
+// ─── Modal ───────────────────────────────────────────────────────────────────────
 const Modal = ({ title, onClose, children }) => (
   <div
     onClick={onClose}
-    className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-5"
-    style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)" }}
+    style={{
+      position: "fixed",
+      inset: 0,
+      zIndex: 1000,
+      background: "rgba(0,0,0,.85)",
+      backdropFilter: "blur(8px)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 16,
+    }}
   >
     <motion.div
-      initial={{ scale: 0.95, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.95, opacity: 0 }}
+      initial={{ scale: 0.94, opacity: 0, y: 20 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      exit={{ scale: 0.94, opacity: 0 }}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
       onClick={(e) => e.stopPropagation()}
-      className="relative rounded-2xl w-full max-w-lg overflow-y-auto shadow-2xl"
       style={{
-        background: "#0f1219",
-        border: "1px solid #252d3e",
+        background: "var(--surface)",
+        border: "1px solid var(--border2)",
+        borderRadius: 20,
+        width: "100%",
+        maxWidth: 480,
         maxHeight: "90dvh",
+        overflowY: "auto",
+        boxShadow: "0 40px 100px rgba(0,0,0,.8)",
       }}
     >
       <div
-        className="flex items-center justify-between px-6 pt-6 pb-4"
-        style={{ borderBottom: "1px solid #1e2330" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "20px 24px 16px",
+          borderBottom: "1px solid var(--border)",
+        }}
       >
         <h2
-          className="font-extrabold"
           style={{
-            color: "#f0f4ff",
-            fontSize: 17,
-            fontFamily: "'Syne', sans-serif",
+            fontFamily: "var(--font-d)",
+            fontWeight: 700,
+            color: "var(--text)",
+            fontSize: "clamp(15px,4vw,17px)",
+            margin: 0,
           }}
         >
           {title}
         </h2>
         <button
           onClick={onClose}
-          className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer border-none transition-colors"
-          style={{ background: "transparent", color: "#8892a4" }}
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            background: "var(--surface2)",
+            border: "1px solid var(--border)",
+            color: "var(--text2)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 14,
+          }}
         >
           ✕
         </button>
       </div>
-      <div className="px-6 py-6">{children}</div>
+      <div style={{ padding: "20px 24px 24px" }}>{children}</div>
     </motion.div>
   </div>
 );
 
-// ─── Mark Complete Modal ──────────────────────────────────────────────────────
+// ─── Log Detail Drawer (replaces "View More") ────────────────────────────────────
+const LogDetailDrawer = ({
+  log,
+  onClose,
+  onMarkComplete,
+  onClaim,
+  claiming,
+}) => {
+  if (!log) return null;
+  const days = daysLeft(log.deadlineAt);
+  const isPending = log.task_status === "pending";
+  const overdue =
+    (log.task_status === "assigned" || isPending) && days !== null && days <= 0;
+  const eff = overdue ? "terminated" : log.task_status;
+  const st = ST[eff] || ST.open;
+  const proj = log.projectId?.problem?.title || log.projectId?.projectID || "—";
+
+  const InfoRow = ({ icon, label, value, color = "var(--text2)" }) => (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 10,
+        padding: "10px 0",
+        borderBottom: "1px solid var(--border)",
+      }}
+    >
+      <div
+        style={{
+          color: "var(--text3)",
+          flexShrink: 0,
+          marginTop: 1,
+          width: 14,
+        }}
+      >
+        {icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: "var(--font-m)",
+            fontSize: 9,
+            color: "var(--text3)",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            marginBottom: 3,
+          }}
+        >
+          {label}
+        </div>
+        <div
+          style={{
+            fontFamily: "var(--font-m)",
+            fontSize: 12,
+            color,
+            lineHeight: 1.5,
+          }}
+        >
+          {value}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <motion.div
+      className="log-detail-drawer"
+      initial={{ opacity: 0, y: "100%" }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: "100%" }}
+      transition={{ type: "spring", stiffness: 320, damping: 32 }}
+      style={{
+        background: "#080b14",
+        zIndex: 600,
+        overflowY: "auto",
+      }}
+    >
+      {/* Drag handle */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          padding: "12px 0 4px",
+        }}
+      >
+        <div
+          style={{
+            width: 40,
+            height: 4,
+            borderRadius: 4,
+            background: "var(--border2)",
+          }}
+        />
+      </div>
+
+      {/* Sticky header */}
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          background: "rgba(8,11,20,.95)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid var(--border)",
+          padding: "12px 16px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontFamily: "var(--font-m)",
+                fontSize: 9,
+                color: "var(--text3)",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: 3,
+              }}
+            >
+              Task Detail
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-d)",
+                fontWeight: 700,
+                color: "var(--text)",
+                fontSize: "clamp(13px,3.5vw,15px)",
+                lineHeight: 1.2,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {log.taskTitle}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Chip status={eff} />
+            <button
+              onClick={onClose}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "var(--surface2)",
+                border: "1px solid var(--border)",
+                color: "var(--text2)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 13,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div
+        style={{
+          padding: 16,
+          paddingBottom: "calc(env(safe-area-inset-bottom,0px) + 32px)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+        }}
+      >
+        {/* Points + deadline strip */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3,1fr)",
+            gap: 8,
+          }}
+        >
+          {[
+            {
+              l: "Points",
+              v: log.assignedTaskPoints ?? 0,
+              c: "#f5a623",
+              icon: "⬡",
+            },
+            {
+              l: "Deadline",
+              v: log.deadlineDays ? `${log.deadlineDays}d` : "—",
+              c: "#4f8ef7",
+              icon: "⏱",
+            },
+            {
+              l: overdue
+                ? "Overdue"
+                : days !== null && (log.task_status === "assigned" || isPending)
+                  ? `${days}d left`
+                  : log.task_status === "completed"
+                    ? "Done"
+                    : "—",
+              v:
+                log.task_status === "completed"
+                  ? fmtDate(log.closedAt)
+                  : fmtDate(log.deadlineAt),
+              c: overdue
+                ? "#f05252"
+                : days !== null && days <= 2
+                  ? "#f97316"
+                  : log.task_status === "completed"
+                    ? "#22d3a0"
+                    : "var(--text3)",
+              icon: log.task_status === "completed" ? "✓" : "📅",
+            },
+          ].map((s) => (
+            <div
+              key={s.l}
+              style={{
+                textAlign: "center",
+                padding: "12px 6px",
+                borderRadius: 12,
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "var(--font-d)",
+                  fontWeight: 800,
+                  fontSize: 16,
+                  color: s.c,
+                  lineHeight: 1,
+                  marginBottom: 4,
+                }}
+              >
+                {s.icon} {s.v}
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-m)",
+                  fontSize: 8,
+                  color: "var(--text3)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                {s.l}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Project reference */}
+        <div
+          style={{
+            padding: "12px 14px",
+            borderRadius: 12,
+            background: "var(--surface)",
+            border: "1px solid #4f8ef720",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <Layers size={14} style={{ color: "#4f8ef7", flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontFamily: "var(--font-m)",
+                fontSize: 9,
+                color: "var(--text3)",
+                textTransform: "uppercase",
+                marginBottom: 2,
+              }}
+            >
+              Project
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-d)",
+                fontWeight: 600,
+                fontSize: 13,
+                color: "var(--text)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {proj}
+            </div>
+          </div>
+          <div
+            style={{
+              fontFamily: "var(--font-m)",
+              fontSize: 10,
+              color: "var(--text3)",
+            }}
+          >
+            {fmtDate(log.createdAt)}
+          </div>
+        </div>
+
+        {/* Description — full rich text */}
+        {log.description && (
+          <div
+            style={{
+              borderRadius: 14,
+              padding: 14,
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-m)",
+                fontSize: 9,
+                color: "#4f8ef7",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <FileText size={11} /> Description
+            </div>
+            <SmartText text={log.description} />
+          </div>
+        )}
+
+        {/* Requirements — full rich text */}
+        {log.requirements && (
+          <div
+            style={{
+              borderRadius: 14,
+              padding: 14,
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-m)",
+                fontSize: 9,
+                color: "#f5a623",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <AlertCircle size={11} /> Requirements
+            </div>
+            <SmartText text={log.requirements} />
+          </div>
+        )}
+
+        {/* Closure / completion note */}
+        {log.closureNote && (
+          <div
+            style={{
+              borderRadius: 14,
+              padding: 14,
+              background: "var(--surface)",
+              border: "1px solid #22d3a020",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-m)",
+                fontSize: 9,
+                color: "#22d3a0",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <CheckCircle size={11} /> Completion Note
+            </div>
+            <SmartText text={log.closureNote} />
+          </div>
+        )}
+
+        {/* Links */}
+        {(log.githubIssueLink || log.githubPrLink) && (
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
+          >
+            {log.githubIssueLink && (
+              <a
+                href={log.githubIssueLink}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  textDecoration: "none",
+                  background: "var(--surface)",
+                  border: "1px solid #4f8ef728",
+                }}
+              >
+                <Github size={14} style={{ color: "#4f8ef7", flexShrink: 0 }} />
+                <div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-m)",
+                      fontSize: 9,
+                      color: "var(--text3)",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Issue
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-m)",
+                      fontSize: 11,
+                      color: "#4f8ef7",
+                    }}
+                  >
+                    View ↗
+                  </div>
+                </div>
+              </a>
+            )}
+            {log.githubPrLink && (
+              <a
+                href={log.githubPrLink}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  textDecoration: "none",
+                  background: "var(--surface)",
+                  border: "1px solid #22d3a028",
+                }}
+              >
+                <GitPullRequest
+                  size={14}
+                  style={{ color: "#22d3a0", flexShrink: 0 }}
+                />
+                <div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-m)",
+                      fontSize: 9,
+                      color: "var(--text3)",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Pull Request
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font-m)",
+                      fontSize: 11,
+                      color: "#22d3a0",
+                    }}
+                  >
+                    View ↗
+                  </div>
+                </div>
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div style={{ display: "flex", gap: 10 }}>
+          {log.task_status === "open" && onClaim && (
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => {
+                onClaim(log._id);
+                onClose();
+              }}
+              disabled={claiming}
+              style={{
+                flex: 1,
+                padding: "14px 0",
+                borderRadius: 12,
+                background: "#071c14",
+                border: "1px solid #22d3a035",
+                color: "#22d3a0",
+                fontSize: 13,
+                fontFamily: "var(--font-m)",
+                fontWeight: 700,
+                cursor: claiming ? "wait" : "pointer",
+                opacity: claiming ? 0.6 : 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              {claiming ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Target size={14} />
+              )}
+              Claim This Task
+            </motion.button>
+          )}
+          {log.task_status === "assigned" && onMarkComplete && (
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => {
+                onMarkComplete(log);
+                onClose();
+              }}
+              style={{
+                flex: 1,
+                padding: "14px 0",
+                borderRadius: 12,
+                background: "#071c14",
+                border: "1px solid #22d3a035",
+                color: "#22d3a0",
+                fontSize: 13,
+                fontFamily: "var(--font-m)",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              <CheckCircle size={14} /> Mark Complete
+            </motion.button>
+          )}
+          <button
+            onClick={onClose}
+            style={{
+              padding: "14px 20px",
+              borderRadius: 12,
+              background: "transparent",
+              border: "1px solid var(--border)",
+              color: "var(--text2)",
+              fontSize: 12,
+              fontFamily: "var(--font-m)",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ─── Mark Complete Modal ──────────────────────────────────────────────────────────
 const MarkCompleteModal = ({ log, onClose, onSubmit }) => {
   const [form, setForm] = useState({ githubPrLink: "", closureNote: "" });
   const [saving, setSaving] = useState(false);
@@ -347,46 +1215,69 @@ const MarkCompleteModal = ({ log, onClose, onSubmit }) => {
     await onSubmit(log._id, form);
     setSaving(false);
   };
+  const inp = {
+    width: "100%",
+    borderRadius: 10,
+    padding: "10px 14px",
+    background: "var(--surface2)",
+    border: "1px solid var(--border)",
+    color: "var(--text)",
+    fontSize: 13,
+    fontFamily: "var(--font-m)",
+    outline: "none",
+  };
   return (
     <Modal title="Submit Task for Review" onClose={onClose}>
       <div
-        className="mb-5 p-3 rounded-xl"
-        style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
+        style={{
+          marginBottom: 16,
+          padding: "12px 14px",
+          borderRadius: 12,
+          background: "var(--surface2)",
+          border: "1px solid var(--border)",
+        }}
       >
         <p
           style={{
-            color: "#8892a4",
+            color: "var(--text2)",
             fontSize: 12,
-            fontFamily: "'DM Mono', monospace",
-            lineHeight: 1.6,
+            fontFamily: "var(--font-m)",
+            lineHeight: 1.7,
+            margin: 0,
           }}
         >
           Submitting:{" "}
-          <span style={{ color: "#f0f4ff", fontWeight: "bold" }}>
-            {log.taskTitle}
-          </span>
+          <strong style={{ color: "var(--text)" }}>{log.taskTitle}</strong>
           <br />
-          Provide your work link so the coordinator can review and award your
+          Provide your work link so the coordinator can review &amp; award
           points.
         </p>
       </div>
-      <form onSubmit={handle} className="space-y-4">
-        <div>
+      <form onSubmit={handle}>
+        <div style={{ marginBottom: 14 }}>
           <label
-            className="block mb-1.5 font-bold uppercase tracking-widest"
             style={{
+              display: "block",
+              marginBottom: 6,
+              fontFamily: "var(--font-m)",
               fontSize: 10,
-              color: "#6b7a99",
-              fontFamily: "'DM Mono', monospace",
+              color: "var(--text3)",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
             }}
           >
-            GitHub PR / Commit Link <span style={{ color: "#4ade80" }}>*</span>
+            GitHub PR / Commit Link <span style={{ color: "#22d3a0" }}>*</span>
           </label>
-          <div className="relative">
+          <div style={{ position: "relative" }}>
             <LinkIcon
-              size={14}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2"
-              style={{ color: "#6b7a99" }}
+              size={13}
+              style={{
+                position: "absolute",
+                left: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--text3)",
+              }}
             />
             <input
               type="url"
@@ -396,26 +1287,22 @@ const MarkCompleteModal = ({ log, onClose, onSubmit }) => {
               onChange={(e) =>
                 setForm({ ...form, githubPrLink: e.target.value })
               }
-              className="w-full rounded-lg pl-9 p-2.5 outline-none transition-colors"
-              style={{
-                background: "#0c0f18",
-                border: "1px solid #1e2330",
-                color: "#f0f4ff",
-                fontSize: 13,
-                fontFamily: "'DM Mono', monospace",
-              }}
-              onFocus={(e) => (e.target.style.borderColor = "#4ade8050")}
-              onBlur={(e) => (e.target.style.borderColor = "#1e2330")}
+              style={{ ...inp, paddingLeft: 34 }}
+              onFocus={(e) => (e.target.style.borderColor = "#22d3a060")}
+              onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
             />
           </div>
         </div>
-        <div>
+        <div style={{ marginBottom: 20 }}>
           <label
-            className="block mb-1.5 font-bold uppercase tracking-widest"
             style={{
+              display: "block",
+              marginBottom: 6,
+              fontFamily: "var(--font-m)",
               fontSize: 10,
-              color: "#6b7a99",
-              fontFamily: "'DM Mono', monospace",
+              color: "var(--text3)",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
             }}
           >
             Completion Note (Optional)
@@ -425,27 +1312,25 @@ const MarkCompleteModal = ({ log, onClose, onSubmit }) => {
             placeholder="Any details the reviewer should know..."
             value={form.closureNote}
             onChange={(e) => setForm({ ...form, closureNote: e.target.value })}
-            className="w-full rounded-lg p-3 outline-none transition-colors resize-none"
-            style={{
-              background: "#0c0f18",
-              border: "1px solid #1e2330",
-              color: "#f0f4ff",
-              fontSize: 13,
-              fontFamily: "'DM Mono', monospace",
-            }}
-            onFocus={(e) => (e.target.style.borderColor = "#4ade8050")}
-            onBlur={(e) => (e.target.style.borderColor = "#1e2330")}
+            style={{ ...inp, resize: "none", lineHeight: 1.6 }}
+            onFocus={(e) => (e.target.style.borderColor = "#22d3a060")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
           />
         </div>
-        <div className="flex gap-3 justify-end pt-2">
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg font-bold cursor-pointer transition-colors bg-transparent border-none"
             style={{
-              color: "#6b7a99",
+              padding: "9px 16px",
+              borderRadius: 10,
+              background: "transparent",
+              border: "1px solid var(--border)",
+              color: "var(--text2)",
+              cursor: "pointer",
               fontSize: 12,
-              fontFamily: "'DM Mono', monospace",
+              fontFamily: "var(--font-m)",
+              fontWeight: 600,
             }}
           >
             Cancel
@@ -453,16 +1338,23 @@ const MarkCompleteModal = ({ log, onClose, onSubmit }) => {
           <button
             type="submit"
             disabled={saving || !form.githubPrLink}
-            className="px-5 py-2 rounded-lg font-bold text-white flex items-center gap-2 cursor-pointer disabled:opacity-50 border-none"
             style={{
-              background: "#08271a",
-              color: "#4ade80",
-              border: "1px solid #4ade8035",
+              padding: "9px 20px",
+              borderRadius: 10,
+              background: "#071c14",
+              border: "1px solid #22d3a035",
+              color: "#22d3a0",
+              cursor: saving || !form.githubPrLink ? "not-allowed" : "pointer",
+              opacity: !form.githubPrLink ? 0.5 : 1,
               fontSize: 12,
-              fontFamily: "'DM Mono', monospace",
+              fontFamily: "var(--font-m)",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
             }}
           >
-            {saving && <Loader2 size={14} className="animate-spin" />} Submit
+            {saving && <Loader2 size={13} className="animate-spin" />} Submit
             Work
           </button>
         </div>
@@ -471,7 +1363,7 @@ const MarkCompleteModal = ({ log, onClose, onSubmit }) => {
   );
 };
 
-// ─── Community Join Banner ─────────────────────────────────────────────────────
+// ─── Community Banner ─────────────────────────────────────────────────────────────
 const CommunityBanner = ({ link, projectTitle }) => {
   if (!link) return null;
   return (
@@ -479,91 +1371,125 @@ const CommunityBanner = ({ link, projectTitle }) => {
       href={link}
       target="_blank"
       rel="noreferrer"
-      initial={{ opacity: 0, scale: 0.97 }}
-      animate={{ opacity: 1, scale: 1 }}
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.98 }}
-      className="block rounded-2xl p-4 no-underline relative overflow-hidden"
       style={{
+        display: "block",
+        textDecoration: "none",
+        borderRadius: 16,
+        padding: "14px 16px",
+        position: "relative",
+        overflow: "hidden",
         background:
-          "linear-gradient(135deg,#1a0a2e 0%,#0d1a2e 50%,#0a1a12 100%)",
-        border: "1px solid #9c3ae830",
+          "linear-gradient(135deg,#160d28 0%,#0d1a2e 50%,#071c14 100%)",
+        border: "1px solid #7c5cfc30",
       }}
     >
-      {/* Glow blobs */}
       <div
-        className="absolute -top-8 -right-8 w-32 h-32 rounded-full pointer-events-none"
         style={{
-          background: "radial-gradient(circle,#9c3ae820,transparent 70%)",
+          position: "absolute",
+          top: -40,
+          right: -40,
+          width: 120,
+          height: 120,
+          borderRadius: "50%",
+          background: "radial-gradient(circle,#7c5cfc18,transparent 70%)",
+          pointerEvents: "none",
         }}
       />
       <div
-        className="absolute -bottom-8 -left-8 w-24 h-24 rounded-full pointer-events-none"
         style={{
-          background: "radial-gradient(circle,#3a9de815,transparent 70%)",
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          position: "relative",
         }}
-      />
-      <div className="relative z-10 flex items-center gap-4">
+      >
         <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-          style={{ background: "#9c3ae820", border: "1px solid #9c3ae840" }}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            flexShrink: 0,
+            background: "#7c5cfc18",
+            border: "1px solid #7c5cfc35",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          <MessageSquare size={22} style={{ color: "#b565f5" }} />
+          <MessageSquare size={20} style={{ color: "#a78bfa" }} />
         </div>
-        <div className="flex-1 min-w-0">
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div
-            className="font-extrabold mb-0.5"
             style={{
-              color: "#f0f4ff",
-              fontSize: 14,
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "var(--font-d)",
+              fontWeight: 700,
+              color: "var(--text)",
+              fontSize: "clamp(13px,3.5vw,14px)",
+              marginBottom: 2,
             }}
           >
             Join the Community
           </div>
           <div
             style={{
-              color: "#8892a4",
+              fontFamily: "var(--font-m)",
               fontSize: 11,
-              fontFamily: "'DM Mono', monospace",
+              color: "var(--text2)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
             Connect with contributors of{" "}
-            <span style={{ color: "#b565f5" }}>
+            <span style={{ color: "#a78bfa" }}>
               {projectTitle || "this project"}
             </span>
           </div>
         </div>
         <div
-          className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl font-bold"
           style={{
-            background: "#9c3ae825",
-            border: "1px solid #9c3ae845",
-            color: "#b565f5",
-            fontSize: 12,
-            fontFamily: "'DM Mono', monospace",
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            padding: "7px 14px",
+            borderRadius: 10,
+            background: "#7c5cfc20",
+            border: "1px solid #7c5cfc40",
+            color: "#a78bfa",
+            fontSize: 11,
+            fontFamily: "var(--font-m)",
+            fontWeight: 700,
           }}
         >
-          Join Now <ExternalLink size={12} />
+          Join <ExternalLink size={11} />
         </div>
       </div>
     </motion.a>
   );
 };
 
-// ─── Coordinator Card ──────────────────────────────────────────────────────────
+// ─── Coordinator Card ─────────────────────────────────────────────────────────────
 const CoordinatorCard = ({ coordinator }) => {
   if (!coordinator)
     return (
       <div
-        className="rounded-xl p-4 text-center"
-        style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
+        style={{
+          borderRadius: 12,
+          padding: 14,
+          textAlign: "center",
+          background: "var(--surface2)",
+          border: "1px solid var(--border)",
+        }}
       >
         <p
           style={{
-            color: "#4a5568",
+            color: "var(--text3)",
             fontSize: 11,
-            fontFamily: "'DM Mono', monospace",
+            fontFamily: "var(--font-m)",
+            margin: 0,
           }}
         >
           No coordinator assigned yet.
@@ -572,45 +1498,63 @@ const CoordinatorCard = ({ coordinator }) => {
     );
   return (
     <div
-      className="rounded-xl p-4"
-      style={{ background: "#0c0f18", border: "1px solid #3a9de820" }}
+      style={{
+        borderRadius: 12,
+        padding: 14,
+        background: "var(--surface2)",
+        border: "1px solid #4f8ef720",
+      }}
     >
-      <div className="flex items-start gap-3">
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
         <Av name={coordinator.name} size={40} />
-        <div className="flex-1 min-w-0">
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div
-            className="font-extrabold mb-0.5 truncate"
             style={{
-              color: "#f0f4ff",
-              fontSize: 13,
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "var(--font-d)",
+              fontWeight: 700,
+              color: "var(--text)",
+              fontSize: "clamp(12px,3vw,14px)",
+              marginBottom: 2,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
             {coordinator.name}
           </div>
           <div
-            className="mb-2"
             style={{
-              color: "#3a9de8",
+              fontFamily: "var(--font-m)",
               fontSize: 10,
-              fontFamily: "'DM Mono', monospace",
+              color: "#4f8ef7",
               textTransform: "uppercase",
-              letterSpacing: "0.1em",
+              letterSpacing: "0.08em",
+              marginBottom: 8,
             }}
           >
             Project Coordinator
           </div>
-          <div className="space-y-1.5">
+          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
             {coordinator.email && (
               <a
                 href={`mailto:${coordinator.email}`}
-                className="flex items-center gap-2 no-underline group"
-                style={{ color: "#8892a4" }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 7,
+                  textDecoration: "none",
+                  color: "var(--text2)",
+                }}
               >
-                <Mail size={12} style={{ color: "#3a9de8", flexShrink: 0 }} />
+                <Mail size={11} style={{ color: "#4f8ef7", flexShrink: 0 }} />
                 <span
-                  className="truncate group-hover:text-white transition-colors"
-                  style={{ fontSize: 11, fontFamily: "'DM Mono', monospace" }}
+                  style={{
+                    fontSize: 11,
+                    fontFamily: "var(--font-m)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
                 >
                   {coordinator.email}
                 </span>
@@ -619,30 +1563,41 @@ const CoordinatorCard = ({ coordinator }) => {
             {coordinator.phone && (
               <a
                 href={`tel:${coordinator.phone}`}
-                className="flex items-center gap-2 no-underline group"
-                style={{ color: "#8892a4" }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 7,
+                  textDecoration: "none",
+                  color: "var(--text2)",
+                }}
               >
-                <Phone size={12} style={{ color: "#4ade80", flexShrink: 0 }} />
-                <span
-                  className="group-hover:text-white transition-colors"
-                  style={{ fontSize: 11, fontFamily: "'DM Mono', monospace" }}
-                >
+                <Phone size={11} style={{ color: "#22d3a0", flexShrink: 0 }} />
+                <span style={{ fontSize: 11, fontFamily: "var(--font-m)" }}>
                   {coordinator.phone}
                 </span>
               </a>
             )}
             {coordinator.college && (
               <div
-                className="flex items-center gap-2"
-                style={{ color: "#6b7a99" }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 7,
+                  color: "var(--text3)",
+                }}
               >
                 <BookOpen
-                  size={12}
-                  style={{ color: "#fbbf24", flexShrink: 0 }}
+                  size={11}
+                  style={{ color: "#f5a623", flexShrink: 0 }}
                 />
                 <span
-                  className="truncate"
-                  style={{ fontSize: 11, fontFamily: "'DM Mono', monospace" }}
+                  style={{
+                    fontSize: 11,
+                    fontFamily: "var(--font-m)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
                 >
                   {coordinator.college}
                 </span>
@@ -655,275 +1610,319 @@ const CoordinatorCard = ({ coordinator }) => {
   );
 };
 
-// ─── Log Card ─────────────────────────────────────────────────────────────────
+// ─── Log Card ──────────────────────────────────────────────────────────────────────
+// Now has "View More" button that opens the detail drawer
 const LogCard = ({
   log,
   showClaim = false,
   onClaim,
   claiming = false,
   onMarkComplete,
+  onViewDetail,
 }) => {
   const days = daysLeft(log.deadlineAt);
   const isPending = log.task_status === "pending";
   const overdue =
     (log.task_status === "assigned" || isPending) && days !== null && days <= 0;
-  const st = ST[overdue ? "terminated" : log.task_status] || ST.open;
+  const eff = overdue ? "terminated" : log.task_status;
+  const st = ST[eff] || ST.open;
   const proj = log.projectId?.problem?.title || log.projectId?.projectID || "—";
-
   return (
     <div
-      className="rounded-xl p-3.5 transition-all"
       style={{
-        background: "#0c0f18",
+        borderRadius: 14,
+        padding: 14,
+        background: "var(--surface)",
         border: `1px solid ${st.border}`,
-        borderLeft: `2.5px solid ${st.dot}`,
+        borderLeft: `3px solid ${st.dot}`,
       }}
     >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="min-w-0 flex-1">
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 10,
+          marginBottom: 8,
+        }}
+      >
+        <div style={{ minWidth: 0, flex: 1 }}>
           <div
-            className="font-bold leading-tight truncate mb-0.5"
             style={{
-              color: "#f0f4ff",
-              fontSize: 13,
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "var(--font-d)",
+              fontWeight: 700,
+              color: "var(--text)",
+              fontSize: "clamp(12px,3.5vw,14px)",
+              lineHeight: 1.3,
+              marginBottom: 3,
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
             }}
           >
             {log.taskTitle}
           </div>
           <div
             style={{
-              color: "#6b7a99",
+              fontFamily: "var(--font-m)",
               fontSize: 10,
-              fontFamily: "'DM Mono', monospace",
+              color: "var(--text3)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
             {proj} · {fmtDate(log.createdAt)}
           </div>
         </div>
-        <Chip status={overdue ? "terminated" : log.task_status} />
+        <Chip status={eff} />
       </div>
 
+      {/* Description preview — smart renders rich text with clamp */}
       {log.description && (
-        <p
-          className="leading-relaxed mb-2.5"
-          style={{
-            color: "#8892a4",
-            fontSize: 11,
-            fontFamily: "'DM Mono', monospace",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
-          {log.description}
-        </p>
+        <div style={{ marginBottom: 10 }}>
+          <SmartText text={log.description} clamp={2} />
+        </div>
       )}
 
       <div
-        className="flex flex-wrap gap-2 items-center mt-1.5"
-        style={{ fontSize: 11, fontFamily: "'DM Mono', monospace" }}
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 8,
+          alignItems: "center",
+          fontSize: 11,
+          fontFamily: "var(--font-m)",
+        }}
       >
-        <span style={{ color: "#fbbf24" }}>
+        <span style={{ color: "#f5a623", fontWeight: 700 }}>
           ⬡ {log.assignedTaskPoints ?? 0} pts
         </span>
         {log.deadlineDays && (
-          <span style={{ color: "#6b7a99" }}>⏱ {log.deadlineDays}d window</span>
+          <span style={{ color: "var(--text3)" }}>⏱ {log.deadlineDays}d</span>
         )}
         {(log.task_status === "assigned" || isPending) && log.deadlineAt && (
           <span
             style={{
-              color: days <= 0 ? "#f87171" : days <= 2 ? "#fb923c" : "#8892a4",
-              fontWeight: days <= 2 ? "bold" : "normal",
+              color:
+                days <= 0 ? "#f05252" : days <= 2 ? "#f97316" : "var(--text3)",
+              fontWeight: days <= 2 ? 700 : 400,
             }}
           >
             {days <= 0 ? "⚠ Overdue" : `${days}d left`}
           </span>
         )}
         {log.task_status === "completed" && log.closedAt && (
-          <span style={{ color: "#4ade80" }}>✓ {fmtDate(log.closedAt)}</span>
+          <span style={{ color: "#22d3a0" }}>✓ {fmtDate(log.closedAt)}</span>
         )}
-        <div className="flex gap-3 ml-auto items-center">
-          {log.githubIssueLink && (
-            <a
-              href={log.githubIssueLink}
-              target="_blank"
-              rel="noreferrer"
-              className="no-underline hover:opacity-75 transition-opacity"
-              style={{ color: "#3a9de8" }}
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            marginLeft: "auto",
+            alignItems: "center",
+          }}
+        >
+          {/* View More button */}
+          {onViewDetail && (
+            <button
+              onClick={() => onViewDetail(log)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#4f8ef7",
+                fontSize: 11,
+                fontFamily: "var(--font-m)",
+                fontWeight: 700,
+                padding: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: 3,
+              }}
             >
-              Issue ↗
-            </a>
-          )}
-          {log.githubPrLink && (
-            <a
-              href={log.githubPrLink}
-              target="_blank"
-              rel="noreferrer"
-              className="no-underline hover:opacity-75 transition-opacity"
-              style={{ color: "#4ade80" }}
-            >
-              PR ↗
-            </a>
+              Details <ChevronRight size={11} />
+            </button>
           )}
           {log.task_status === "assigned" && onMarkComplete && (
             <button
               onClick={() => onMarkComplete(log)}
-              className="no-underline hover:opacity-75 transition-opacity font-bold bg-transparent border-none cursor-pointer"
               style={{
-                color: "#4ade80",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#22d3a0",
                 fontSize: 11,
-                fontFamily: "'DM Mono', monospace",
+                fontFamily: "var(--font-m)",
+                fontWeight: 700,
+                padding: 0,
               }}
             >
-              ✓ Mark Complete
+              ✓ Done
             </button>
           )}
         </div>
       </div>
 
-      {log.requirements && (
-        <details className="mt-2.5 group">
-          <summary
-            className="cursor-pointer list-none flex items-center gap-1 select-none"
-            style={{
-              color: "#6b7a99",
-              fontSize: 10,
-              fontFamily: "'DM Mono', monospace",
-            }}
-          >
-            <span className="group-open:rotate-90 transition-transform inline-block">
-              ▶
-            </span>{" "}
-            Requirements
-          </summary>
-          <p
-            className="leading-relaxed mt-1.5 pl-3"
-            style={{
-              color: "#8892a4",
-              fontSize: 11,
-              fontFamily: "'DM Mono', monospace",
-              borderLeft: "1px solid #1e2330",
-              display: "-webkit-box",
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {log.requirements}
-          </p>
-        </details>
-      )}
-
       {showClaim && log.task_status === "open" && (
-        <button
+        <motion.button
+          whileTap={{ scale: 0.97 }}
           onClick={() => onClaim(log._id)}
           disabled={claiming}
-          className="mt-3 w-full py-2.5 rounded-lg font-bold cursor-pointer disabled:opacity-50 transition-all flex justify-center items-center gap-2 active:scale-[0.98]"
+          className="card-tap"
           style={{
-            background: "#08251a",
-            border: "1px solid #4ade8038",
-            color: "#4ade80",
+            marginTop: 12,
+            width: "100%",
+            padding: "11px 0",
+            borderRadius: 10,
+            background: "#071c14",
+            border: "1px solid #22d3a035",
+            color: "#22d3a0",
             fontSize: 12,
-            fontFamily: "'DM Mono', monospace",
-            letterSpacing: "0.05em",
-            WebkitTapHighlightColor: "transparent",
+            fontFamily: "var(--font-m)",
+            fontWeight: 700,
+            cursor: claiming ? "wait" : "pointer",
+            opacity: claiming ? 0.6 : 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
           }}
         >
-          {claiming ? <Loader2 size={14} className="animate-spin" /> : "✋"}{" "}
-          {claiming ? "Initiating..." : "I'm Interested — Initiate Task"}
-        </button>
+          {claiming ? (
+            <Loader2 size={13} className="animate-spin" />
+          ) : (
+            <Target size={13} />
+          )}
+          {claiming ? "Claiming…" : "Claim This Task"}
+        </motion.button>
       )}
     </div>
   );
 };
 
-// ─── Project Card ──────────────────────────────────────────────────────────────
+// ─── Project Card ──────────────────────────────────────────────────────────────────
 const ProjCard = ({ p, onClick }) => {
   const done = p.myTasksDone ?? 0;
   const active = p.myTasksActive ?? 0;
-  const hasCommunity = !!p.communityLink;
-
   return (
     <motion.div
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ scale: 0.97 }}
       onClick={onClick}
-      className="rounded-2xl p-4 cursor-pointer transition-all active:opacity-90 relative overflow-hidden"
+      className="card-tap"
       style={{
-        background: "#0c0f18",
-        border: "1px solid #1e2330",
-        WebkitTapHighlightColor: "transparent",
+        borderRadius: 18,
+        padding: 16,
+        cursor: "pointer",
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        position: "relative",
+        overflow: "hidden",
+        transition: "border-color .2s",
       }}
     >
-      {hasCommunity && (
-        <div className="absolute top-3 right-3">
-          <div
-            className="w-2 h-2 rounded-full"
-            style={{ background: "#9c3ae8", boxShadow: "0 0 6px #9c3ae8" }}
-          />
-        </div>
-      )}
-      <div className="flex items-start gap-3 mb-3">
+      {p.communityLink && (
         <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center font-bold flex-shrink-0"
           style={{
-            background: "#3a9de815",
-            border: "1px solid #3a9de828",
-            color: "#3a9de8",
-            fontSize: 10,
-            fontFamily: "'DM Mono', monospace",
+            position: "absolute",
+            top: 12,
+            right: 12,
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: "#7c5cfc",
+            boxShadow: "0 0 8px #7c5cfc",
+            animation: "glow 2s ease-in-out infinite",
+          }}
+        />
+      )}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 12,
+          marginBottom: 12,
+        }}
+      >
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 12,
+            flexShrink: 0,
+            background: "#4f8ef715",
+            border: "1px solid #4f8ef728",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#4f8ef7",
+            fontFamily: "var(--font-m)",
+            fontWeight: 700,
+            fontSize: 11,
           }}
         >
           {p.projectID?.slice(-3)}
         </div>
-        <div className="flex-1 min-w-0">
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div
-            className="font-bold leading-tight truncate"
             style={{
-              color: "#f0f4ff",
-              fontSize: 13,
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "var(--font-d)",
+              fontWeight: 700,
+              color: "var(--text)",
+              fontSize: "clamp(12px,3.5vw,14px)",
+              lineHeight: 1.3,
+              marginBottom: 3,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
             {p.problem?.title || "—"}
           </div>
           <div
-            className="mt-0.5"
             style={{
-              color: "#6b7a99",
+              fontFamily: "var(--font-m)",
               fontSize: 10,
-              fontFamily: "'DM Mono', monospace",
+              color: "var(--text3)",
             }}
           >
             {p.projectID}
           </div>
         </div>
       </div>
-      <div className="flex gap-1.5 flex-wrap mb-3">
-        {p.problem?.theme && <Tag color="#9c3ae8">{p.problem.theme}</Tag>}
-        {p.problem?.category && <Tag color="#3a9de8">{p.problem.category}</Tag>}
-        {p.myRole && <Tag color="#fbbf24">{p.myRole}</Tag>}
+      {/* ── CATEGORY REMOVED ── only theme tag remains */}
+      <div
+        style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12 }}
+      >
+        {p.problem?.theme && <Tag color="#7c5cfc">{p.problem.theme}</Tag>}
+        {p.myRole && <Tag color="#f5a623">{p.myRole}</Tag>}
       </div>
-
-      {/* Quick links row */}
-      <div className="flex gap-2 mb-3">
+      <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
         {p.communityLink && (
           <a
             href={p.communityLink}
             target="_blank"
             rel="noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg no-underline transition-opacity hover:opacity-80"
             style={{
-              background: "#9c3ae815",
-              border: "1px solid #9c3ae830",
-              color: "#b565f5",
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 5,
+              padding: "7px 0",
+              borderRadius: 8,
+              textDecoration: "none",
+              background: "#7c5cfc15",
+              border: "1px solid #7c5cfc30",
+              color: "#a78bfa",
               fontSize: 10,
-              fontFamily: "'DM Mono', monospace",
+              fontFamily: "var(--font-m)",
+              fontWeight: 600,
             }}
           >
-            <MessageSquare size={11} /> Community
+            <MessageSquare size={10} /> Community
           </a>
         )}
         {p.githubRepoLink && (
@@ -932,76 +1931,101 @@ const ProjCard = ({ p, onClick }) => {
             target="_blank"
             rel="noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg no-underline transition-opacity hover:opacity-80"
             style={{
-              background: "#3a9de815",
-              border: "1px solid #3a9de830",
-              color: "#3a9de8",
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 5,
+              padding: "7px 0",
+              borderRadius: 8,
+              textDecoration: "none",
+              background: "#4f8ef715",
+              border: "1px solid #4f8ef730",
+              color: "#4f8ef7",
               fontSize: 10,
-              fontFamily: "'DM Mono', monospace",
+              fontFamily: "var(--font-m)",
+              fontWeight: 600,
             }}
           >
-            <Github size={11} /> Repo
+            <Github size={10} /> Repo
           </a>
         )}
       </div>
-
-      <div className="mb-3">
+      <div style={{ marginBottom: 12 }}>
         <div
-          className="flex justify-between mb-1"
           style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: 5,
             fontSize: 10,
-            color: "#6b7a99",
-            fontFamily: "'DM Mono', monospace",
+            color: "var(--text3)",
+            fontFamily: "var(--font-m)",
           }}
         >
           <span>{p.projectProgressRate ?? 0}% overall</span>
           <span>
-            {done}/{p.myLogs?.length ?? 0} my tasks
+            {done}/{p.myLogs?.length ?? 0} tasks
           </span>
         </div>
         <div
-          className="h-1.5 rounded-full overflow-hidden"
-          style={{ background: "#1e2330" }}
+          style={{
+            height: 4,
+            borderRadius: 10,
+            background: "var(--surface3)",
+            overflow: "hidden",
+          }}
         >
-          <div
-            className="h-full rounded-full transition-all duration-500"
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${p.projectProgressRate ?? 0}%` }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
             style={{
-              width: `${p.projectProgressRate ?? 0}%`,
-              background: "#3a9de8",
-              boxShadow: "0 0 6px #3a9de860",
+              height: "100%",
+              borderRadius: 10,
+              background: "linear-gradient(90deg,#4f8ef7,#7c5cfc)",
             }}
           />
         </div>
       </div>
-
-      <div className="grid grid-cols-3 gap-1.5">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3,1fr)",
+          gap: 6,
+        }}
+      >
         {[
-          ["Score", p.myScore, "#fbbf24"],
-          ["Active", active, "#fb923c"],
-          ["Done", done, "#4ade80"],
+          ["Score", p.myScore, "#f5a623"],
+          ["Active", active, "#f97316"],
+          ["Done", done, "#22d3a0"],
         ].map(([l, v, c]) => (
           <div
             key={l}
-            className="text-center py-1.5 rounded-lg"
-            style={{ background: "#131825" }}
+            style={{
+              textAlign: "center",
+              padding: "8px 0",
+              borderRadius: 10,
+              background: "var(--surface2)",
+            }}
           >
             <div
-              className="font-extrabold"
               style={{
-                fontSize: 13,
+                fontFamily: "var(--font-d)",
+                fontWeight: 700,
+                fontSize: 14,
                 color: c,
-                fontFamily: "'Syne', sans-serif",
               }}
             >
               {v}
             </div>
             <div
-              className="uppercase tracking-widest mt-0.5"
               style={{
-                fontSize: 7,
-                color: "#6b7a99",
-                fontFamily: "'DM Mono', monospace",
+                fontFamily: "var(--font-m)",
+                fontSize: 8,
+                color: "var(--text3)",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
               }}
             >
               {l}
@@ -1009,35 +2033,45 @@ const ProjCard = ({ p, onClick }) => {
           </div>
         ))}
       </div>
-      {/* Coordinator name row */}
       {p.coordinators?.length > 0 && (
         <div
-          className="flex items-center gap-2 mt-2 px-2 py-1.5 rounded-lg"
-          style={{ background: "#131825" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 7,
+            marginTop: 10,
+            padding: "8px 10px",
+            borderRadius: 10,
+            background: "var(--surface2)",
+          }}
         >
-          <Trophy size={10} style={{ color: "#9c3ae8", flexShrink: 0 }} />
+          <Trophy size={10} style={{ color: "#7c5cfc", flexShrink: 0 }} />
           <span
-            className="truncate font-bold"
             style={{
-              color: "#9c3ae8",
+              fontFamily: "var(--font-m)",
               fontSize: 10,
-              fontFamily: "'DM Mono', monospace",
+              color: "#a78bfa",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              flex: 1,
             }}
           >
             {p.coordinators[0].name}
             {p.coordinators.length > 1 && (
-              <span style={{ color: "#6b7a99" }}>
+              <span style={{ color: "var(--text3)" }}>
                 {" "}
                 +{p.coordinators.length - 1}
               </span>
             )}
           </span>
           <span
-            className="uppercase tracking-widest flex-shrink-0"
             style={{
-              color: "#6b7a99",
-              fontSize: 7,
-              fontFamily: "'DM Mono', monospace",
+              fontFamily: "var(--font-m)",
+              fontSize: 8,
+              color: "var(--text3)",
+              textTransform: "uppercase",
+              flexShrink: 0,
             }}
           >
             Coord
@@ -1048,44 +2082,55 @@ const ProjCard = ({ p, onClick }) => {
   );
 };
 
+// ─── Ranking Row ───────────────────────────────────────────────────────────────────
 const RRow = ({ rank, name, score, dept, isMe }) => {
   const medal = ["🥇", "🥈", "🥉"][rank - 1];
   return (
     <div
-      className="flex items-center gap-3 px-3 sm:px-4 py-2.5 rounded-xl transition-all"
       style={{
-        background: isMe ? "#18110a" : "transparent",
-        border: isMe ? "1px solid #fbbf2428" : "1px solid transparent",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "10px 12px",
+        borderRadius: 12,
+        background: isMe ? "#1c1508" : "transparent",
+        border: isMe ? "1px solid #f5a62328" : "1px solid transparent",
       }}
     >
       <div
-        className="w-7 text-center font-bold flex-shrink-0"
         style={{
-          color: isMe ? "#fbbf24" : "#6b7a99",
+          width: 24,
+          textAlign: "center",
+          flexShrink: 0,
+          fontFamily: "var(--font-m)",
+          fontWeight: 700,
           fontSize: 11,
-          fontFamily: "'DM Mono', monospace",
+          color: isMe ? "#f5a623" : "var(--text3)",
         }}
       >
         {medal || `#${rank}`}
       </div>
-      <Av name={name} size={26} />
-      <div className="flex-1 min-w-0">
+      <Av name={name} size={28} />
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div
-          className="font-bold truncate"
           style={{
-            color: isMe ? "#fbbf24" : "#f0f4ff",
-            fontSize: 12,
-            fontFamily: "'Syne', sans-serif",
+            fontFamily: "var(--font-d)",
+            fontWeight: 700,
+            fontSize: "clamp(11px,3vw,13px)",
+            color: isMe ? "#f5a623" : "var(--text)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
         >
           {name}
           {isMe && (
             <span
               style={{
-                color: "#e85d3a",
+                color: "#f05252",
                 fontSize: 8,
                 marginLeft: 4,
-                fontFamily: "'DM Mono', monospace",
+                fontFamily: "var(--font-m)",
               }}
             >
               (you)
@@ -1095,9 +2140,12 @@ const RRow = ({ rank, name, score, dept, isMe }) => {
         {dept && (
           <div
             style={{
-              color: "#6b7a99",
+              fontFamily: "var(--font-m)",
               fontSize: 9,
-              fontFamily: "'DM Mono', monospace",
+              color: "var(--text3)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
             {dept}
@@ -1105,11 +2153,12 @@ const RRow = ({ rank, name, score, dept, isMe }) => {
         )}
       </div>
       <div
-        className="font-extrabold"
         style={{
-          color: isMe ? "#fbbf24" : "#c4cedf",
-          fontSize: 13,
-          fontFamily: "'Syne', sans-serif",
+          fontFamily: "var(--font-d)",
+          fontWeight: 800,
+          fontSize: 14,
+          color: isMe ? "#f5a623" : "var(--text)",
+          flexShrink: 0,
         }}
       >
         {score}
@@ -1118,7 +2167,7 @@ const RRow = ({ rank, name, score, dept, isMe }) => {
   );
 };
 
-// ─── Enhanced Project Drawer ───────────────────────────────────────────────────
+// ─── Project Drawer ────────────────────────────────────────────────────────────────
 const ProjectDrawer = ({
   drawer,
   logs,
@@ -1127,6 +2176,7 @@ const ProjectDrawer = ({
   onClaim,
   onClose,
   onMarkComplete,
+  onViewDetail,
 }) => {
   const myLogs = logs.filter(
     (l) =>
@@ -1139,160 +2189,219 @@ const ProjectDrawer = ({
       l.projectId?.toString() === drawer._id?.toString(),
   );
   const coordinators = drawer.coordinators || [];
-
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="proj-drawer fixed z-[500] shadow-2xl overflow-y-auto"
-      style={{
-        background: "#0a0d16",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        maxHeight: "92dvh",
-        borderRadius: "20px 20px 0 0",
-        borderTop: "1px solid #252d3e",
-      }}
+      className="proj-drawer"
+      initial={{ opacity: 0, y: "100%" }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: "100%" }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      style={{ background: "#0a0d16", zIndex: 500, overflowY: "auto" }}
     >
-      {/* Pull handle mobile */}
-      <div className="flex justify-center pt-3 pb-1 sm:hidden">
-        <div
-          className="w-10 h-1 rounded-full"
-          style={{ background: "#252d3e" }}
-        />
-      </div>
-
-      {/* Header */}
       <div
-        className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-6 py-3.5"
         style={{
-          background: "#0a0d16ee",
-          backdropFilter: "blur(10px)",
-          borderBottom: "1px solid #1e2330",
+          display: "flex",
+          justifyContent: "center",
+          padding: "12px 0 4px",
         }}
       >
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div
+          style={{
+            width: 40,
+            height: 4,
+            borderRadius: 4,
+            background: "var(--border2)",
+          }}
+        />
+      </div>
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "12px 16px",
+          background: "rgba(10,13,22,.92)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid var(--border)",
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            minWidth: 0,
+            flex: 1,
+          }}
+        >
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold flex-shrink-0"
             style={{
-              background: "#3a9de820",
-              border: "1px solid #3a9de840",
-              color: "#3a9de8",
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              flexShrink: 0,
+              background: "#4f8ef720",
+              border: "1px solid #4f8ef740",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#4f8ef7",
+              fontFamily: "var(--font-m)",
+              fontWeight: 700,
               fontSize: 10,
-              fontFamily: "'DM Mono', monospace",
             }}
           >
             {drawer.projectID?.slice(-3)}
           </div>
-          <div className="min-w-0">
+          <div style={{ minWidth: 0 }}>
             <div
-              className="uppercase tracking-widest"
               style={{
-                color: "#3a9de8",
+                fontFamily: "var(--font-m)",
                 fontSize: 9,
-                fontFamily: "'DM Mono', monospace",
+                color: "#4f8ef7",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
               }}
             >
               {drawer.projectID}
             </div>
             <div
-              className="font-extrabold leading-tight truncate"
               style={{
-                color: "#f0f4ff",
-                fontSize: 13,
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: "var(--font-d)",
+                fontWeight: 700,
+                color: "var(--text)",
+                fontSize: "clamp(12px,3.5vw,14px)",
+                lineHeight: 1.2,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
             >
               {drawer.problem?.title || "—"}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flexShrink: 0,
+          }}
+        >
           <span
-            className="px-2 py-1 rounded-lg"
             style={{
-              background: drawer.is_blocked ? "#280a0a" : "#08271a",
-              color: drawer.is_blocked ? "#f87171" : "#4ade80",
-              border: `1px solid ${drawer.is_blocked ? "#f8717120" : "#4ade8020"}`,
+              padding: "4px 10px",
+              borderRadius: 20,
+              background: drawer.is_blocked ? "#200808" : "#071c14",
+              color: drawer.is_blocked ? "#f05252" : "#22d3a0",
+              border: `1px solid ${drawer.is_blocked ? "#f0525220" : "#22d3a020"}`,
               fontSize: 10,
-              fontFamily: "'DM Mono', monospace",
+              fontFamily: "var(--font-m)",
+              fontWeight: 600,
             }}
           >
-            {drawer.is_blocked ? "🔒 Blocked" : "🟢 Active"}
+            {drawer.is_blocked ? "🔒 Blocked" : "● Active"}
           </span>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer font-mono text-sm border-none"
+            className="card-tap"
             style={{
-              background: "#1e2330",
-              color: "#8892a4",
-              WebkitTapHighlightColor: "transparent",
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: "var(--surface2)",
+              border: "1px solid var(--border)",
+              color: "var(--text2)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 13,
             }}
           >
             ✕
           </button>
         </div>
       </div>
-
       <div
-        className="p-4 sm:p-5 space-y-5"
         style={{
-          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 32px)",
+          padding: 16,
+          paddingBottom: "calc(env(safe-area-inset-bottom,0px) + 32px)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
         }}
       >
-        {/* 🔥 Community Join — PROMINENT FIRST */}
         {drawer.communityLink && (
           <CommunityBanner
             link={drawer.communityLink}
             projectTitle={drawer.problem?.title}
           />
         )}
-
         {/* My Contribution */}
         <div
-          className="rounded-xl p-4"
-          style={{ background: "#101520", border: "1px solid #1e2330" }}
+          style={{
+            borderRadius: 14,
+            padding: 14,
+            background: "var(--surface2)",
+            border: "1px solid var(--border)",
+          }}
         >
           <div
-            className="font-bold uppercase tracking-widest mb-3"
             style={{
-              color: "#3a9de8",
+              fontFamily: "var(--font-m)",
               fontSize: 9,
-              fontFamily: "'DM Mono', monospace",
+              color: "#4f8ef7",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              marginBottom: 10,
             }}
           >
             ◆ My Contribution
           </div>
-          <div className="grid grid-cols-4 gap-2 mb-3">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4,1fr)",
+              gap: 8,
+            }}
+          >
             {[
-              ["Score", drawer.myScore, "#fbbf24"],
-              ["Done", drawer.myTasksDone, "#4ade80"],
-              ["Active", drawer.myTasksActive, "#fb923c"],
-              ["Logs", myLogs.length, "#3a9de8"],
+              ["Score", drawer.myScore, "#f5a623"],
+              ["Done", drawer.myTasksDone, "#22d3a0"],
+              ["Active", drawer.myTasksActive, "#f97316"],
+              ["Logs", myLogs.length, "#4f8ef7"],
             ].map(([l, v, c]) => (
               <div
                 key={l}
-                className="text-center py-2 rounded-lg"
-                style={{ background: "#0c0f18" }}
+                style={{
+                  textAlign: "center",
+                  padding: "10px 4px",
+                  borderRadius: 10,
+                  background: "var(--surface)",
+                }}
               >
                 <div
-                  className="font-extrabold"
                   style={{
-                    fontSize: 16,
+                    fontFamily: "var(--font-d)",
+                    fontWeight: 800,
+                    fontSize: "clamp(15px,4vw,18px)",
                     color: c,
-                    fontFamily: "'Syne', sans-serif",
                   }}
                 >
                   {v}
                 </div>
                 <div
-                  className="uppercase"
                   style={{
+                    fontFamily: "var(--font-m)",
                     fontSize: 8,
-                    color: "#6b7a99",
-                    fontFamily: "'DM Mono', monospace",
+                    color: "var(--text3)",
+                    textTransform: "uppercase",
                   }}
                 >
                   {l}
@@ -1303,99 +2412,107 @@ const ProjectDrawer = ({
           {drawer.myRole && (
             <div
               style={{
+                marginTop: 10,
+                fontFamily: "var(--font-m)",
                 fontSize: 11,
-                color: "#9c3ae8",
-                fontFamily: "'DM Mono', monospace",
+                color: "var(--text2)",
               }}
             >
-              Role: <span style={{ color: "#f0f4ff" }}>{drawer.myRole}</span>
+              Role:{" "}
+              <span style={{ color: "var(--text)" }}>{drawer.myRole}</span>
             </div>
           )}
-          {drawer.myDescription && (
-            <p
-              className="mt-1 leading-relaxed"
-              style={{
-                color: "#8892a4",
-                fontSize: 11,
-                fontFamily: "'DM Mono', monospace",
-              }}
-            >
-              {drawer.myDescription}
-            </p>
-          )}
         </div>
-
         {/* Project Details */}
         <div
-          className="rounded-xl p-4"
-          style={{ background: "#101520", border: "1px solid #1e2330" }}
+          style={{
+            borderRadius: 14,
+            padding: 14,
+            background: "var(--surface2)",
+            border: "1px solid var(--border)",
+          }}
         >
           <div
-            className="font-bold uppercase tracking-widest mb-3"
             style={{
-              color: "#fbbf24",
+              fontFamily: "var(--font-m)",
               fontSize: 9,
-              fontFamily: "'DM Mono', monospace",
+              color: "#f5a623",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              marginBottom: 10,
             }}
           >
             ◆ Project Details
           </div>
-          <div className="grid grid-cols-2 gap-2 mb-3">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 8,
+              marginBottom: 10,
+            }}
+          >
             {[
               {
                 l: "Contributors",
                 v: drawer.contributors?.length ?? 0,
-                c: "#3a9de8",
+                c: "#4f8ef7",
                 i: <Users size={12} />,
               },
               {
                 l: "Progress",
                 v: `${drawer.projectProgressRate ?? 0}%`,
-                c: "#4ade80",
+                c: "#22d3a0",
                 i: <Activity size={12} />,
               },
               {
                 l: "Tasks Done",
                 v: drawer.totalTasksCompleted ?? 0,
-                c: "#4ade80",
+                c: "#22d3a0",
                 i: <CheckCircle size={12} />,
               },
               {
                 l: "Total Tasks",
                 v: drawer.totalTasksCreated ?? 0,
-                c: "#fbbf24",
+                c: "#f5a623",
                 i: <Zap size={12} />,
               },
               {
                 l: "Points Given",
                 v: drawer.totalPointsDistributed ?? 0,
-                c: "#e85d3a",
+                c: "#f05252",
                 i: <Star size={12} />,
               },
             ].map(({ l, v, c, i }) => (
               <div
                 key={l}
-                className="flex items-center gap-2.5 p-2.5 rounded-lg"
-                style={{ background: "#0c0f18" }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: "var(--surface)",
+                }}
               >
                 <div style={{ color: c }}>{i}</div>
                 <div>
                   <div
-                    className="font-extrabold"
                     style={{
-                      fontSize: 14,
+                      fontFamily: "var(--font-d)",
+                      fontWeight: 700,
+                      fontSize: 15,
                       color: c,
-                      fontFamily: "'Syne', sans-serif",
                     }}
                   >
                     {v}
                   </div>
                   <div
-                    className="uppercase tracking-widest"
                     style={{
+                      fontFamily: "var(--font-m)",
                       fontSize: 8,
-                      color: "#6b7a99",
-                      fontFamily: "'DM Mono', monospace",
+                      color: "var(--text3)",
+                      textTransform: "uppercase",
                     }}
                   >
                     {l}
@@ -1403,19 +2520,29 @@ const ProjectDrawer = ({
                 </div>
               </div>
             ))}
-            {/* Coordinator name cell — spans full width if only one, otherwise shows first + count */}
             <div
-              className="col-span-2 flex items-center gap-2.5 p-2.5 rounded-lg"
-              style={{ background: "#0c0f18", border: "1px solid #9c3ae820" }}
+              style={{
+                gridColumn: "1/-1",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 12px",
+                borderRadius: 10,
+                background: "var(--surface)",
+                border: "1px solid #7c5cfc20",
+              }}
             >
-              <Trophy size={12} style={{ color: "#9c3ae8", flexShrink: 0 }} />
-              <div className="min-w-0 flex-1">
+              <Trophy size={12} style={{ color: "#7c5cfc", flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div
-                  className="font-extrabold truncate"
                   style={{
+                    fontFamily: "var(--font-d)",
+                    fontWeight: 700,
                     fontSize: 13,
-                    color: "#9c3ae8",
-                    fontFamily: "'Syne', sans-serif",
+                    color: "#a78bfa",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {coordinators.length === 0
@@ -1425,11 +2552,11 @@ const ProjectDrawer = ({
                       : `${coordinators[0].name} +${coordinators.length - 1} more`}
                 </div>
                 <div
-                  className="uppercase tracking-widest"
                   style={{
+                    fontFamily: "var(--font-m)",
                     fontSize: 8,
-                    color: "#6b7a99",
-                    fontFamily: "'DM Mono', monospace",
+                    color: "var(--text3)",
+                    textTransform: "uppercase",
                   }}
                 >
                   {coordinators.length <= 1 ? "Coordinator" : "Coordinators"}
@@ -1439,13 +2566,19 @@ const ProjectDrawer = ({
                 <a
                   href={`mailto:${coordinators[0].email}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="flex-shrink-0 flex items-center gap-1 no-underline hover:opacity-80 px-2 py-1 rounded-lg"
                   style={{
-                    background: "#9c3ae815",
-                    color: "#b565f5",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    textDecoration: "none",
+                    padding: "5px 10px",
+                    borderRadius: 8,
+                    flexShrink: 0,
+                    background: "#7c5cfc15",
+                    color: "#a78bfa",
                     fontSize: 10,
-                    fontFamily: "'DM Mono', monospace",
-                    border: "1px solid #9c3ae828",
+                    fontFamily: "var(--font-m)",
+                    border: "1px solid #7c5cfc28",
                   }}
                 >
                   <Mail size={10} /> Mail
@@ -1453,298 +2586,148 @@ const ProjectDrawer = ({
               )}
             </div>
           </div>
-
-          {/* Progress Bar */}
-          <div>
-            <div
-              className="flex justify-between mb-1"
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: 6,
+              fontSize: 10,
+              color: "var(--text3)",
+              fontFamily: "var(--font-m)",
+            }}
+          >
+            <span>Overall Progress</span>
+            <span style={{ color: "#4f8ef7" }}>
+              {drawer.projectProgressRate ?? 0}%
+            </span>
+          </div>
+          <div
+            style={{
+              height: 6,
+              borderRadius: 10,
+              background: "var(--surface3)",
+              overflow: "hidden",
+            }}
+          >
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${drawer.projectProgressRate ?? 0}%` }}
+              transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
               style={{
-                fontSize: 10,
-                color: "#6b7a99",
-                fontFamily: "'DM Mono', monospace",
+                height: "100%",
+                borderRadius: 10,
+                background: "linear-gradient(90deg,#4f8ef7,#7c5cfc)",
+                boxShadow: "0 0 10px #4f8ef760",
               }}
-            >
-              <span>Overall Progress</span>
-              <span style={{ color: "#3a9de8" }}>
-                {drawer.projectProgressRate ?? 0}%
-              </span>
-            </div>
-            <div
-              className="h-2 rounded-full overflow-hidden"
-              style={{ background: "#1e2330" }}
-            >
-              <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{
-                  width: `${drawer.projectProgressRate ?? 0}%`,
-                  background: "linear-gradient(90deg,#3a9de8,#9c3ae8)",
-                  boxShadow: "0 0 8px #3a9de860",
-                }}
-              />
-            </div>
+            />
           </div>
         </div>
-
-        {/* Problem Description */}
+        {/* Problem — RICH TEXT SUPPORTED */}
         {drawer.problem?.description && (
           <div
-            className="rounded-xl p-4"
-            style={{ background: "#101520", border: "1px solid #1e2330" }}
+            style={{
+              borderRadius: 14,
+              padding: 14,
+              background: "var(--surface2)",
+              border: "1px solid var(--border)",
+            }}
           >
             <div
-              className="font-bold uppercase tracking-widest mb-2"
               style={{
-                color: "#6b7a99",
+                fontFamily: "var(--font-m)",
                 fontSize: 9,
-                fontFamily: "'DM Mono', monospace",
+                color: "var(--text3)",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: 10,
               }}
             >
               ◆ Problem Statement
             </div>
-            <p
-              className="leading-relaxed"
+            {/* Smart renderer: handles both rich HTML and plain text */}
+            <SmartText text={drawer.problem.description} />
+            <div
               style={{
-                color: "#8892a4",
-                fontSize: 11,
-                fontFamily: "'DM Mono', monospace",
+                display: "flex",
+                gap: 5,
+                flexWrap: "wrap",
+                marginTop: 12,
               }}
             >
-              {drawer.problem.description}
-            </p>
-            <div className="flex gap-1.5 flex-wrap mt-3">
               {drawer.problem?.theme && (
-                <Tag color="#9c3ae8">{drawer.problem.theme}</Tag>
+                <Tag color="#7c5cfc">{drawer.problem.theme}</Tag>
               )}
-              {drawer.problem?.category && (
-                <Tag color="#3a9de8">{drawer.problem.category}</Tag>
-              )}
+              {/* category tag removed per request */}
               {(drawer.problem?.tags || []).map((t) => (
-                <Tag key={t} color="#6b7a99">
+                <Tag key={t} color="var(--text3)">
                   {t}
                 </Tag>
               ))}
             </div>
           </div>
         )}
-
         {/* Coordinators */}
         {coordinators.length > 0 && (
           <div>
             <div
-              className="font-bold uppercase tracking-widest mb-3"
               style={{
-                color: "#3a9de8",
+                fontFamily: "var(--font-m)",
                 fontSize: 9,
-                fontFamily: "'DM Mono', monospace",
+                color: "#4f8ef7",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: 10,
               }}
             >
               ◆ Coordinators ({coordinators.length})
             </div>
-            <div className="space-y-2">
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {coordinators.map((coord, i) => (
                 <CoordinatorCard key={coord._id || i} coordinator={coord} />
               ))}
             </div>
           </div>
         )}
-
-        {/* Problem Owner / Organization */}
-        {drawer.problem?.ownerName && (
-          <div
-            className="rounded-xl p-4"
-            style={{ background: "#101520", border: "1px solid #fbbf2415" }}
-          >
-            <div
-              className="font-bold uppercase tracking-widest mb-3"
-              style={{
-                color: "#fbbf24",
-                fontSize: 9,
-                fontFamily: "'DM Mono', monospace",
-              }}
-            >
-              ◆ Problem Sponsor
-            </div>
-            <div className="flex items-start gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{
-                  background: "#fbbf2415",
-                  border: "1px solid #fbbf2428",
-                }}
-              >
-                <BookOpen size={16} style={{ color: "#fbbf24" }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div
-                  className="font-bold"
-                  style={{
-                    color: "#f0f4ff",
-                    fontSize: 13,
-                    fontFamily: "'Syne', sans-serif",
-                  }}
-                >
-                  {drawer.problem.ownerName}
-                </div>
-                {drawer.problem.organization && (
-                  <div
-                    style={{
-                      color: "#fbbf24",
-                      fontSize: 11,
-                      fontFamily: "'DM Mono', monospace",
-                    }}
-                  >
-                    {drawer.problem.organization}
-                  </div>
-                )}
-                {drawer.problem.department && (
-                  <div
-                    style={{
-                      color: "#6b7a99",
-                      fontSize: 11,
-                      fontFamily: "'DM Mono', monospace",
-                    }}
-                  >
-                    {drawer.problem.department}
-                  </div>
-                )}
-                <div className="flex gap-3 mt-2 flex-wrap">
-                  {drawer.problem.contactInfo && (
-                    <a
-                      href={`mailto:${drawer.problem.contactInfo}`}
-                      className="flex items-center gap-1.5 no-underline hover:opacity-80"
-                      style={{
-                        color: "#3a9de8",
-                        fontSize: 11,
-                        fontFamily: "'DM Mono', monospace",
-                      }}
-                    >
-                      <Mail size={11} /> {drawer.problem.contactInfo}
-                    </a>
-                  )}
-                  {drawer.problem.Phone && (
-                    <a
-                      href={`tel:${drawer.problem.Phone}`}
-                      className="flex items-center gap-1.5 no-underline hover:opacity-80"
-                      style={{
-                        color: "#4ade80",
-                        fontSize: 11,
-                        fontFamily: "'DM Mono', monospace",
-                      }}
-                    >
-                      <Phone size={11} /> {drawer.problem.Phone}
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Contributors List */}
-        {drawer.contributors?.length > 0 && (
-          <div>
-            <div
-              className="font-bold uppercase tracking-widest mb-3"
-              style={{
-                color: "#4ade80",
-                fontSize: 9,
-                fontFamily: "'DM Mono', monospace",
-              }}
-            >
-              ◆ Contributors ({drawer.contributors.length})
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {drawer.contributors.slice(0, 8).map((c, i) => (
-                <div
-                  key={c._id || i}
-                  className="flex items-center gap-2.5 p-2.5 rounded-lg"
-                  style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
-                >
-                  <Av name={c.name || "?"} size={28} />
-                  <div className="min-w-0 flex-1">
-                    <div
-                      className="font-bold truncate"
-                      style={{
-                        color: "#f0f4ff",
-                        fontSize: 11,
-                        fontFamily: "'Syne', sans-serif",
-                      }}
-                    >
-                      {c.name || "Unknown"}
-                    </div>
-                    {c.branch && (
-                      <div
-                        style={{
-                          color: "#6b7a99",
-                          fontSize: 9,
-                          fontFamily: "'DM Mono', monospace",
-                        }}
-                      >
-                        {c.branch}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {drawer.contributors.length > 8 && (
-                <div
-                  className="flex items-center justify-center p-2.5 rounded-lg"
-                  style={{
-                    background: "#0c0f18",
-                    border: "1px dashed #1e2330",
-                  }}
-                >
-                  <span
-                    style={{
-                      color: "#6b7a99",
-                      fontSize: 11,
-                      fontFamily: "'DM Mono', monospace",
-                    }}
-                  >
-                    +{drawer.contributors.length - 8} more
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Project Links */}
         <div>
           <div
-            className="font-bold uppercase tracking-widest mb-2.5"
             style={{
-              color: "#6b7a99",
+              fontFamily: "var(--font-m)",
               fontSize: 9,
-              fontFamily: "'DM Mono', monospace",
+              color: "var(--text3)",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              marginBottom: 10,
             }}
           >
             ◆ Project Links
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
+          >
             {[
               {
-                l: "GitHub Repo",
+                l: "GitHub",
                 href: drawer.githubRepoLink,
-                c: "#3a9de8",
+                c: "#4f8ef7",
                 i: <Github size={14} />,
               },
               {
                 l: "Live Demo",
                 href: drawer.liveHostedLink,
-                c: "#4ade80",
+                c: "#22d3a0",
                 i: <ExternalLink size={14} />,
               },
               {
                 l: "Resources",
                 href: drawer.resourcesLink,
-                c: "#fbbf24",
+                c: "#f5a623",
                 i: <BookOpen size={14} />,
               },
               {
                 l: "Community",
                 href: drawer.communityLink,
-                c: "#9c3ae8",
+                c: "#7c5cfc",
                 i: <MessageSquare size={14} />,
                 highlight: true,
               },
@@ -1756,31 +2739,35 @@ const ProjectDrawer = ({
                   href={lnk.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-2 rounded-xl p-3 no-underline active:opacity-70 transition-opacity"
+                  className="card-tap"
                   style={{
-                    background: lnk.highlight ? "#9c3ae812" : "#101520",
-                    border: `1px solid ${lnk.highlight ? "#9c3ae830" : "#1e2330"}`,
-                    WebkitTapHighlightColor: "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "12px",
+                    borderRadius: 12,
+                    textDecoration: "none",
+                    background: lnk.highlight ? "#7c5cfc12" : "var(--surface)",
+                    border: `1px solid ${lnk.highlight ? "#7c5cfc30" : "var(--border)"}`,
                   }}
                 >
                   <span style={{ color: lnk.c }}>{lnk.i}</span>
                   <div>
                     <div
-                      className="uppercase tracking-widest"
                       style={{
-                        color: "#6b7a99",
+                        fontFamily: "var(--font-m)",
                         fontSize: 9,
-                        fontFamily: "'DM Mono', monospace",
+                        color: "var(--text3)",
+                        textTransform: "uppercase",
                       }}
                     >
                       {lnk.l}
                     </div>
                     <div
-                      className="mt-px"
                       style={{
-                        color: lnk.c,
+                        fontFamily: "var(--font-m)",
                         fontSize: 10,
-                        fontFamily: "'DM Mono', monospace",
+                        color: lnk.c,
                       }}
                     >
                       Open ↗
@@ -1790,21 +2777,22 @@ const ProjectDrawer = ({
               ))}
           </div>
         </div>
-
         {/* Available Tasks */}
         {drawerOpenLogs.length > 0 && (
           <div>
             <div
-              className="font-bold uppercase tracking-widest mb-3"
               style={{
-                color: "#4ade80",
+                fontFamily: "var(--font-m)",
                 fontSize: 9,
-                fontFamily: "'DM Mono', monospace",
+                color: "#22d3a0",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: 10,
               }}
             >
               ◆ Available Tasks ({drawerOpenLogs.length})
             </div>
-            <div className="space-y-2.5">
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {drawerOpenLogs.map((l) => (
                 <LogCard
                   key={l._id}
@@ -1813,28 +2801,35 @@ const ProjectDrawer = ({
                   onClaim={onClaim}
                   claiming={claiming === l._id}
                   onMarkComplete={onMarkComplete}
+                  onViewDetail={onViewDetail}
                 />
               ))}
             </div>
           </div>
         )}
-
         {/* My Logs */}
         {myLogs.length > 0 && (
           <div>
             <div
-              className="font-bold uppercase tracking-widest mb-3"
               style={{
-                color: "#e85d3a",
+                fontFamily: "var(--font-m)",
                 fontSize: 9,
-                fontFamily: "'DM Mono', monospace",
+                color: "#f97316",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: 10,
               }}
             >
               ◆ My Task Logs ({myLogs.length})
             </div>
-            <div className="space-y-2.5">
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {myLogs.map((l) => (
-                <LogCard key={l._id} log={l} onMarkComplete={onMarkComplete} />
+                <LogCard
+                  key={l._id}
+                  log={l}
+                  onMarkComplete={onMarkComplete}
+                  onViewDetail={onViewDetail}
+                />
               ))}
             </div>
           </div>
@@ -1844,78 +2839,119 @@ const ProjectDrawer = ({
   );
 };
 
-// ─── Bottom Nav ────────────────────────────────────────────────────────────────
-const BottomNav = ({ tab, setTab, TABS }) => (
-  <nav
-    className="fixed bottom-0 left-0 right-0 z-[200] flex items-center justify-around sm:hidden"
-    style={{
-      background: "#0a0d16f0",
-      backdropFilter: "blur(16px)",
-      borderTop: "1px solid #1e2330",
-      paddingBottom: "env(safe-area-inset-bottom, 0px)",
-    }}
-  >
-    {TABS.map((t) => {
-      const icons = {
-        overview: "◎",
-        projects: "◉",
-        tasks: "◌",
-        open: "✦",
-        ranking: "⬡",
-      };
-      const active = tab === t.id;
-      return (
-        <button
-          key={t.id}
-          onClick={() => setTab(t.id)}
-          className="flex flex-col items-center gap-0.5 py-2.5 px-3 relative cursor-pointer bg-transparent border-none"
-          style={{
-            color: active ? "#3a9de8" : "#4a5568",
-            WebkitTapHighlightColor: "transparent",
-            minWidth: 56,
-          }}
-        >
-          {t.badge !== undefined && t.badge > 0 && (
+// ─── Bottom Nav ────────────────────────────────────────────────────────────────────
+const BottomNav = ({ tab, setTab, TABS }) => {
+  const ICONS = {
+    overview: <BarChart2 size={20} />,
+    projects: <Layers size={20} />,
+    tasks: <Target size={20} />,
+    open: <Flame size={20} />,
+    ranking: <Trophy size={20} />,
+  };
+  return (
+    <nav
+      style={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 200,
+        background: "rgba(6,8,16,.92)",
+        backdropFilter: "blur(20px)",
+        borderTop: "1px solid var(--border)",
+        paddingBottom: "env(safe-area-inset-bottom,0px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-around",
+      }}
+    >
+      {TABS.map((t) => {
+        const active = tab === t.id;
+        return (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className="card-tap"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 3,
+              padding: "10px 12px",
+              position: "relative",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: active ? "#4f8ef7" : "var(--text3)",
+              minWidth: 56,
+              transition: "color .2s",
+            }}
+          >
+            {t.badge !== undefined && t.badge > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: 6,
+                  right: 6,
+                  width: 16,
+                  height: 16,
+                  borderRadius: "50%",
+                  background: "#4f8ef7",
+                  color: "#fff",
+                  fontSize: 8,
+                  fontFamily: "var(--font-m)",
+                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {t.badge > 99 ? "99+" : t.badge}
+              </span>
+            )}
+            <motion.div
+              animate={{ scale: active ? 1.15 : 1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
+              {ICONS[t.id]}
+            </motion.div>
             <span
-              className="absolute top-1.5 right-2 w-4 h-4 rounded-full flex items-center justify-center font-bold"
               style={{
-                background: "#3a9de8",
-                color: "#fff",
+                fontFamily: "var(--font-m)",
                 fontSize: 8,
-                fontFamily: "'DM Mono', monospace",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
               }}
             >
-              {t.badge > 99 ? "99+" : t.badge}
+              {t.label}
             </span>
-          )}
-          <span
-            className="text-[18px] leading-none transition-transform duration-150"
-            style={{ transform: active ? "scale(1.2)" : "scale(1)" }}
-          >
-            {icons[t.id]}
-          </span>
-          <span
-            className="font-bold uppercase tracking-widest transition-all"
-            style={{ fontSize: 8, fontFamily: "'DM Mono', monospace" }}
-          >
-            {t.label}
-          </span>
-          {active && (
-            <motion.div
-              layoutId="bottomNavActive"
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-[2px] rounded-full"
-              style={{ background: "#3a9de8" }}
-            />
-          )}
-        </button>
-      );
-    })}
-  </nav>
-);
+            {active && (
+              <motion.div
+                layoutId="nav-ind"
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: 20,
+                  height: 2,
+                  borderRadius: 2,
+                  background: "#4f8ef7",
+                }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+          </button>
+        );
+      })}
+    </nav>
+  );
+};
 
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════════
 // MAIN DASHBOARD
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════════
 const Dashboard = () => {
   const appCtx = (() => {
     try {
@@ -1979,6 +3015,9 @@ const Dashboard = () => {
   const [claiming, setClaiming] = useState(null);
   const [drawer, setDrawer] = useState(null);
   const [completingLog, setCompletingLog] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  // New: log detail drawer state
+  const [logDetail, setLogDetail] = useState(null);
 
   const boom = (message, type = "success") => setToastData({ message, type });
 
@@ -1989,7 +3028,6 @@ const Dashboard = () => {
       setLoading(false);
       return;
     }
-    setLoading(true);
     try {
       const { data: r } = await authGet("/api/student/dashboard");
       if (r.success) setData(r);
@@ -1998,6 +3036,7 @@ const Dashboard = () => {
       boom(e?.response?.data?.message || "Failed to load dashboard.", "error");
     } finally {
       setLoading(false);
+      setSyncing(false);
     }
   }, [ctxToken]);
 
@@ -2006,16 +3045,17 @@ const Dashboard = () => {
   }, [load]);
 
   useEffect(() => {
-    if (drawer) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    // Block body scroll when any drawer is open
+    document.body.style.overflow = drawer || logDetail ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [drawer]);
+  }, [drawer, logDetail]);
 
+  const handleSync = async () => {
+    setSyncing(true);
+    await load();
+  };
   const handleClaim = async (logId) => {
     setClaiming(logId);
     try {
@@ -2025,14 +3065,13 @@ const Dashboard = () => {
       if (r.success) {
         boom(r.message, "success");
         await load();
-      } else boom(r.message || "Failed to initiate task.", "error");
+      } else boom(r.message || "Failed.", "error");
     } catch (e) {
-      boom(e?.response?.data?.message || "Failed to initiate task.", "error");
+      boom(e?.response?.data?.message || "Failed.", "error");
     } finally {
       setClaiming(null);
     }
   };
-
   const handleMarkComplete = async (logId, formPayload) => {
     try {
       const { data: r } = await authPatch(
@@ -2040,12 +3079,12 @@ const Dashboard = () => {
         formPayload,
       );
       if (r.success) {
-        boom("Task submitted for admin review!", "success");
+        boom("Submitted for review!", "success");
         setCompletingLog(null);
         await load();
-      } else boom(r.message || "Failed to submit task.", "error");
+      } else boom(r.message || "Failed.", "error");
     } catch (e) {
-      boom(e?.response?.data?.message || "Failed to submit task.", "error");
+      boom(e?.response?.data?.message || "Failed.", "error");
     }
   };
 
@@ -2058,7 +3097,6 @@ const Dashboard = () => {
     completed: logs.filter((l) => l.task_status === "completed").length,
     terminated: logs.filter((l) => l.task_status === "terminated").length,
   };
-
   const fLogs =
     lFilter === "all"
       ? logs
@@ -2067,63 +3105,55 @@ const Dashboard = () => {
             return l.task_status === "assigned" || l.task_status === "pending";
           return l.task_status === lFilter;
         });
-
   const { student, stats, projects, openLogs, ranking } = data || {};
 
   const TABS = [
-    { id: "overview", label: "Overview" },
+    { id: "overview", label: "Home" },
     { id: "projects", label: "Projects", badge: stats?.totalProjects },
     { id: "tasks", label: "Tasks", badge: LC.all },
-    { id: "open", label: "Available", badge: openLogs?.length },
-    { id: "ranking", label: "Rankings" },
+    { id: "open", label: "Open", badge: openLogs?.length },
+    { id: "ranking", label: "Ranks" },
   ];
 
-  const GLOBAL_STYLES = `
-    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap');
-    *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    @keyframes slideUp{from{transform:translateX(-50%) translateY(14px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
-    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(.94)}}
-    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-    ::-webkit-scrollbar{width:4px;height:4px}
-    ::-webkit-scrollbar-track{background:#0c0f18}
-    ::-webkit-scrollbar-thumb{background:#252d3e;border-radius:3px}
-    details summary::-webkit-details-marker{display:none}
-    html{scroll-behavior:smooth}
-    .animate-spin{animation:spin 1s linear infinite}
-    @media(min-width:640px){
-      .proj-drawer{
-        top:0!important;bottom:auto!important;right:0!important;left:auto!important;
-        width:100%!important;max-width:460px!important;max-height:100dvh!important;
-        height:100dvh!important;border-radius:0!important;
-        border-top:none!important;border-left:1px solid #252d3e!important;
-      }
-    }
-  `;
-
+  // ── Loading ──
   if (loading)
     return (
       <div
-        className="min-h-screen flex flex-col items-center justify-center gap-5"
-        style={{ background: "#070a12" }}
+        style={{
+          minHeight: "100dvh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 20,
+          background: "var(--bg)",
+        }}
       >
         <style>{GLOBAL_STYLES}</style>
-        <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center font-extrabold text-white text-2xl"
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           style={{
-            background: "#1e2330",
-            animation: "pulse 1.5s ease-in-out infinite",
-            fontFamily: "'Syne', sans-serif",
+            width: 50,
+            height: 50,
+            borderRadius: 14,
+            background: "linear-gradient(135deg,#4f8ef7,#7c5cfc)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 22,
+            color: "#fff",
           }}
         >
           ◎
-        </div>
+        </motion.div>
         <p
-          className="uppercase tracking-widest"
           style={{
-            color: "#6b7a99",
+            fontFamily: "var(--font-m)",
             fontSize: 11,
-            fontFamily: "'DM Mono', monospace",
+            color: "var(--text3)",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
           }}
         >
           Loading dashboard…
@@ -2134,23 +3164,38 @@ const Dashboard = () => {
   if (!resolveToken() && !data)
     return (
       <div
-        className="min-h-screen flex flex-col items-center justify-center gap-5 px-4"
-        style={{ background: "#070a12" }}
+        style={{
+          minHeight: "100dvh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 16,
+          padding: 24,
+          background: "var(--bg)",
+        }}
       >
         <style>{GLOBAL_STYLES}</style>
-        <div className="text-5xl opacity-20">◎</div>
-        <p
-          className="font-extrabold text-xl text-center"
-          style={{ color: "#f0f4ff", fontFamily: "'Syne', sans-serif" }}
+        <div style={{ fontSize: 48, opacity: 0.1 }}>◎</div>
+        <h1
+          style={{
+            fontFamily: "var(--font-d)",
+            fontWeight: 800,
+            color: "var(--text)",
+            fontSize: "clamp(18px,5vw,24px)",
+            margin: 0,
+            textAlign: "center",
+          }}
         >
           Not Logged In
-        </p>
+        </h1>
         <p
-          className="text-center"
           style={{
-            color: "#6b7a99",
+            fontFamily: "var(--font-m)",
             fontSize: 12,
-            fontFamily: "'DM Mono', monospace",
+            color: "var(--text3)",
+            textAlign: "center",
+            margin: 0,
           }}
         >
           Please log in to access your dashboard.
@@ -2158,15 +3203,22 @@ const Dashboard = () => {
         {navigate && (
           <button
             onClick={() => navigate("/register")}
-            className="px-6 py-2.5 rounded-xl font-extrabold cursor-pointer mt-2 border-none"
             style={{
-              background: "#3a9de8",
+              padding: "12px 28px",
+              borderRadius: 12,
+              border: "none",
+              cursor: "pointer",
+              background: "linear-gradient(135deg,#4f8ef7,#7c5cfc)",
               color: "#fff",
-              fontSize: 13,
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "var(--font-d)",
+              fontWeight: 700,
+              fontSize: 14,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
             }}
           >
-            Go to Login →
+            <LogIn size={16} /> Go to Login
           </button>
         )}
       </div>
@@ -2176,127 +3228,156 @@ const Dashboard = () => {
     <>
       <style>{GLOBAL_STYLES}</style>
       <div
-        className="min-h-screen"
         style={{
-          background: "#070a12",
-          color: "#f0f4ff",
-          fontFamily: "'DM Mono', monospace",
+          minHeight: "100dvh",
+          background: "var(--bg)",
+          color: "var(--text)",
         }}
       >
-        {/* Ambient BG */}
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Ambient bg */}
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            pointerEvents: "none",
+            zIndex: 0,
+            overflow: "hidden",
+          }}
+        >
           <div
-            className="absolute"
             style={{
+              position: "absolute",
               top: -200,
-              left: "20%",
-              width: 700,
-              height: 700,
-              borderRadius: "50%",
-              background:
-                "radial-gradient(circle,#3a9de806 0%,transparent 70%)",
-            }}
-          />
-          <div
-            className="absolute"
-            style={{
-              bottom: -200,
-              right: "5%",
+              left: "15%",
               width: 600,
               height: 600,
               borderRadius: "50%",
               background:
-                "radial-gradient(circle,#9c3ae808 0%,transparent 70%)",
+                "radial-gradient(circle,#4f8ef708 0%,transparent 70%)",
             }}
           />
           <div
-            className="absolute"
             style={{
-              top: "40%",
-              left: "60%",
-              width: 400,
-              height: 400,
+              position: "absolute",
+              bottom: -200,
+              right: "5%",
+              width: 500,
+              height: 500,
               borderRadius: "50%",
               background:
-                "radial-gradient(circle,#e85d3a04 0%,transparent 70%)",
+                "radial-gradient(circle,#7c5cfc08 0%,transparent 70%)",
             }}
           />
         </div>
 
         {/* TOP NAV */}
         <nav
-          className="sticky top-0 z-[100] flex items-center justify-between px-4 h-14"
+          className="glass"
           style={{
-            background: "#070a12cc",
-            backdropFilter: "blur(12px)",
-            borderBottom: "1px solid #1e233060",
+            position: "sticky",
+            top: 0,
+            zIndex: 100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 16px",
+            height: 56,
+            borderBottom: "1px solid var(--border)",
           }}
         >
-          <div className="flex items-center gap-2.5">
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center font-extrabold text-white text-sm flex-shrink-0"
               style={{
-                background: "#1e2330",
-                border: "1px solid #252d3e",
-                fontFamily: "'Syne', sans-serif",
+                width: 32,
+                height: 32,
+                borderRadius: 10,
+                background: "linear-gradient(135deg,#4f8ef7,#7c5cfc)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 16,
+                color: "#fff",
+                fontWeight: 900,
+                flexShrink: 0,
               }}
             >
               ◎
             </div>
             <div
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg"
-              style={{ background: "#4ade8014", border: "1px solid #4ade8028" }}
+              className="sm-live"
+              style={{
+                display: "none",
+                alignItems: "center",
+                gap: 6,
+                padding: "4px 10px",
+                borderRadius: 20,
+                background: "#22d3a015",
+                border: "1px solid #22d3a030",
+              }}
             >
-              <span
-                className="w-1.5 h-1.5 rounded-full inline-block"
-                style={{ background: "#4ade80", boxShadow: "0 0 5px #4ade80" }}
+              <div
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "#22d3a0",
+                  boxShadow: "0 0 6px #22d3a0",
+                }}
               />
               <span
-                className="font-bold uppercase tracking-widest"
                 style={{
-                  color: "#4ade80",
+                  fontFamily: "var(--font-m)",
                   fontSize: 10,
-                  fontFamily: "'DM Mono', monospace",
+                  color: "#22d3a0",
+                  fontWeight: 700,
                 }}
               >
                 Live
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={load}
-              className="px-3 py-1.5 rounded-lg cursor-pointer transition-colors active:scale-95 border-none"
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={handleSync}
+              className="card-tap"
               style={{
-                background: "#1e2330",
-                border: "1px solid #252d3e",
-                color: "#8892a4",
+                padding: "6px 12px",
+                borderRadius: 10,
+                cursor: "pointer",
+                background: "var(--surface2)",
+                border: "1px solid var(--border)",
+                color: "var(--text2)",
                 fontSize: 11,
-                fontFamily: "'DM Mono', monospace",
-                WebkitTapHighlightColor: "transparent",
+                fontFamily: "var(--font-m)",
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
               }}
             >
-              ↻ Sync
-            </button>
+              <RefreshCw size={12} className={syncing ? "animate-spin" : ""} />{" "}
+              Sync
+            </motion.button>
             {student && (
-              <div className="flex items-center gap-2">
-                <Av name={student.name} size={30} />
-                <div className="hidden sm:block">
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Av name={student.name} size={32} />
+                <div className="sm-name" style={{ display: "none" }}>
                   <div
-                    className="font-bold"
                     style={{
-                      color: "#f0f4ff",
-                      fontSize: 11,
-                      fontFamily: "'Syne', sans-serif",
+                      fontFamily: "var(--font-d)",
+                      fontWeight: 700,
+                      color: "var(--text)",
+                      fontSize: 12,
                     }}
                   >
                     {student.name?.split(" ")[0]}
                   </div>
                   <div
                     style={{
-                      color: "#6b7a99",
+                      fontFamily: "var(--font-m)",
                       fontSize: 9,
-                      fontFamily: "'DM Mono', monospace",
+                      color: "var(--text3)",
                     }}
                   >
                     #{ranking?.myRank ?? "—"} Global
@@ -2307,38 +3388,57 @@ const Dashboard = () => {
           </div>
         </nav>
 
-        {/* DESKTOP TAB BAR */}
+        {/* DESKTOP TABS */}
         <div
-          className="hidden sm:flex sticky z-[90] gap-0.5 overflow-x-auto px-4"
+          className="sm-tabs glass"
           style={{
+            display: "none",
+            position: "sticky",
             top: 56,
-            borderBottom: "1px solid #1e2330",
-            background: "#070a12e8",
-            backdropFilter: "blur(10px)",
+            zIndex: 90,
+            borderBottom: "1px solid var(--border)",
+            padding: "0 16px",
+            gap: 0,
+            overflowX: "auto",
           }}
         >
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className="flex items-center gap-1.5 px-4 py-2.5 font-bold uppercase tracking-widest cursor-pointer whitespace-nowrap border-b-2 bg-transparent transition-colors"
               style={{
-                color: tab === t.id ? "#3a9de8" : "#6b7a99",
-                borderColor: tab === t.id ? "#3a9de8" : "transparent",
-                marginBottom: -1,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "12px 16px",
+                background: "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-m)",
+                fontWeight: 700,
                 fontSize: 11,
-                fontFamily: "'DM Mono', monospace",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                whiteSpace: "nowrap",
+                color: tab === t.id ? "#4f8ef7" : "var(--text3)",
+                borderBottom:
+                  tab === t.id ? "2px solid #4f8ef7" : "2px solid transparent",
+                borderTop: "none",
+                borderLeft: "none",
+                borderRight: "none",
+                transition: "color .2s",
+                marginBottom: -1,
               }}
             >
               {t.label}
               {t.badge !== undefined && (
                 <span
-                  className="px-1.5 py-px rounded-full"
                   style={{
-                    background: tab === t.id ? "#3a9de818" : "#1e2330",
-                    color: tab === t.id ? "#3a9de8" : "#6b7a99",
+                    padding: "1px 7px",
+                    borderRadius: 100,
+                    background: tab === t.id ? "#4f8ef718" : "var(--surface2)",
+                    color: tab === t.id ? "#4f8ef7" : "var(--text3)",
                     fontSize: 9,
-                    fontFamily: "'DM Mono', monospace",
+                    fontFamily: "var(--font-m)",
                   }}
                 >
                   {t.badge}
@@ -2348,90 +3448,116 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* MAIN CONTENT */}
+        {/* CONTENT */}
         <div
-          className="relative z-10 max-w-[1200px] mx-auto px-3 sm:px-4 py-4 sm:py-6"
           style={{
-            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 80px)",
+            position: "relative",
+            zIndex: 10,
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "16px 12px",
+            paddingBottom: "calc(env(safe-area-inset-bottom,0px) + 88px)",
           }}
         >
-          {/* HERO CARD */}
+          {/* HERO */}
           <motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="rounded-2xl overflow-hidden mb-5 sm:mb-6"
             style={{
-              background: "linear-gradient(135deg,#0e1622 0%,#0a0d16 100%)",
-              border: "1px solid #1e2330",
+              borderRadius: 20,
+              overflow: "hidden",
+              marginBottom: 20,
+              background: "linear-gradient(135deg,#0d1526 0%,#0a0d16 100%)",
+              border: "1px solid var(--border)",
             }}
           >
             <div
-              className="h-[3px]"
               style={{
-                background: "linear-gradient(90deg,#3a9de8,#9c3ae8,#e85d3a)",
+                height: 3,
+                background: "linear-gradient(90deg,#4f8ef7,#7c5cfc,#f05252)",
               }}
             />
-            <div className="px-4 sm:px-6 py-4 sm:py-5">
-              <div className="flex items-start gap-3 sm:gap-4 flex-wrap mb-4 sm:mb-5">
+            <div style={{ padding: 16 }}>
+              {/* Profile */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 12,
+                  flexWrap: "wrap",
+                  marginBottom: 14,
+                }}
+              >
                 <Av name={student?.name || ""} size={52} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      flexWrap: "wrap",
+                      marginBottom: 4,
+                    }}
+                  >
                     <h1
-                      className="font-extrabold leading-tight"
                       style={{
-                        fontSize: "clamp(16px, 4vw, 22px)",
-                        color: "#f0f4ff",
-                        fontFamily: "'Syne', sans-serif",
+                        fontFamily: "var(--font-d)",
+                        fontWeight: 800,
+                        color: "var(--text)",
+                        margin: 0,
+                        fontSize: "clamp(16px,4.5vw,22px)",
+                        letterSpacing: "-0.02em",
+                        lineHeight: 1.2,
                       }}
                     >
                       {student?.name}
                     </h1>
                     <span
-                      className="px-2.5 py-0.5 rounded-full"
-                      style={
-                        student?.isBlocked
+                      style={{
+                        padding: "3px 10px",
+                        borderRadius: 100,
+                        fontSize: 10,
+                        fontFamily: "var(--font-m)",
+                        fontWeight: 600,
+                        ...(student?.isBlocked
                           ? {
-                              background: "#2d0a0a",
-                              color: "#f87171",
-                              border: "1px solid #f8717128",
-                              fontSize: 10,
-                              fontFamily: "'DM Mono', monospace",
+                              background: "#200808",
+                              color: "#f05252",
+                              border: "1px solid #f0525228",
                             }
                           : {
-                              background: "#08221a",
-                              color: "#4ade80",
-                              border: "1px solid #4ade8028",
-                              fontSize: 10,
-                              fontFamily: "'DM Mono', monospace",
-                            }
-                      }
+                              background: "#071c14",
+                              color: "#22d3a0",
+                              border: "1px solid #22d3a028",
+                            }),
+                      }}
                     >
                       {student?.isBlocked ? "Blocked" : "Active"}
                     </span>
                   </div>
                   <div
-                    className="mb-2"
                     style={{
-                      color: "#6b7a99",
+                      fontFamily: "var(--font-m)",
                       fontSize: 11,
-                      fontFamily: "'DM Mono', monospace",
+                      color: "var(--text3)",
+                      marginBottom: 8,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {student?.email}
                   </div>
-                  <div className="flex gap-1.5 flex-wrap">
+                  <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                     {student?.branch && (
-                      <Tag color="#3a9de8">{student.branch}</Tag>
+                      <Tag color="#4f8ef7">{student.branch}</Tag>
                     )}
                     {student?.department && (
-                      <Tag color="#9c3ae8">{student.department}</Tag>
+                      <Tag color="#7c5cfc">{student.department}</Tag>
                     )}
                     {student?.program && (
-                      <Tag color="#fbbf24">{student.program}</Tag>
-                    )}
-                    {student?.college && (
-                      <Tag color="#6b7a99">{student.college}</Tag>
+                      <Tag color="#f5a623">{student.program}</Tag>
                     )}
                   </div>
                   {student?.githubLink && (
@@ -2439,123 +3565,111 @@ const Dashboard = () => {
                       href={student.githubLink}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 mt-2 no-underline hover:opacity-75"
                       style={{
-                        color: "#3a9de8",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5,
+                        marginTop: 8,
+                        textDecoration: "none",
+                        color: "#4f8ef7",
                         fontSize: 11,
-                        fontFamily: "'DM Mono', monospace",
+                        fontFamily: "var(--font-m)",
                       }}
                     >
-                      <Github size={12} /> GitHub Profile ↗
+                      <Github size={12} /> GitHub ↗
                     </a>
                   )}
                 </div>
                 {/* Rank badge */}
                 <div
-                  className="text-center rounded-2xl px-4 py-3 flex-shrink-0 ml-auto sm:ml-0"
-                  style={{ border: "1px solid #1e2330" }}
+                  style={{
+                    textAlign: "center",
+                    borderRadius: 14,
+                    padding: "12px 16px",
+                    border: "1px solid var(--border)",
+                    background: "var(--surface2)",
+                    flexShrink: 0,
+                    marginLeft: "auto",
+                  }}
                 >
                   <div
-                    className="uppercase tracking-widest mb-0.5"
                     style={{
-                      color: "#6b7a99",
+                      fontFamily: "var(--font-m)",
                       fontSize: 8,
-                      fontFamily: "'DM Mono', monospace",
+                      color: "var(--text3)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      marginBottom: 4,
                     }}
                   >
-                    Global Rank
+                    Rank
                   </div>
                   <div
-                    className="font-extrabold"
                     style={{
-                      fontSize: 24,
-                      color: "#fbbf24",
-                      fontFamily: "'Syne', sans-serif",
+                      fontFamily: "var(--font-d)",
+                      fontWeight: 900,
+                      fontSize: "clamp(22px,6vw,30px)",
+                      color: "#f5a623",
+                      lineHeight: 1,
                     }}
                   >
                     #{ranking?.myRank ?? "—"}
                   </div>
                   <div
-                    className="mt-0.5"
                     style={{
-                      color: "#6b7a99",
+                      fontFamily: "var(--font-m)",
                       fontSize: 9,
-                      fontFamily: "'DM Mono', monospace",
+                      color: "var(--text3)",
+                      marginTop: 4,
                     }}
                   >
                     of {ranking?.totalStudents ?? "—"}
                   </div>
                 </div>
               </div>
-
-              {/* Stats strip */}
-              <div className="grid gap-2 grid-cols-4 sm:grid-cols-7">
+              {/* Stats Strip */}
+              <div
+                style={{
+                  display: "grid",
+                  gap: 6,
+                  gridTemplateColumns: "repeat(4,1fr)",
+                  marginBottom: 8,
+                }}
+              >
                 {[
-                  { l: "Score", v: stats?.totalScore, c: "#fbbf24", i: "⬡" },
-                  { l: "Points", v: stats?.totalPoints, c: "#e85d3a", i: "◈" },
-                  {
-                    l: "Projects",
-                    v: stats?.totalProjects,
-                    c: "#3a9de8",
-                    i: "◉",
-                  },
-                  { l: "Logs", v: stats?.totalLogs, c: "#9c3ae8", i: "◌" },
-                  {
-                    l: "Done",
-                    v: stats?.completedLogs,
-                    c: "#4ade80",
-                    i: "✓",
-                    hideXs: true,
-                  },
-                  {
-                    l: "Active",
-                    v: stats?.assignedLogs,
-                    c: "#fbbf24",
-                    i: "⏳",
-                    hideXs: true,
-                  },
-                  {
-                    l: "Rate",
-                    v: `${stats?.completionRate ?? 0}%`,
-                    c: "#3a9de8",
-                    i: "%",
-                    hideXs: true,
-                  },
+                  { l: "Score", v: stats?.totalScore, c: "#f5a623" },
+                  { l: "Points", v: stats?.totalPoints, c: "#f05252" },
+                  { l: "Projects", v: stats?.totalProjects, c: "#4f8ef7" },
+                  { l: "Logs", v: stats?.totalLogs, c: "#7c5cfc" },
                 ].map((s) => (
                   <div
                     key={s.l}
-                    className={`text-center rounded-xl py-2${s.hideXs ? " hidden sm:block" : ""}`}
                     style={{
-                      background: "#0c0f18",
-                      border: "1px solid #1a2030",
+                      textAlign: "center",
+                      padding: "10px 4px",
+                      borderRadius: 12,
+                      background: "var(--surface3)",
                     }}
                   >
                     <div
                       style={{
+                        fontFamily: "var(--font-d)",
+                        fontWeight: 800,
+                        fontSize: "clamp(14px,4vw,18px)",
                         color: s.c,
-                        fontSize: 11,
-                        fontFamily: "'DM Mono', monospace",
-                        marginBottom: 2,
+                        lineHeight: 1,
                       }}
                     >
-                      {s.i}
+                      {s.v ?? 0}
                     </div>
                     <div
-                      className="font-extrabold leading-none"
                       style={{
-                        fontSize: 14,
-                        color: s.c,
-                        fontFamily: "'Syne', sans-serif",
-                      }}
-                    >
-                      {s.v}
-                    </div>
-                    <div
-                      className="uppercase tracking-widest mt-0.5"
-                      style={{
-                        fontSize: 7,
-                        color: "#6b7a99",
-                        fontFamily: "'DM Mono', monospace",
+                        fontFamily: "var(--font-m)",
+                        fontSize: 8,
+                        color: "var(--text3)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        marginTop: 3,
                       }}
                     >
                       {s.l}
@@ -2563,42 +3677,44 @@ const Dashboard = () => {
                   </div>
                 ))}
               </div>
-
-              {/* Mobile extra stats */}
-              <div className="flex gap-2 mt-2 sm:hidden flex-wrap">
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {[
-                  { l: "Done", v: stats?.completedLogs, c: "#4ade80" },
-                  { l: "Active", v: stats?.assignedLogs, c: "#fbbf24" },
+                  { l: "Done", v: stats?.completedLogs, c: "#22d3a0" },
+                  { l: "Active", v: stats?.assignedLogs, c: "#f5a623" },
                   {
                     l: "Rate",
                     v: `${stats?.completionRate ?? 0}%`,
-                    c: "#3a9de8",
+                    c: "#4f8ef7",
                   },
                 ].map((s) => (
                   <div
                     key={s.l}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
                     style={{
-                      background: "#0c0f18",
-                      border: `1px solid ${s.c}20`,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "5px 12px",
+                      borderRadius: 10,
+                      background: `${s.c}12`,
+                      border: `1px solid ${s.c}25`,
                     }}
                   >
                     <span
-                      className="font-extrabold"
                       style={{
+                        fontFamily: "var(--font-d)",
+                        fontWeight: 700,
+                        fontSize: 13,
                         color: s.c,
-                        fontSize: 11,
-                        fontFamily: "'Syne', sans-serif",
                       }}
                     >
-                      {s.v}
+                      {s.v ?? 0}
                     </span>
                     <span
-                      className="uppercase tracking-widest"
                       style={{
-                        color: "#6b7a99",
+                        fontFamily: "var(--font-m)",
                         fontSize: 9,
-                        fontFamily: "'DM Mono', monospace",
+                        color: "var(--text3)",
+                        textTransform: "uppercase",
                       }}
                     >
                       {s.l}
@@ -2611,280 +3727,312 @@ const Dashboard = () => {
 
           {/* ── OVERVIEW ── */}
           {tab === "overview" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
-              <div className="lg:col-span-2 space-y-4 sm:space-y-5">
-                {/* Community Links Strip — show if any project has community */}
-                {(projects || []).filter((p) => p.communityLink).length > 0 && (
-                  <div>
-                    <SH
-                      title="Community Spaces"
-                      accent="#9c3ae8"
-                      count={
-                        (projects || []).filter((p) => p.communityLink).length
-                      }
-                    />
-                    <div className="space-y-2">
-                      {(projects || [])
-                        .filter((p) => p.communityLink)
-                        .map((p) => (
-                          <CommunityBanner
-                            key={p._id}
-                            link={p.communityLink}
-                            projectTitle={p.problem?.title}
-                          />
-                        ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Bricks */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-                  <Brick
-                    icon={<Star size={16} />}
-                    label="Total Score"
-                    value={stats?.totalScore}
-                    accent="#fbbf24"
-                  />
-                  <Brick
-                    icon={<Zap size={16} />}
-                    label="Points Earned"
-                    value={stats?.totalPoints}
-                    accent="#e85d3a"
-                  />
-                  <Brick
-                    icon={<CheckCircle size={16} />}
-                    label="Tasks Done"
-                    value={stats?.completedLogs}
-                    accent="#4ade80"
-                  />
-                  <Brick
-                    icon={<Clock size={16} />}
-                    label="Active Tasks"
-                    value={stats?.assignedLogs}
-                    accent="#fb923c"
-                    sub={stats?.assignedLogs > 0 ? "In progress" : "All clear"}
-                  />
-                </div>
-
-                {/* Projects preview */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {(projects || []).filter((p) => p.communityLink).length > 0 && (
                 <div>
                   <SH
-                    title="My Projects"
-                    accent="#3a9de8"
-                    count={projects?.length}
-                    action={() => setTab("projects")}
-                    actionLabel="All →"
+                    title="Community Spaces"
+                    accent="#7c5cfc"
+                    count={
+                      (projects || []).filter((p) => p.communityLink).length
+                    }
                   />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {(projects || []).slice(0, 4).map((p) => (
-                      <ProjCard
-                        key={p._id}
-                        p={p}
-                        onClick={() => setDrawer(p)}
-                      />
-                    ))}
-                    {!projects?.length && (
-                      <div
-                        className="col-span-2 text-center py-12 rounded-xl"
-                        style={{ border: "1px dashed #1e2330" }}
-                      >
-                        <div className="text-3xl opacity-10 mb-2">◉</div>
-                        <p
-                          style={{
-                            color: "#4a5568",
-                            fontSize: 12,
-                            fontFamily: "'DM Mono', monospace",
-                          }}
-                        >
-                          No projects joined yet.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Active tasks */}
-                {LC.assigned > 0 && (
-                  <div>
-                    <SH
-                      title="Active Tasks"
-                      accent="#fbbf24"
-                      count={LC.assigned}
-                      action={() => {
-                        setTab("tasks");
-                        setLFilter("assigned");
-                      }}
-                      actionLabel="View all →"
-                    />
-                    <div className="space-y-2.5">
-                      {logs
-                        .filter(
-                          (l) =>
-                            l.task_status === "assigned" ||
-                            l.task_status === "pending",
-                        )
-                        .slice(0, 3)
-                        .map((l) => (
-                          <LogCard
-                            key={l._id}
-                            log={l}
-                            onMarkComplete={setCompletingLog}
-                          />
-                        ))}
-                    </div>
-                  </div>
-                )}
-
-                {LC.completed > 0 && (
-                  <div>
-                    <SH
-                      title="Recently Completed"
-                      accent="#4ade80"
-                      count={LC.completed}
-                      action={() => {
-                        setTab("tasks");
-                        setLFilter("completed");
-                      }}
-                      actionLabel="View all →"
-                    />
-                    <div className="space-y-2.5">
-                      {logs
-                        .filter((l) => l.task_status === "completed")
-                        .slice(0, 3)
-                        .map((l) => (
-                          <LogCard
-                            key={l._id}
-                            log={l}
-                            onMarkComplete={setCompletingLog}
-                          />
-                        ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Sidebar */}
-              <div className="space-y-4 sm:space-y-5">
-                {/* Leaderboard */}
-                <div
-                  className="rounded-2xl overflow-hidden"
-                  style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
-                >
-                  <div className="px-4 sm:px-5 pt-4 pb-2">
-                    <SH title="Leaderboard" accent="#fbbf24" />
-                  </div>
-                  <div className="px-2 sm:px-3 pb-3 space-y-0.5">
-                    {(ranking?.top10 || []).slice(0, 5).map((s, i) => (
-                      <RRow
-                        key={s._id}
-                        rank={i + 1}
-                        name={s.name}
-                        score={s.totalScore}
-                        dept={s.department}
-                        isMe={s._id === student?._id?.toString()}
-                      />
-                    ))}
-                    {ranking?.myRank > 5 && (
-                      <>
-                        <div
-                          className="text-center py-1"
-                          style={{
-                            color: "#4a5568",
-                            fontSize: 10,
-                            fontFamily: "'DM Mono', monospace",
-                          }}
-                        >
-                          · · ·
-                        </div>
-                        <RRow
-                          rank={ranking.myRank}
-                          name={student?.name}
-                          score={stats?.totalScore}
-                          isMe
-                        />
-                      </>
-                    )}
-                  </div>
                   <div
-                    className="px-4 sm:px-5 py-3"
-                    style={{ borderTop: "1px solid #1e2330" }}
+                    style={{ display: "flex", flexDirection: "column", gap: 8 }}
                   >
-                    <button
-                      onClick={() => setTab("ranking")}
-                      className="w-full py-2 rounded-lg font-bold cursor-pointer active:scale-[0.98] transition-transform border-none"
-                      style={{
-                        background: "#fbbf2410",
-                        border: "1px solid #fbbf2428",
-                        color: "#fbbf24",
-                        fontSize: 11,
-                        fontFamily: "'DM Mono', monospace",
-                        WebkitTapHighlightColor: "transparent",
-                      }}
-                    >
-                      Full Leaderboard →
-                    </button>
+                    {(projects || [])
+                      .filter((p) => p.communityLink)
+                      .map((p) => (
+                        <CommunityBanner
+                          key={p._id}
+                          link={p.communityLink}
+                          projectTitle={p.problem?.title}
+                        />
+                      ))}
                   </div>
                 </div>
-
-                {/* Available tasks */}
+              )}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2,1fr)",
+                  gap: 10,
+                }}
+              >
+                <Brick
+                  icon={<Star size={15} />}
+                  label="Total Score"
+                  value={stats?.totalScore}
+                  accent="#f5a623"
+                  delay={0}
+                />
+                <Brick
+                  icon={<Zap size={15} />}
+                  label="Points"
+                  value={stats?.totalPoints}
+                  accent="#f05252"
+                  delay={0.05}
+                />
+                <Brick
+                  icon={<CheckCircle size={15} />}
+                  label="Tasks Done"
+                  value={stats?.completedLogs}
+                  accent="#22d3a0"
+                  delay={0.1}
+                />
+                <Brick
+                  icon={<Clock size={15} />}
+                  label="Active"
+                  value={stats?.assignedLogs}
+                  accent="#f97316"
+                  sub={stats?.assignedLogs > 0 ? "In progress" : "All clear"}
+                  delay={0.15}
+                />
+              </div>
+              <div>
+                <SH
+                  title="My Projects"
+                  accent="#4f8ef7"
+                  count={projects?.length}
+                  action={() => setTab("projects")}
+                  actionLabel="All →"
+                />
                 <div
-                  className="rounded-2xl overflow-hidden"
-                  style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill,minmax(min(100%,280px),1fr))",
+                    gap: 12,
+                  }}
                 >
-                  <div className="px-4 sm:px-5 pt-4 pb-2">
-                    <SH
-                      title="Available Tasks"
-                      accent="#4ade80"
-                      count={openLogs?.length}
-                    />
-                  </div>
-                  <div className="px-3 sm:px-4 pb-4 space-y-2.5">
-                    {(openLogs || []).slice(0, 3).map((l) => (
-                      <LogCard
-                        key={l._id}
-                        log={l}
-                        showClaim
-                        onClaim={handleClaim}
-                        claiming={claiming === l._id}
-                        onMarkComplete={setCompletingLog}
-                      />
-                    ))}
-                    {!openLogs?.length && (
-                      <div className="text-center py-8">
-                        <p
-                          style={{
-                            color: "#4a5568",
-                            fontSize: 11,
-                            fontFamily: "'DM Mono', monospace",
-                          }}
-                        >
-                          No open tasks available.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  {openLogs?.length > 3 && (
+                  {(projects || []).slice(0, 4).map((p) => (
+                    <ProjCard key={p._id} p={p} onClick={() => setDrawer(p)} />
+                  ))}
+                  {!projects?.length && (
                     <div
-                      className="px-4 sm:px-5 py-3"
-                      style={{ borderTop: "1px solid #1e2330" }}
+                      style={{
+                        gridColumn: "1/-1",
+                        textAlign: "center",
+                        padding: "48px 0",
+                        borderRadius: 16,
+                        border: "1px dashed var(--border)",
+                      }}
                     >
-                      <button
-                        onClick={() => setTab("open")}
-                        className="w-full py-2 rounded-lg font-bold cursor-pointer active:scale-[0.98] transition-transform border-none"
+                      <div
                         style={{
-                          background: "#4ade8010",
-                          border: "1px solid #4ade8028",
-                          color: "#4ade80",
-                          fontSize: 11,
-                          fontFamily: "'DM Mono', monospace",
-                          WebkitTapHighlightColor: "transparent",
+                          fontSize: 32,
+                          opacity: 0.08,
+                          marginBottom: 10,
                         }}
                       >
-                        See all {openLogs.length} tasks →
-                      </button>
+                        ◉
+                      </div>
+                      <p
+                        style={{
+                          fontFamily: "var(--font-m)",
+                          fontSize: 12,
+                          color: "var(--text3)",
+                          margin: 0,
+                        }}
+                      >
+                        No projects joined yet.
+                      </p>
                     </div>
                   )}
                 </div>
+              </div>
+              {LC.assigned > 0 && (
+                <div>
+                  <SH
+                    title="Active Tasks"
+                    accent="#f5a623"
+                    count={LC.assigned}
+                    action={() => {
+                      setTab("tasks");
+                      setLFilter("assigned");
+                    }}
+                    actionLabel="View all →"
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                    }}
+                  >
+                    {logs
+                      .filter(
+                        (l) =>
+                          l.task_status === "assigned" ||
+                          l.task_status === "pending",
+                      )
+                      .slice(0, 3)
+                      .map((l) => (
+                        <LogCard
+                          key={l._id}
+                          log={l}
+                          onMarkComplete={setCompletingLog}
+                          onViewDetail={setLogDetail}
+                        />
+                      ))}
+                  </div>
+                </div>
+              )}
+              {/* Leaderboard snippet */}
+              <div
+                style={{
+                  borderRadius: 18,
+                  overflow: "hidden",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                <div style={{ padding: "16px 16px 10px" }}>
+                  <SH title="Leaderboard" accent="#f5a623" />
+                </div>
+                <div
+                  style={{
+                    padding: "0 8px 12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                  }}
+                >
+                  {(ranking?.top10 || []).slice(0, 5).map((s, i) => (
+                    <RRow
+                      key={s._id}
+                      rank={i + 1}
+                      name={s.name}
+                      score={s.totalScore}
+                      dept={s.department}
+                      isMe={s._id === student?._id?.toString()}
+                    />
+                  ))}
+                  {ranking?.myRank > 5 && (
+                    <>
+                      <div
+                        style={{
+                          textAlign: "center",
+                          padding: 6,
+                          fontFamily: "var(--font-m)",
+                          fontSize: 10,
+                          color: "var(--text3)",
+                        }}
+                      >
+                        · · ·
+                      </div>
+                      <RRow
+                        rank={ranking.myRank}
+                        name={student?.name}
+                        score={stats?.totalScore}
+                        isMe
+                      />
+                    </>
+                  )}
+                </div>
+                <div
+                  style={{
+                    padding: "12px 14px",
+                    borderTop: "1px solid var(--border)",
+                  }}
+                >
+                  <button
+                    onClick={() => setTab("ranking")}
+                    className="card-tap"
+                    style={{
+                      width: "100%",
+                      padding: "10px 0",
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      background: "#f5a62310",
+                      border: "1px solid #f5a62328",
+                      color: "#f5a623",
+                      fontFamily: "var(--font-m)",
+                      fontWeight: 700,
+                      fontSize: 11,
+                    }}
+                  >
+                    Full Leaderboard →
+                  </button>
+                </div>
+              </div>
+              {/* Available tasks */}
+              <div
+                style={{
+                  borderRadius: 18,
+                  overflow: "hidden",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                <div style={{ padding: "16px 16px 10px" }}>
+                  <SH
+                    title="Available Tasks"
+                    accent="#22d3a0"
+                    count={openLogs?.length}
+                  />
+                </div>
+                <div
+                  style={{
+                    padding: "0 12px 14px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                  }}
+                >
+                  {(openLogs || []).slice(0, 3).map((l) => (
+                    <LogCard
+                      key={l._id}
+                      log={l}
+                      showClaim
+                      onClaim={handleClaim}
+                      claiming={claiming === l._id}
+                      onMarkComplete={setCompletingLog}
+                      onViewDetail={setLogDetail}
+                    />
+                  ))}
+                  {!openLogs?.length && (
+                    <div style={{ textAlign: "center", padding: "32px 0" }}>
+                      <p
+                        style={{
+                          fontFamily: "var(--font-m)",
+                          fontSize: 11,
+                          color: "var(--text3)",
+                          margin: 0,
+                        }}
+                      >
+                        No open tasks available.
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {openLogs?.length > 3 && (
+                  <div
+                    style={{
+                      padding: "12px 14px",
+                      borderTop: "1px solid var(--border)",
+                    }}
+                  >
+                    <button
+                      onClick={() => setTab("open")}
+                      className="card-tap"
+                      style={{
+                        width: "100%",
+                        padding: "10px 0",
+                        borderRadius: 10,
+                        cursor: "pointer",
+                        background: "#22d3a010",
+                        border: "1px solid #22d3a028",
+                        color: "#22d3a0",
+                        fontFamily: "var(--font-m)",
+                        fontWeight: 700,
+                        fontSize: 11,
+                      }}
+                    >
+                      See all {openLogs.length} tasks →
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2893,28 +4041,39 @@ const Dashboard = () => {
           {tab === "projects" && (
             <div>
               <SH
-                title="All Joined Projects"
-                accent="#3a9de8"
+                title="All Projects"
+                accent="#4f8ef7"
                 count={projects?.length}
               />
               {!projects?.length ? (
                 <div
-                  className="text-center py-16 sm:py-20 rounded-2xl"
-                  style={{ border: "1px dashed #1e2330" }}
+                  style={{
+                    textAlign: "center",
+                    padding: "64px 0",
+                    borderRadius: 16,
+                    border: "1px dashed var(--border)",
+                  }}
                 >
-                  <div className="text-4xl opacity-10 mb-4">◉</div>
                   <p
                     style={{
-                      color: "#4a5568",
+                      fontFamily: "var(--font-m)",
                       fontSize: 13,
-                      fontFamily: "'DM Mono', monospace",
+                      color: "var(--text3)",
+                      margin: 0,
                     }}
                   >
-                    You haven't joined any projects yet.
+                    No projects joined yet.
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill,minmax(min(100%,280px),1fr))",
+                    gap: 12,
+                  }}
+                >
                   {(projects || []).map((p) => (
                     <ProjCard key={p._id} p={p} onClick={() => setDrawer(p)} />
                   ))}
@@ -2927,21 +4086,33 @@ const Dashboard = () => {
           {tab === "tasks" && (
             <div>
               <div
-                className="flex gap-2 mb-5 overflow-x-auto pb-1 -mx-1 px-1"
-                style={{ scrollbarWidth: "none" }}
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  marginBottom: 16,
+                  overflowX: "auto",
+                  paddingBottom: 4,
+                  scrollbarWidth: "none",
+                }}
               >
                 {Object.entries(LC).map(([k, c]) => (
                   <button
                     key={k}
                     onClick={() => setLFilter(k)}
-                    className="flex-shrink-0 px-3 py-1.5 rounded-lg font-bold uppercase tracking-widest cursor-pointer transition-all active:scale-[0.97] border-none"
+                    className="card-tap"
                     style={{
-                      background: lFilter === k ? "#3a9de8" : "#0c0f18",
-                      color: lFilter === k ? "#fff" : "#6b7a99",
-                      border: `1px solid ${lFilter === k ? "#3a9de8" : "#1e2330"}`,
-                      fontSize: 10,
-                      fontFamily: "'DM Mono', monospace",
-                      WebkitTapHighlightColor: "transparent",
+                      flexShrink: 0,
+                      padding: "7px 14px",
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      fontFamily: "var(--font-m)",
+                      fontWeight: 700,
+                      fontSize: 11,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                      background: lFilter === k ? "#4f8ef7" : "var(--surface)",
+                      color: lFilter === k ? "#fff" : "var(--text3)",
+                      border: `1px solid ${lFilter === k ? "#4f8ef7" : "var(--border)"}`,
                     }}
                   >
                     {k} ({c})
@@ -2950,27 +4121,39 @@ const Dashboard = () => {
               </div>
               {fLogs.length === 0 ? (
                 <div
-                  className="text-center py-16 sm:py-20 rounded-2xl"
-                  style={{ border: "1px dashed #1e2330" }}
+                  style={{
+                    textAlign: "center",
+                    padding: "64px 0",
+                    borderRadius: 16,
+                    border: "1px dashed var(--border)",
+                  }}
                 >
-                  <div className="text-3xl opacity-10 mb-3">◌</div>
                   <p
                     style={{
-                      color: "#4a5568",
+                      fontFamily: "var(--font-m)",
                       fontSize: 12,
-                      fontFamily: "'DM Mono', monospace",
+                      color: "var(--text3)",
+                      margin: 0,
                     }}
                   >
                     No logs in this category.
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill,minmax(min(100%,340px),1fr))",
+                    gap: 12,
+                  }}
+                >
                   {fLogs.map((l) => (
                     <LogCard
                       key={l._id}
                       log={l}
                       onMarkComplete={setCompletingLog}
+                      onViewDetail={setLogDetail}
                     />
                   ))}
                 </div>
@@ -2978,46 +4161,56 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* ── AVAILABLE TASKS ── */}
+          {/* ── OPEN TASKS ── */}
           {tab === "open" && (
             <div>
               <SH
-                title="Available Tasks to Claim"
-                accent="#4ade80"
+                title="Available Tasks"
+                accent="#22d3a0"
                 count={openLogs?.length}
               />
               <p
-                className="mb-5"
                 style={{
-                  color: "#6b7a99",
+                  fontFamily: "var(--font-m)",
                   fontSize: 11,
-                  fontFamily: "'DM Mono', monospace",
+                  color: "var(--text3)",
+                  marginBottom: 16,
                 }}
               >
-                Published tasks from your joined projects. Claim one to start
-                the deadline clock.
-                <span className="ml-1.5 font-bold" style={{ color: "#fbbf24" }}>
+                Claim a task to start the deadline clock.{" "}
+                <span style={{ color: "#f5a623", fontWeight: 700 }}>
                   Max 5 active at a time.
                 </span>
               </p>
               {!openLogs?.length ? (
                 <div
-                  className="text-center py-16 sm:py-20 rounded-2xl"
-                  style={{ border: "1px dashed #1e2330" }}
+                  style={{
+                    textAlign: "center",
+                    padding: "64px 0",
+                    borderRadius: 16,
+                    border: "1px dashed var(--border)",
+                  }}
                 >
-                  <div className="text-3xl opacity-10 mb-3">◌</div>
                   <p
                     style={{
-                      color: "#4a5568",
+                      fontFamily: "var(--font-m)",
                       fontSize: 12,
-                      fontFamily: "'DM Mono', monospace",
+                      color: "var(--text3)",
+                      margin: 0,
                     }}
                   >
                     No open tasks right now.
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill,minmax(min(100%,340px),1fr))",
+                    gap: 12,
+                  }}
+                >
                   {(openLogs || []).map((l) => (
                     <LogCard
                       key={l._id}
@@ -3026,6 +4219,7 @@ const Dashboard = () => {
                       onClaim={handleClaim}
                       claiming={claiming === l._id}
                       onMarkComplete={setCompletingLog}
+                      onViewDetail={setLogDetail}
                     />
                   ))}
                 </div>
@@ -3035,358 +4229,331 @@ const Dashboard = () => {
 
           {/* ── RANKINGS ── */}
           {tab === "ranking" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
-              <div className="lg:col-span-1">
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div
+                style={{
+                  borderRadius: 18,
+                  overflow: "hidden",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                }}
+              >
                 <div
-                  className="rounded-2xl overflow-hidden lg:sticky lg:top-28"
-                  style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
-                >
-                  <div
-                    className="h-[3px]"
-                    style={{
-                      background: "linear-gradient(90deg,#fbbf24,#e85d3a)",
-                    }}
-                  />
-                  <div className="p-4 sm:p-5 text-center">
+                  style={{
+                    height: 3,
+                    background: "linear-gradient(90deg,#f5a623,#f05252)",
+                  }}
+                />
+                <div style={{ padding: "20px 16px" }}>
+                  <div style={{ textAlign: "center", marginBottom: 16 }}>
                     <div
-                      className="uppercase tracking-widest mb-2"
                       style={{
-                        color: "#6b7a99",
-                        fontSize: 8,
-                        fontFamily: "'DM Mono', monospace",
+                        fontFamily: "var(--font-m)",
+                        fontSize: 9,
+                        color: "var(--text3)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
+                        marginBottom: 8,
                       }}
                     >
                       Your Ranking
                     </div>
                     <div
-                      className="font-extrabold mb-1"
                       style={{
-                        fontSize: 40,
-                        color: "#fbbf24",
-                        fontFamily: "'Syne', sans-serif",
+                        fontFamily: "var(--font-d)",
+                        fontWeight: 900,
+                        fontSize: "clamp(36px,10vw,52px)",
+                        color: "#f5a623",
+                        lineHeight: 1,
+                        letterSpacing: "-0.02em",
                       }}
                     >
                       #{ranking?.myRank ?? "—"}
                     </div>
                     <div
-                      className="mb-4"
                       style={{
-                        color: "#6b7a99",
+                        fontFamily: "var(--font-m)",
                         fontSize: 11,
-                        fontFamily: "'DM Mono', monospace",
+                        color: "var(--text3)",
+                        marginTop: 6,
                       }}
                     >
                       of {ranking?.totalStudents} students
                     </div>
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      {[
-                        ["Total Score", stats?.totalScore, "#fbbf24"],
-                        ["Tasks Done", stats?.completedLogs, "#4ade80"],
-                      ].map(([l, v, c]) => (
-                        <div
-                          key={l}
-                          className="py-3 rounded-xl"
-                          style={{ background: "#131825" }}
-                        >
-                          <div
-                            className="font-extrabold text-xl"
-                            style={{
-                              color: c,
-                              fontFamily: "'Syne', sans-serif",
-                            }}
-                          >
-                            {v}
-                          </div>
-                          <div
-                            className="uppercase"
-                            style={{
-                              color: "#6b7a99",
-                              fontSize: 9,
-                              fontFamily: "'DM Mono', monospace",
-                            }}
-                          >
-                            {l}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="text-left">
+                  </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 10,
+                      marginBottom: 14,
+                    }}
+                  >
+                    {[
+                      ["Total Score", stats?.totalScore, "#f5a623"],
+                      ["Tasks Done", stats?.completedLogs, "#22d3a0"],
+                    ].map(([l, v, c]) => (
                       <div
-                        className="flex justify-between mb-1"
+                        key={l}
                         style={{
-                          color: "#6b7a99",
-                          fontSize: 10,
-                          fontFamily: "'DM Mono', monospace",
+                          padding: 12,
+                          borderRadius: 12,
+                          background: "var(--surface2)",
+                          textAlign: "center",
                         }}
                       >
-                        <span>Completion rate</span>
-                        <span style={{ color: "#3a9de8" }}>
-                          {stats?.completionRate ?? 0}%
-                        </span>
-                      </div>
-                      <div
-                        className="h-1.5 rounded-full overflow-hidden"
-                        style={{ background: "#1e2330" }}
-                      >
                         <div
-                          className="h-full rounded-full"
                           style={{
-                            width: `${stats?.completionRate ?? 0}%`,
-                            background: "#3a9de8",
+                            fontFamily: "var(--font-d)",
+                            fontWeight: 800,
+                            fontSize: "clamp(18px,5vw,22px)",
+                            color: c,
                           }}
-                        />
+                        >
+                          {v}
+                        </div>
+                        <div
+                          style={{
+                            fontFamily: "var(--font-m)",
+                            fontSize: 9,
+                            color: "var(--text3)",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {l}
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                  <div className="px-4 sm:px-5 pb-5">
+                  <div>
                     <div
-                      className="font-bold uppercase tracking-widest mb-2.5"
                       style={{
-                        color: "#e85d3a",
-                        fontSize: 9,
-                        fontFamily: "'DM Mono', monospace",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginBottom: 6,
+                        fontSize: 10,
+                        color: "var(--text3)",
+                        fontFamily: "var(--font-m)",
                       }}
                     >
-                      ◆ Project Scores
+                      <span>Completion rate</span>
+                      <span style={{ color: "#4f8ef7" }}>
+                        {stats?.completionRate ?? 0}%
+                      </span>
                     </div>
-                    {!student?.projectWiseContribution?.length ? (
-                      <p
+                    <div
+                      style={{
+                        height: 6,
+                        borderRadius: 10,
+                        background: "var(--surface3)",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
                         style={{
-                          color: "#4a5568",
-                          fontSize: 11,
-                          fontFamily: "'DM Mono', monospace",
+                          height: "100%",
+                          borderRadius: 10,
+                          background: "#4f8ef7",
+                          width: `${stats?.completionRate ?? 0}%`,
+                          transition: "width 1s ease",
                         }}
-                      >
-                        No contributions yet.
-                      </p>
-                    ) : (
-                      (student.projectWiseContribution || []).map((c, i) => {
-                        const proj = projects?.find(
-                          (p) => p._id === c.project?.toString(),
-                        );
-                        return (
-                          <div
-                            key={i}
-                            className="flex items-center justify-between py-2.5"
-                            style={{ borderBottom: "1px solid #1a2030" }}
-                          >
-                            <div className="min-w-0 mr-3">
-                              <div
-                                className="truncate"
-                                style={{
-                                  color: "#c4cedf",
-                                  fontSize: 11,
-                                  fontFamily: "'DM Mono', monospace",
-                                }}
-                              >
-                                {proj?.problem?.title?.slice(0, 26) ||
-                                  "Project"}
-                              </div>
-                              {c.role && (
-                                <div
-                                  style={{
-                                    color: "#9c3ae8",
-                                    fontSize: 9,
-                                    fontFamily: "'DM Mono', monospace",
-                                  }}
-                                >
-                                  {c.role}
-                                </div>
-                              )}
-                            </div>
-                            <div
-                              className="font-extrabold flex-shrink-0"
-                              style={{
-                                color: "#fbbf24",
-                                fontSize: 13,
-                                fontFamily: "'Syne', sans-serif",
-                              }}
-                            >
-                              {c.contributionScore}
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-
-              <div className="lg:col-span-2">
-                <SH title="Global Leaderboard" accent="#fbbf24" />
+              <div>
+                <SH title="Global Leaderboard" accent="#f5a623" />
                 <div
-                  className="rounded-2xl overflow-hidden"
-                  style={{ background: "#0c0f18", border: "1px solid #1e2330" }}
+                  style={{
+                    borderRadius: 18,
+                    overflow: "hidden",
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                  }}
                 >
                   <div
-                    className="grid px-3 sm:px-4 py-2.5 uppercase tracking-widest"
                     style={{
+                      display: "grid",
                       gridTemplateColumns: "1fr auto",
-                      borderBottom: "1px solid #1e2330",
-                      color: "#6b7a99",
+                      padding: "10px 16px",
+                      borderBottom: "1px solid var(--border)",
+                      fontFamily: "var(--font-m)",
                       fontSize: 9,
-                      fontFamily: "'DM Mono', monospace",
+                      color: "var(--text3)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
                     }}
                   >
                     <span>Rank · Student</span>
                     <span>Score</span>
                   </div>
-                  <div className="divide-y divide-[#1a203020]">
-                    {(ranking?.top10 || []).map((s, i) => {
-                      const isMe =
-                        s._id === student?._id?.toString() ||
-                        s._id === student?._id;
-                      return (
-                        <div
-                          key={s._id}
-                          className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-3 transition-colors"
+                  {(ranking?.top10 || []).map((s, i) => {
+                    const isMe =
+                      s._id === student?._id?.toString() ||
+                      s._id === student?._id;
+                    return (
+                      <div
+                        key={s._id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "12px 14px",
+                          borderBottom: "1px solid var(--border)",
+                          background: isMe ? "#1c1508" : "transparent",
+                        }}
+                      >
+                        <span
                           style={{
-                            background: isMe ? "#18110a" : "transparent",
+                            width: 24,
+                            textAlign: "center",
+                            flexShrink: 0,
+                            fontFamily: "var(--font-m)",
+                            fontSize: 11,
+                            color: isMe ? "#f5a623" : "var(--text3)",
                           }}
                         >
-                          <span
-                            className="w-6 text-center flex-shrink-0"
-                            style={{
-                              color: isMe ? "#fbbf24" : "#6b7a99",
-                              fontSize: 11,
-                              fontFamily: "'DM Mono', monospace",
-                            }}
-                          >
-                            {i < 3 ? ["🥇", "🥈", "🥉"][i] : `#${i + 1}`}
-                          </span>
-                          <Av name={s.name} size={26} />
-                          <div className="flex-1 min-w-0">
-                            <div
-                              className="font-bold truncate"
-                              style={{
-                                color: isMe ? "#fbbf24" : "#f0f4ff",
-                                fontSize: 12,
-                                fontFamily: "'Syne', sans-serif",
-                              }}
-                            >
-                              {s.name}
-                              {isMe && (
-                                <span
-                                  style={{
-                                    color: "#e85d3a",
-                                    fontSize: 8,
-                                    marginLeft: 4,
-                                    fontFamily: "'DM Mono', monospace",
-                                  }}
-                                >
-                                  (you)
-                                </span>
-                              )}
-                            </div>
-                            {s.department && (
-                              <div
-                                style={{
-                                  color: "#6b7a99",
-                                  fontSize: 9,
-                                  fontFamily: "'DM Mono', monospace",
-                                }}
-                              >
-                                {s.department}
-                              </div>
-                            )}
-                          </div>
+                          {i < 3 ? ["🥇", "🥈", "🥉"][i] : `#${i + 1}`}
+                        </span>
+                        <Av name={s.name} size={28} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div
-                            className="font-extrabold flex-shrink-0"
                             style={{
-                              color: isMe ? "#fbbf24" : "#c4cedf",
-                              fontSize: 14,
-                              fontFamily: "'Syne', sans-serif",
+                              fontFamily: "var(--font-d)",
+                              fontWeight: 700,
+                              color: isMe ? "#f5a623" : "var(--text)",
+                              fontSize: "clamp(11px,3vw,13px)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
                             }}
                           >
-                            {s.totalScore}
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {ranking?.myRank > 10 && (
-                      <>
-                        <div
-                          className="text-center py-2"
-                          style={{
-                            color: "#4a5568",
-                            fontSize: 10,
-                            fontFamily: "'DM Mono', monospace",
-                          }}
-                        >
-                          · · · {ranking.myRank - 10} more · · ·
-                        </div>
-                        <div
-                          className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-3"
-                          style={{ background: "#18110a" }}
-                        >
-                          <span
-                            className="w-6 text-center"
-                            style={{
-                              color: "#fbbf24",
-                              fontSize: 11,
-                              fontFamily: "'DM Mono', monospace",
-                            }}
-                          >
-                            #{ranking.myRank}
-                          </span>
-                          <Av name={student?.name} size={26} />
-                          <div className="flex-1 min-w-0">
-                            <div
-                              className="font-bold"
-                              style={{
-                                color: "#fbbf24",
-                                fontSize: 12,
-                                fontFamily: "'Syne', sans-serif",
-                              }}
-                            >
-                              {student?.name}
+                            {s.name}
+                            {isMe && (
                               <span
                                 style={{
-                                  color: "#e85d3a",
+                                  color: "#f05252",
                                   fontSize: 8,
                                   marginLeft: 4,
-                                  fontFamily: "'DM Mono', monospace",
+                                  fontFamily: "var(--font-m)",
                                 }}
                               >
                                 (you)
                               </span>
-                            </div>
-                            {student?.department && (
-                              <div
-                                style={{
-                                  color: "#6b7a99",
-                                  fontSize: 9,
-                                  fontFamily: "'DM Mono', monospace",
-                                }}
-                              >
-                                {student.department}
-                              </div>
                             )}
                           </div>
+                          {s.department && (
+                            <div
+                              style={{
+                                fontFamily: "var(--font-m)",
+                                fontSize: 9,
+                                color: "var(--text3)",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {s.department}
+                            </div>
+                          )}
+                        </div>
+                        <div
+                          style={{
+                            fontFamily: "var(--font-d)",
+                            fontWeight: 800,
+                            fontSize: 15,
+                            color: isMe ? "#f5a623" : "var(--text)",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {s.totalScore}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {ranking?.myRank > 10 && (
+                    <>
+                      <div
+                        style={{
+                          textAlign: "center",
+                          padding: 8,
+                          fontFamily: "var(--font-m)",
+                          fontSize: 10,
+                          color: "var(--text3)",
+                        }}
+                      >
+                        · · · {ranking.myRank - 10} more · · ·
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "12px 14px",
+                          background: "#1c1508",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 24,
+                            textAlign: "center",
+                            fontFamily: "var(--font-m)",
+                            fontSize: 11,
+                            color: "#f5a623",
+                          }}
+                        >
+                          #{ranking.myRank}
+                        </span>
+                        <Av name={student?.name} size={28} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div
-                            className="font-extrabold"
                             style={{
-                              color: "#fbbf24",
-                              fontSize: 14,
-                              fontFamily: "'Syne', sans-serif",
+                              fontFamily: "var(--font-d)",
+                              fontWeight: 700,
+                              color: "#f5a623",
+                              fontSize: 13,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
                             }}
                           >
-                            {stats?.totalScore}
+                            {student?.name}
+                            <span
+                              style={{
+                                color: "#f05252",
+                                fontSize: 8,
+                                marginLeft: 4,
+                                fontFamily: "var(--font-m)",
+                              }}
+                            >
+                              (you)
+                            </span>
                           </div>
                         </div>
-                      </>
-                    )}
-                  </div>
+                        <div
+                          style={{
+                            fontFamily: "var(--font-d)",
+                            fontWeight: 800,
+                            fontSize: 15,
+                            color: "#f5a623",
+                          }}
+                        >
+                          {stats?.totalScore}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* MOBILE BOTTOM NAV */}
+        {/* Mobile Bottom Nav */}
         <BottomNav tab={tab} setTab={setTab} TABS={TABS} />
 
-        {/* PROJECT DRAWER */}
+        {/* Project Drawer */}
         <AnimatePresence>
           {drawer && (
             <>
@@ -3395,10 +4562,12 @@ const Dashboard = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setDrawer(null)}
-                className="fixed inset-0 z-[400]"
                 style={{
-                  background: "rgba(0,0,0,.7)",
-                  backdropFilter: "blur(6px)",
+                  position: "fixed",
+                  inset: 0,
+                  zIndex: 400,
+                  background: "rgba(0,0,0,.75)",
+                  backdropFilter: "blur(8px)",
                 }}
               />
               <ProjectDrawer
@@ -3409,6 +4578,38 @@ const Dashboard = () => {
                 onClaim={handleClaim}
                 onClose={() => setDrawer(null)}
                 onMarkComplete={setCompletingLog}
+                onViewDetail={setLogDetail}
+              />
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Log Detail Drawer */}
+        <AnimatePresence>
+          {logDetail && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setLogDetail(null)}
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  zIndex: 550,
+                  background: "rgba(0,0,0,.75)",
+                  backdropFilter: "blur(8px)",
+                }}
+              />
+              <LogDetailDrawer
+                log={logDetail}
+                onClose={() => setLogDetail(null)}
+                onMarkComplete={(log) => {
+                  setLogDetail(null);
+                  setCompletingLog(log);
+                }}
+                onClaim={handleClaim}
+                claiming={claiming === logDetail._id}
               />
             </>
           )}
@@ -3417,7 +4618,6 @@ const Dashboard = () => {
         {toastData && (
           <ToastBar {...toastData} onDone={() => setToastData(null)} />
         )}
-
         <AnimatePresence>
           {completingLog && (
             <MarkCompleteModal

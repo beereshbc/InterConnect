@@ -374,6 +374,7 @@ const Problems = () => {
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  /* --- UPLOAD FUNCTIONALITY DISABLED START ---
   const handleUploadClick = () => {
     if (!studentToken) {
       toast.error("Please log in to upload a problem statement.");
@@ -382,6 +383,7 @@ const Problems = () => {
     }
     setIsCreateOpen(true);
   };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -399,7 +401,6 @@ const Problems = () => {
       );
 
       if (data.success) {
-        // Updated toast message as requested
         toast.success(
           "Problem submitted! It will be reviewed by the admin and published after approval.",
         );
@@ -426,6 +427,7 @@ const Problems = () => {
       setSubmitting(false);
     }
   };
+  --- UPLOAD FUNCTIONALITY DISABLED END --- */
 
   const handleJoinProject = async (problemId) => {
     if (!studentToken) {
@@ -618,7 +620,9 @@ const Problems = () => {
               Discover, inspect, and contribute to real-world challenges.
             </p>
           </div>
-          <button
+
+          {/* --- UPLOAD FUNCTIONALITY DISABLED START --- */}
+          {/* <button
             onClick={handleUploadClick}
             className="inline-flex items-center gap-1.5 rounded-lg font-mono font-medium text-[13px] px-4 py-2.5 cursor-pointer transition-all hover:border-[#3b5bdb]"
             style={{
@@ -631,6 +635,8 @@ const Problems = () => {
             <span className="hidden xs:inline">Upload Statement</span>
             <span className="xs:hidden">Upload</span>
           </button>
+          */}
+          {/* --- UPLOAD FUNCTIONALITY DISABLED END --- */}
         </div>
 
         {/* ── Development Phase LIVE Banner ── */}
@@ -663,14 +669,17 @@ const Problems = () => {
                     </h3>
                     <p className="font-mono text-[12px] sm:text-[13px] text-emerald-100/70 leading-relaxed max-w-2xl">
                       Select a problem statement below and join as a{" "}
-                      <strong>contributor</strong> to start working on tasks, or{" "}
-                      <strong>upload your own problem statement</strong> to
-                      kickstart a brand new project.
+                      <strong>contributor</strong> to start working on tasks.
+                      {/* --- UPLOAD FUNCTIONALITY DISABLED START --- */}
+                      {/* , or <strong>upload your own problem statement</strong> to kickstart a brand new project. */}
+                      {/* --- UPLOAD FUNCTIONALITY DISABLED END --- */}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+                  {/* --- UPLOAD FUNCTIONALITY DISABLED START --- */}
+                  {/*
                   <button
                     onClick={handleUploadClick}
                     className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold font-mono text-[12px] uppercase tracking-wider rounded-lg transition-colors cursor-pointer"
@@ -678,6 +687,8 @@ const Problems = () => {
                     <Plus size={14} strokeWidth={3} />
                     Upload Statement
                   </button>
+                  */}
+                  {/* --- UPLOAD FUNCTIONALITY DISABLED END --- */}
                   <button
                     onClick={() => setShowDevBanner(false)}
                     className="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/60 border border-emerald-500/20 transition-colors"
@@ -1176,8 +1187,9 @@ const Problems = () => {
 
         {/* ── MODALS ── */}
         <AnimatePresence>
+          {/* --- UPLOAD FUNCTIONALITY DISABLED START --- */}
           {/* Create Problem */}
-          {isCreateOpen && (
+          {/* {isCreateOpen && (
             <Overlay
               onClose={() => setIsCreateOpen(false)}
               title="Submit Problem Statement"
@@ -1308,6 +1320,8 @@ const Problems = () => {
               </form>
             </Overlay>
           )}
+          */}
+          {/* --- UPLOAD FUNCTIONALITY DISABLED END --- */}
 
           {/* View Problem */}
           {selectedProblem && (

@@ -8,8 +8,27 @@ import prateeksha from "../../public/prateeksha11.jpeg";
 import giresh from "../../public/giresh11.jpeg";
 import beeresh from "../../public/Beeresh.jpeg";
 import yashwanth from "../../public/yashwanth.jpeg";
-import pratham from "../../public/pratham.png";
+import prathamImg from "../../public/pratham.png";
+import rahulImg from "../../public/rahul.jpeg";
+import vinayImg from "../../public/vinyas.jpeg";
 import adi from "../../public/adi.jpeg";
+import puneet from "../../public/puneet11.jpeg";
+import vinayaka from "../../public/vinayakak.jpeg";
+import kousthubha from "../../public/kousthubha.jpeg";
+import annapurna from "../../public/none.png";
+import chandana from "../../public/chandanaap.png";
+import preeti from "../../public/preeti.jpeg";
+import rakshitha from "../../public/Rakshithasn.jpeg";
+import yashaswini from "../../public/yashaswini.jpeg";
+import pushpa from "../../public/pushpakc.jpeg";
+import usha from "../../public/ushab.png";
+import ruchitha from "../../public/ruchitharaju.jpeg";
+import vaibhavi from "../../public/vibhavi.jpeg";
+import junaid from "../../public/junaid.jpeg";
+import maqsood from "../../public/MaqsoodMD.jpeg";
+import khaderouse from "../../public/gouse.jpeg";
+import manasa from "../../public/manasahmata.png";
+import shashidhar from "../../public/shashidar.jpeg";
 import promo from "../../public/promo.mp4";
 import { User, Phone, Mail, Volume2, VolumeX } from "lucide-react";
 
@@ -158,48 +177,188 @@ const SectionLabel = ({ color = "#3a9de8", children }) => (
   </p>
 );
 
-const creativeTeam = [
-  {
-    name: "Ramya S",
-    phone: "8073114564",
-    email: "ramyas5188@gmail.com",
-    role: "Creative Team",
-    image: ramya,
-  },
-  {
-    name: "Pallavi D S",
-    phone: "9611185331",
-    email: "pallavids359@gmail.com",
-    role: "Creative Team",
-    image: pallavi,
-  },
-  {
-    name: "Prateeksha D G",
-    phone: "9483743743",
-    email: "dgprateeksha01@gmail.com",
-    role: "Creative Team",
-    image: prateeksha,
-  },
+const mediaTeam = [
   {
     name: "Pratham Bhavi",
     phone: "+91 91086 70736",
     email: "prathambhavi@gmail.com",
-    role: "Media Team",
-    image: pratham,
+    role: "Media Lead ",
+    image: prathamImg,
   },
   {
-    name: "GIREESH L P",
-    phone: "77950 65290",
+    name: "Rahul R",
+    phone: "9113581424",
+    email: "rahulr142005@gmail.com",
+    role: "Media Team",
+    image: rahulImg,
+  },
+  {
+    name: "Vinay S Angadi",
+    phone: "8088446257",
+    email: "vinaysangadi31@gmail.com",
+    role: "Media Team",
+    image: vinayImg,
+  },
+];
+
+const adminTeam = [
+  {
+    name: "Ramya S",
+    phone: "8073114564",
+    email: "ramyas5188@gmail.com",
+    role: "Admin",
+    image: ramya,
+  },
+  {
+    name: "Puneet C Negalur",
+    phone: "8073336221",
+    email: "puneet@gmail.com",
+    role: "Admin",
+    image: puneet,
+  },
+
+  {
+    name: "Pallavi D S",
+    phone: "9611185331",
+    email: "pallavids359@gmail.com",
+    role: "Admin",
+    image: pallavi,
+  },
+
+  {
+    name: "Prateeksha D G",
+    phone: "9483743743",
+    email: "dgprateeksha01@gmail.com",
+    role: "Admin",
+    image: prateeksha,
+  },
+  {
+    name: "Gireesh L P",
+    phone: "7795065290",
     email: "gireeshlp1@gmail.com",
-    role: "Creative Team",
+    role: "Admin",
     image: giresh,
   },
   {
+    name: "Vinayaka K",
+    phone: "6361685509",
+    email: "vinayaka@gmail.com",
+    role: "Admin",
+    image: vinayaka,
+  },
+  {
     name: "Aditya R H",
-    phone: "87626 22221",
+    phone: "8762622221",
     email: "adityarh2020@gmail.com",
-    role: "Creative Team",
+    role: "Admin",
     image: adi,
+  },
+
+  // 🔥 rest same (unchanged)
+  {
+    name: "Kousthubha S V",
+    phone: "9019716749",
+    email: "kousthubha@gmail.com",
+    role: "Admin",
+    image: kousthubha,
+  },
+  {
+    name: "Annapurna S K",
+    phone: "6362887009",
+    email: "annapurna@gmail.com",
+    role: "Admin",
+    image: annapurna,
+  },
+  {
+    name: "Chandana A P",
+    phone: "8317489749",
+    email: "chandana@gmail.com",
+    role: "Admin",
+    image: chandana,
+  },
+  {
+    name: "Preeti Gangar",
+    phone: "7019866565",
+    email: "preeti@gmail.com",
+    role: "Admin",
+    image: preeti,
+  },
+  {
+    name: "Rakshitha S N",
+    phone: "7204450048",
+    email: "rakshitha@gmail.com",
+    role: "Admin",
+    image: rakshitha,
+  },
+  {
+    name: "Yashaswini A L",
+    phone: "8861829891",
+    email: "yashaswini@gmail.com",
+    role: "Admin",
+    image: yashaswini,
+  },
+  {
+    name: "Pushpa K C",
+    phone: "8792041529",
+    email: "pushpa@gmail.com",
+    role: "Admin",
+    image: pushpa,
+  },
+  {
+    name: "Usha B",
+    phone: "8431541078",
+    email: "usha@gmail.com",
+    role: "Admin",
+    image: usha,
+  },
+  {
+    name: "Ruchitha",
+    phone: "7022189283",
+    email: "ruchitha@gmail.com",
+    role: "Admin",
+    image: ruchitha,
+  },
+  {
+    name: "Vaibhavi Bhandare",
+    phone: "7795366836",
+    email: "vaibhavi@gmail.com",
+    role: "Admin",
+    image: vaibhavi,
+  },
+  {
+    name: "Junaid Kotwal",
+    phone: "8197041637",
+    email: "junaid@gmail.com",
+    role: "Admin",
+    image: junaid,
+  },
+  {
+    name: "Maqsood MD",
+    phone: "8792404950",
+    email: "maqsood@gmail.com",
+    role: "Admin",
+    image: maqsood,
+  },
+  {
+    name: "Khaderouse Savanur",
+    phone: "7353625114",
+    email: "khaderouse@gmail.com",
+    role: "Admin",
+    image: khaderouse,
+  },
+  {
+    name: "Manasa H Mota",
+    phone: "9019580671",
+    email: "manasa@gmail.com",
+    role: "Admin",
+    image: manasa,
+  },
+  {
+    name: "Shashidhar Bhattad",
+    phone: "8050791640",
+    email: "shashidhar@gmail.com",
+    role: "Admin",
+    image: shashidhar,
   },
 ];
 
@@ -759,6 +918,15 @@ const About = () => {
           border-radius: 50%;
           z-index: 0;
         }
+
+        .animate-team-slider {
+          animation: teamSlider 40s linear infinite;
+        }
+
+        @keyframes teamSlider {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
           
         /* video corner brackets */
         .ab-tl{top:12px;left:12px;border-top:1.5px solid rgba(58,157,232,0.55);border-left:1.5px solid rgba(58,157,232,0.55);}
@@ -1194,7 +1362,7 @@ const About = () => {
             <StudentCard
               img={beeresh}
               name="Beeresh Kumar B C"
-              role="Student Coordinator"
+              role="Tech Lead - Student Coordinator"
               phone="6360995219"
               email="bcbeereshkumar@gmail.com"
               delay={0.05}
@@ -1211,7 +1379,38 @@ const About = () => {
         </section>
 
         {/* ══════════════════════════════
-            6. CREATIVE TEAM (3D STYLE)
+            6. MEDIA TEAM
+        ══════════════════════════════ */}
+        <section
+          className="ab-section"
+          style={{ paddingTop: 40, paddingBottom: 40 }}
+        >
+          <div className="ab-team-header">
+            <div>
+              <SectionLabel color="#22c55e">Media Team</SectionLabel>
+              <h2 className="ab-team-header__title font-display">
+                Our Media Team
+              </h2>
+            </div>
+            <div className="ab-team-header__rule" />
+          </div>
+
+          <div className="overflow-hidden w-full mt-10">
+            <div className="flex w-max gap-6 animate-team-slider">
+              {/* Duplicated 4 times to ensure it covers enough width for seamless scrolling */}
+              {[...mediaTeam, ...mediaTeam, ...mediaTeam, ...mediaTeam].map(
+                (member, i) => (
+                  <div key={i} className="min-w-[250px] flex-shrink-0">
+                    <CreativeCard member={member} />
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════
+            7. ADMIN TEAM
         ══════════════════════════════ */}
         <section
           className="ab-section"
@@ -1219,18 +1418,22 @@ const About = () => {
         >
           <div className="ab-team-header">
             <div>
-              <SectionLabel color="#ec4899">Creative Team</SectionLabel>
+              <SectionLabel color="#ec4899">Admin Team</SectionLabel>
               <h2 className="ab-team-header__title font-display">
-                Our Creative Team
+                Our Admin Team
               </h2>
             </div>
             <div className="ab-team-header__rule" />
           </div>
 
-          <div className="flex flex-wrap justify-center gap-6 mt-8">
-            {creativeTeam.map((member, i) => (
-              <CreativeCard key={i} member={member} />
-            ))}
+          <div className="overflow-hidden w-full mt-10">
+            <div className="flex w-max gap-6 animate-team-slider">
+              {[...adminTeam, ...adminTeam].map((member, i) => (
+                <div key={i} className="min-w-[250px] flex-shrink-0">
+                  <CreativeCard member={member} />
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* ── Bottom CTA ── */}
