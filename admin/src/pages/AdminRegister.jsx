@@ -103,8 +103,8 @@ const AdminRegister = () => {
   const navigate = useNavigate();
   const { axios, setAdminToken } = useAppContext();
 
-  // 1. Reset default state to false to show Registration by default (optional)
-  const [isLogin, setIsLogin] = useState(false);
+  // --- REGISTRATION DISABLED: Set to true by default to enforce Login ---
+  const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [isForgot, setIsForgot] = useState(false);
@@ -148,13 +148,15 @@ const AdminRegister = () => {
           navigate("/");
         }
       } else {
-        // 2. Uncommented Registration API Call
+        // --- REGISTRATION FUNCTIONALITY DISABLED ---
+        /*
         const { data } = await axios.post("/api/admin/register", form);
         if (data.success) {
           setAdminToken(data.token);
           toast.success("Admin profile initialized!");
           navigate("/");
         }
+        */
       }
     } catch (err) {
       toast.error(
@@ -513,8 +515,8 @@ const AdminRegister = () => {
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.28 }}
                 >
-                  {/* 3. Re-enabled Tab Switcher */}
-                  <TabSwitch isLogin={isLogin} onChange={setIsLogin} />
+                  {/* --- REGISTRATION DISABLED: TabSwitcher hidden --- */}
+                  {/* <TabSwitch isLogin={isLogin} onChange={setIsLogin} /> */}
 
                   <h2
                     className="font-display text-2xl font-extrabold mb-1.5"
@@ -532,7 +534,8 @@ const AdminRegister = () => {
                   </p>
 
                   <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                    {/* 4. Re-enabled Registration Fields with Animation */}
+                    {/* --- REGISTRATION DISABLED: Registration fields hidden --- */}
+                    {/*
                     <AnimatePresence>
                       {!isLogin && (
                         <motion.div
@@ -637,6 +640,7 @@ const AdminRegister = () => {
                         </motion.div>
                       )}
                     </AnimatePresence>
+                    */}
 
                     <FocusInput
                       icon="✉"
@@ -747,7 +751,8 @@ const AdminRegister = () => {
                     </div>
                   </form>
 
-                  {/* 5. Re-enabled Bottom Toggle Link */}
+                  {/* --- REGISTRATION DISABLED: Bottom toggle link hidden --- */}
+                  {/*
                   <p
                     className="text-center font-mono text-[12px] mt-6"
                     style={{ color: "#6b7a99" }}
@@ -767,6 +772,7 @@ const AdminRegister = () => {
                       {isLogin ? "Initialize Node" : "Login here"}
                     </button>
                   </p>
+                  */}
                 </motion.div>
               )}
             </AnimatePresence>

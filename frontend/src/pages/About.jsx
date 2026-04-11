@@ -14,7 +14,7 @@ import vinayImg from "../../public/vinyas.jpeg";
 import adi from "../../public/adi.jpeg";
 import puneet from "../../public/puneet11.jpeg";
 import vinayaka from "../../public/vinayakak.jpeg";
-import kousthubha from "../../public/kousthubha.jpeg";
+import kousthubha from "../../public/kousthubha.png";
 import annapurna from "../../public/none.png";
 import chandana from "../../public/chandanaap.png";
 import preeti from "../../public/preeti.jpeg";
