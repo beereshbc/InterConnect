@@ -1194,7 +1194,7 @@ const About = () => {
             <StudentCard
               img={beeresh}
               name="Beeresh Kumar B C"
-              role="Technical Lead & Coordinator"
+              role="Student Coordinator"
               phone="6360995219"
               email="bcbeereshkumar@gmail.com"
               delay={0.05}
