@@ -26,12 +26,13 @@ import {
   Briefcase,
   Clock,
   Calendar,
-  Code, // Added for Department
+  Code,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 
+/* --- COMMENTED OUT FOR REGISTRATION ---
 const PROGRAMS = [
   "BE/B.Tech",
   "M.Tech",
@@ -57,12 +58,13 @@ const SEMESTERS = [
   "7th Sem",
   "8th Sem",
 ];
+*/
 
 const TIMELINE = [
   {
     label: "Registration Opens",
-    date: "Now Open",
-    icon: Calendar, // or whichever icon you're using
+    date: "Now Closed",
+    icon: Calendar,
   },
   {
     label: "Registration Closes",
@@ -92,7 +94,7 @@ const Register = () => {
   const navigate = useNavigate();
   const { axios, setStudentToken } = useAppContext();
 
-  // Default to login view
+  // Force login view since registration is closed
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -107,7 +109,7 @@ const Register = () => {
     email: "",
     phone: "",
     college: "",
-    department: "", // Added to map with Schema
+    department: "",
     program: "",
     semester: "",
     usn: "",
@@ -139,7 +141,9 @@ const Register = () => {
           toast.success("Welcome back to the network!");
           navigate("/");
         }
-      } else {
+      }
+      /* --- REGISTRATION API LOGIC COMMENTED OUT ---
+      else {
         const { data } = await axios.post("/api/student/register", formData);
         if (data.success) {
           setStudentToken(data.token);
@@ -147,6 +151,7 @@ const Register = () => {
           navigate("/");
         }
       }
+      ---------------------------------------------- */
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Connection failed. Try again.",
@@ -496,7 +501,7 @@ const Register = () => {
                   )}
                 </motion.div>
               ) : (
-                /* =========== LOGIN / REGISTER FLOW =========== */
+                /* =========== LOGIN FLOW =========== */
                 <motion.div
                   key="auth"
                   initial={{ opacity: 0, x: -20 }}
@@ -518,40 +523,40 @@ const Register = () => {
                   <div className="flex p-1.5 bg-slate-950/60 border border-slate-800 rounded-2xl mb-7">
                     <button
                       type="button"
-                      onClick={() => setIsLogin(true)}
-                      className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${
-                        isLogin
-                          ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                          : "text-slate-400 hover:text-white"
-                      }`}
+                      className="flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                     >
                       Login
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsLogin(false)}
-                      className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${
-                        !isLogin
-                          ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                          : "text-slate-400 hover:text-white"
-                      }`}
+                    <div
+                      className="flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 text-slate-500 bg-slate-900/50 flex items-center justify-center cursor-not-allowed border border-slate-800/50"
+                      title="Registrations are currently closed"
                     >
-                      Register
-                    </button>
+                      Registration Closed
+                    </div>
                   </div>
 
                   <div className="mb-6">
                     <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1.5">
-                      {isLogin ? "Welcome Back" : "Create Account"}
+                      Welcome Back
                     </h2>
                     <p className="text-slate-400 text-sm">
-                      {isLogin
-                        ? "Enter your credentials to access the network."
-                        : "Join the INTERCONNECT 26.0 challenge — fill in your details below."}
+                      Enter your credentials to access the network.
                     </p>
+                    <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-2">
+                      <Lock
+                        size={16}
+                        className="text-red-400 mt-0.5 flex-shrink-0"
+                      />
+                      <p className="text-red-300 text-xs leading-relaxed">
+                        New registrations for InterConnect 26.0 are officially
+                        closed. Already registered participants can continue to
+                        log in.
+                      </p>
+                    </div>
                   </div>
 
                   <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    {/* --- REGISTRATION FIELDS COMMENTED OUT ---
                     <AnimatePresence mode="popLayout">
                       {!isLogin && (
                         <motion.div
@@ -627,6 +632,7 @@ const Register = () => {
                         </motion.div>
                       )}
                     </AnimatePresence>
+                    ------------------------------------------- */}
 
                     <motion.div layout className="space-y-4">
                       <InputField
@@ -648,21 +654,19 @@ const Register = () => {
                       />
                     </motion.div>
 
-                    {isLogin && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="flex items-center justify-end text-sm"
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex items-center justify-end text-sm"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setIsForgotPassword(true)}
+                        className="font-semibold text-blue-400 hover:text-blue-300 transition-colors text-sm"
                       >
-                        <button
-                          type="button"
-                          onClick={() => setIsForgotPassword(true)}
-                          className="font-semibold text-blue-400 hover:text-blue-300 transition-colors text-sm"
-                        >
-                          Forgot Password?
-                        </button>
-                      </motion.div>
-                    )}
+                        Forgot Password?
+                      </button>
+                    </motion.div>
 
                     <motion.button
                       layout
@@ -676,9 +680,7 @@ const Register = () => {
                         <Loader2 size={20} className="animate-spin" />
                       ) : (
                         <>
-                          {isLogin
-                            ? "Login to Network"
-                            : "Register for Challenge"}
+                          Login to Network
                           <ArrowRight size={18} />
                         </>
                       )}

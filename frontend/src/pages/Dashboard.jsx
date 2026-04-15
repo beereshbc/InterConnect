@@ -13,7 +13,7 @@ import {
   MessageSquare,
   BookOpen,
   Zap,
-  Trophy,
+  // Trophy,   // RANKING REMOVED
   CheckCircle,
   Clock,
   ChevronRight,
@@ -25,13 +25,13 @@ import {
   Layers,
   BarChart2,
   Flame,
-  ArrowUpRight,
-  Shield,
-  Bell,
+  // ArrowUpRight,  // RANKING REMOVED
+  // Shield,        // RANKING REMOVED
+  // Bell,          // RANKING REMOVED
   X,
   FileText,
-  Calendar,
-  Award,
+  // Calendar,   // RANKING REMOVED
+  // Award,      // RANKING REMOVED
   GitPullRequest,
   AlertCircle,
 } from "lucide-react";
@@ -182,13 +182,10 @@ const avatarBg = (n = "") => {
   return PALETTE[Math.abs(h) % PALETTE.length];
 };
 
-// Detect if a string contains HTML tags
 const isRichText = (str) => /<[a-z][\s\S]*>/i.test(str);
 
-// Sanitize and render rich text safely (basic allow-list)
 const sanitizeHtml = (html) => {
   if (!html) return "";
-  // Decode &amp; -> & for display
   return html
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
@@ -336,7 +333,6 @@ const RichText = ({ html, clamp }) => {
   );
 };
 
-// ─── Plain or Rich Text auto-renderer ────────────────────────────────────────────
 const SmartText = ({ text, clamp, style = {} }) => {
   if (!text) return null;
   if (isRichText(text)) return <RichText html={text} clamp={clamp} />;
@@ -635,7 +631,7 @@ const Modal = ({ title, onClose, children }) => (
   </div>
 );
 
-// ─── Log Detail Drawer (replaces "View More") ────────────────────────────────────
+// ─── Log Detail Drawer ────────────────────────────────────────────────────────────
 const LogDetailDrawer = ({
   log,
   onClose,
@@ -712,7 +708,6 @@ const LogDetailDrawer = ({
         overflowY: "auto",
       }}
     >
-      {/* Drag handle */}
       <div
         style={{
           display: "flex",
@@ -730,7 +725,6 @@ const LogDetailDrawer = ({
         />
       </div>
 
-      {/* Sticky header */}
       <div
         style={{
           position: "sticky",
@@ -802,7 +796,6 @@ const LogDetailDrawer = ({
         </div>
       </div>
 
-      {/* Content */}
       <div
         style={{
           padding: 16,
@@ -812,7 +805,6 @@ const LogDetailDrawer = ({
           gap: 14,
         }}
       >
-        {/* Points + deadline strip */}
         <div
           style={{
             display: "grid",
@@ -892,7 +884,6 @@ const LogDetailDrawer = ({
           ))}
         </div>
 
-        {/* Project reference */}
         <div
           style={{
             padding: "12px 14px",
@@ -942,7 +933,6 @@ const LogDetailDrawer = ({
           </div>
         </div>
 
-        {/* Description — full rich text */}
         {log.description && (
           <div
             style={{
@@ -971,7 +961,6 @@ const LogDetailDrawer = ({
           </div>
         )}
 
-        {/* Requirements — full rich text */}
         {log.requirements && (
           <div
             style={{
@@ -1000,7 +989,6 @@ const LogDetailDrawer = ({
           </div>
         )}
 
-        {/* Closure / completion note */}
         {log.closureNote && (
           <div
             style={{
@@ -1029,7 +1017,6 @@ const LogDetailDrawer = ({
           </div>
         )}
 
-        {/* Links */}
         {(log.githubIssueLink || log.githubPrLink) && (
           <div
             style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
@@ -1120,7 +1107,6 @@ const LogDetailDrawer = ({
           </div>
         )}
 
-        {/* Action Buttons */}
         <div style={{ display: "flex", gap: 10 }}>
           {log.task_status === "open" && onClaim && (
             <motion.button
@@ -1611,7 +1597,6 @@ const CoordinatorCard = ({ coordinator }) => {
 };
 
 // ─── Log Card ──────────────────────────────────────────────────────────────────────
-// Now has "View More" button that opens the detail drawer
 const LogCard = ({
   log,
   showClaim = false,
@@ -1679,7 +1664,6 @@ const LogCard = ({
         <Chip status={eff} />
       </div>
 
-      {/* Description preview — smart renders rich text with clamp */}
       {log.description && (
         <div style={{ marginBottom: 10 }}>
           <SmartText text={log.description} clamp={2} />
@@ -1724,7 +1708,6 @@ const LogCard = ({
             alignItems: "center",
           }}
         >
-          {/* View More button */}
           {onViewDetail && (
             <button
               onClick={() => onViewDetail(log)}
@@ -1891,7 +1874,6 @@ const ProjCard = ({ p, onClick }) => {
           </div>
         </div>
       </div>
-      {/* ── CATEGORY REMOVED ── only theme tag remains */}
       <div
         style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12 }}
       >
@@ -2033,6 +2015,7 @@ const ProjCard = ({ p, onClick }) => {
           </div>
         ))}
       </div>
+      {/* RANKING REMOVED: coordinators strip kept but Trophy icon replaced */}
       {p.coordinators?.length > 0 && (
         <div
           style={{
@@ -2045,7 +2028,7 @@ const ProjCard = ({ p, onClick }) => {
             background: "var(--surface2)",
           }}
         >
-          <Trophy size={10} style={{ color: "#7c5cfc", flexShrink: 0 }} />
+          <Users size={10} style={{ color: "#7c5cfc", flexShrink: 0 }} />
           <span
             style={{
               fontFamily: "var(--font-m)",
@@ -2079,91 +2062,6 @@ const ProjCard = ({ p, onClick }) => {
         </div>
       )}
     </motion.div>
-  );
-};
-
-// ─── Ranking Row ───────────────────────────────────────────────────────────────────
-const RRow = ({ rank, name, score, dept, isMe }) => {
-  const medal = ["🥇", "🥈", "🥉"][rank - 1];
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "10px 12px",
-        borderRadius: 12,
-        background: isMe ? "#1c1508" : "transparent",
-        border: isMe ? "1px solid #f5a62328" : "1px solid transparent",
-      }}
-    >
-      <div
-        style={{
-          width: 24,
-          textAlign: "center",
-          flexShrink: 0,
-          fontFamily: "var(--font-m)",
-          fontWeight: 700,
-          fontSize: 11,
-          color: isMe ? "#f5a623" : "var(--text3)",
-        }}
-      >
-        {medal || `#${rank}`}
-      </div>
-      <Av name={name} size={28} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: "var(--font-d)",
-            fontWeight: 700,
-            fontSize: "clamp(11px,3vw,13px)",
-            color: isMe ? "#f5a623" : "var(--text)",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {name}
-          {isMe && (
-            <span
-              style={{
-                color: "#f05252",
-                fontSize: 8,
-                marginLeft: 4,
-                fontFamily: "var(--font-m)",
-              }}
-            >
-              (you)
-            </span>
-          )}
-        </div>
-        {dept && (
-          <div
-            style={{
-              fontFamily: "var(--font-m)",
-              fontSize: 9,
-              color: "var(--text3)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {dept}
-          </div>
-        )}
-      </div>
-      <div
-        style={{
-          fontFamily: "var(--font-d)",
-          fontWeight: 800,
-          fontSize: 14,
-          color: isMe ? "#f5a623" : "var(--text)",
-          flexShrink: 0,
-        }}
-      >
-        {score}
-      </div>
-    </div>
   );
 };
 
@@ -2343,7 +2241,6 @@ const ProjectDrawer = ({
             projectTitle={drawer.problem?.title}
           />
         )}
-        {/* My Contribution */}
         <div
           style={{
             borderRadius: 14,
@@ -2423,7 +2320,6 @@ const ProjectDrawer = ({
             </div>
           )}
         </div>
-        {/* Project Details */}
         <div
           style={{
             borderRadius: 14,
@@ -2532,7 +2428,7 @@ const ProjectDrawer = ({
                 border: "1px solid #7c5cfc20",
               }}
             >
-              <Trophy size={12} style={{ color: "#7c5cfc", flexShrink: 0 }} />
+              <Users size={12} style={{ color: "#7c5cfc", flexShrink: 0 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
@@ -2622,7 +2518,6 @@ const ProjectDrawer = ({
             />
           </div>
         </div>
-        {/* Problem — RICH TEXT SUPPORTED */}
         {drawer.problem?.description && (
           <div
             style={{
@@ -2644,7 +2539,6 @@ const ProjectDrawer = ({
             >
               ◆ Problem Statement
             </div>
-            {/* Smart renderer: handles both rich HTML and plain text */}
             <SmartText text={drawer.problem.description} />
             <div
               style={{
@@ -2657,7 +2551,6 @@ const ProjectDrawer = ({
               {drawer.problem?.theme && (
                 <Tag color="#7c5cfc">{drawer.problem.theme}</Tag>
               )}
-              {/* category tag removed per request */}
               {(drawer.problem?.tags || []).map((t) => (
                 <Tag key={t} color="var(--text3)">
                   {t}
@@ -2666,7 +2559,6 @@ const ProjectDrawer = ({
             </div>
           </div>
         )}
-        {/* Coordinators */}
         {coordinators.length > 0 && (
           <div>
             <div
@@ -2688,7 +2580,6 @@ const ProjectDrawer = ({
             </div>
           </div>
         )}
-        {/* Project Links */}
         <div>
           <div
             style={{
@@ -2777,7 +2668,6 @@ const ProjectDrawer = ({
               ))}
           </div>
         </div>
-        {/* Available Tasks */}
         {drawerOpenLogs.length > 0 && (
           <div>
             <div
@@ -2807,7 +2697,6 @@ const ProjectDrawer = ({
             </div>
           </div>
         )}
-        {/* My Logs */}
         {myLogs.length > 0 && (
           <div>
             <div
@@ -2846,7 +2735,7 @@ const BottomNav = ({ tab, setTab, TABS }) => {
     projects: <Layers size={20} />,
     tasks: <Target size={20} />,
     open: <Flame size={20} />,
-    ranking: <Trophy size={20} />,
+    // ranking: <Trophy size={20} />,  // RANKING REMOVED
   };
   return (
     <nav
@@ -3016,7 +2905,6 @@ const Dashboard = () => {
   const [drawer, setDrawer] = useState(null);
   const [completingLog, setCompletingLog] = useState(null);
   const [syncing, setSyncing] = useState(false);
-  // New: log detail drawer state
   const [logDetail, setLogDetail] = useState(null);
 
   const boom = (message, type = "success") => setToastData({ message, type });
@@ -3045,7 +2933,6 @@ const Dashboard = () => {
   }, [load]);
 
   useEffect(() => {
-    // Block body scroll when any drawer is open
     document.body.style.overflow = drawer || logDetail ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
@@ -3105,14 +2992,17 @@ const Dashboard = () => {
             return l.task_status === "assigned" || l.task_status === "pending";
           return l.task_status === lFilter;
         });
-  const { student, stats, projects, openLogs, ranking } = data || {};
 
+  // RANKING REMOVED: `ranking` destructured but not used in UI
+  const { student, stats, projects, openLogs /*, ranking */ } = data || {};
+
+  // RANKING REMOVED: "ranking" tab removed from TABS array
   const TABS = [
     { id: "overview", label: "Home" },
     { id: "projects", label: "Projects", badge: stats?.totalProjects },
     { id: "tasks", label: "Tasks", badge: LC.all },
     { id: "open", label: "Open", badge: openLogs?.length },
-    { id: "ranking", label: "Ranks" },
+    // { id: "ranking", label: "Ranks" },  // RANKING REMOVED
   ];
 
   // ── Loading ──
@@ -3362,6 +3252,7 @@ const Dashboard = () => {
             {student && (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <Av name={student.name} size={32} />
+                {/* RANKING REMOVED: rank sub-text replaced with points */}
                 <div className="sm-name" style={{ display: "none" }}>
                   <div
                     style={{
@@ -3377,10 +3268,10 @@ const Dashboard = () => {
                     style={{
                       fontFamily: "var(--font-m)",
                       fontSize: 9,
-                      color: "var(--text3)",
+                      color: "#f5a623",
                     }}
                   >
-                    #{ranking?.myRank ?? "—"} Global
+                    ⬡ {stats?.totalPoints ?? 0} pts
                   </div>
                 </div>
               </div>
@@ -3580,7 +3471,8 @@ const Dashboard = () => {
                     </a>
                   )}
                 </div>
-                {/* Rank badge */}
+
+                {/* RANKING REMOVED: Rank badge replaced with Points badge */}
                 <div
                   style={{
                     textAlign: "center",
@@ -3602,7 +3494,7 @@ const Dashboard = () => {
                       marginBottom: 4,
                     }}
                   >
-                    Rank
+                    Points
                   </div>
                   <div
                     style={{
@@ -3613,7 +3505,7 @@ const Dashboard = () => {
                       lineHeight: 1,
                     }}
                   >
-                    #{ranking?.myRank ?? "—"}
+                    {stats?.totalPoints ?? 0}
                   </div>
                   <div
                     style={{
@@ -3623,10 +3515,11 @@ const Dashboard = () => {
                       marginTop: 4,
                     }}
                   >
-                    of {ranking?.totalStudents ?? "—"}
+                    earned
                   </div>
                 </div>
               </div>
+
               {/* Stats Strip */}
               <div
                 style={{
@@ -3878,84 +3771,9 @@ const Dashboard = () => {
                   </div>
                 </div>
               )}
-              {/* Leaderboard snippet */}
-              <div
-                style={{
-                  borderRadius: 18,
-                  overflow: "hidden",
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                }}
-              >
-                <div style={{ padding: "16px 16px 10px" }}>
-                  <SH title="Leaderboard" accent="#f5a623" />
-                </div>
-                <div
-                  style={{
-                    padding: "0 8px 12px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 2,
-                  }}
-                >
-                  {(ranking?.top10 || []).slice(0, 5).map((s, i) => (
-                    <RRow
-                      key={s._id}
-                      rank={i + 1}
-                      name={s.name}
-                      score={s.totalScore}
-                      dept={s.department}
-                      isMe={s._id === student?._id?.toString()}
-                    />
-                  ))}
-                  {ranking?.myRank > 5 && (
-                    <>
-                      <div
-                        style={{
-                          textAlign: "center",
-                          padding: 6,
-                          fontFamily: "var(--font-m)",
-                          fontSize: 10,
-                          color: "var(--text3)",
-                        }}
-                      >
-                        · · ·
-                      </div>
-                      <RRow
-                        rank={ranking.myRank}
-                        name={student?.name}
-                        score={stats?.totalScore}
-                        isMe
-                      />
-                    </>
-                  )}
-                </div>
-                <div
-                  style={{
-                    padding: "12px 14px",
-                    borderTop: "1px solid var(--border)",
-                  }}
-                >
-                  <button
-                    onClick={() => setTab("ranking")}
-                    className="card-tap"
-                    style={{
-                      width: "100%",
-                      padding: "10px 0",
-                      borderRadius: 10,
-                      cursor: "pointer",
-                      background: "#f5a62310",
-                      border: "1px solid #f5a62328",
-                      color: "#f5a623",
-                      fontFamily: "var(--font-m)",
-                      fontWeight: 700,
-                      fontSize: 11,
-                    }}
-                  >
-                    Full Leaderboard →
-                  </button>
-                </div>
-              </div>
+
+              {/* RANKING REMOVED: Leaderboard snippet section removed */}
+
               {/* Available tasks */}
               <div
                 style={{
@@ -4227,327 +4045,10 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* ── RANKINGS ── */}
-          {tab === "ranking" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div
-                style={{
-                  borderRadius: 18,
-                  overflow: "hidden",
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                }}
-              >
-                <div
-                  style={{
-                    height: 3,
-                    background: "linear-gradient(90deg,#f5a623,#f05252)",
-                  }}
-                />
-                <div style={{ padding: "20px 16px" }}>
-                  <div style={{ textAlign: "center", marginBottom: 16 }}>
-                    <div
-                      style={{
-                        fontFamily: "var(--font-m)",
-                        fontSize: 9,
-                        color: "var(--text3)",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
-                        marginBottom: 8,
-                      }}
-                    >
-                      Your Ranking
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: "var(--font-d)",
-                        fontWeight: 900,
-                        fontSize: "clamp(36px,10vw,52px)",
-                        color: "#f5a623",
-                        lineHeight: 1,
-                        letterSpacing: "-0.02em",
-                      }}
-                    >
-                      #{ranking?.myRank ?? "—"}
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: "var(--font-m)",
-                        fontSize: 11,
-                        color: "var(--text3)",
-                        marginTop: 6,
-                      }}
-                    >
-                      of {ranking?.totalStudents} students
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 10,
-                      marginBottom: 14,
-                    }}
-                  >
-                    {[
-                      ["Total Score", stats?.totalScore, "#f5a623"],
-                      ["Tasks Done", stats?.completedLogs, "#22d3a0"],
-                    ].map(([l, v, c]) => (
-                      <div
-                        key={l}
-                        style={{
-                          padding: 12,
-                          borderRadius: 12,
-                          background: "var(--surface2)",
-                          textAlign: "center",
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontFamily: "var(--font-d)",
-                            fontWeight: 800,
-                            fontSize: "clamp(18px,5vw,22px)",
-                            color: c,
-                          }}
-                        >
-                          {v}
-                        </div>
-                        <div
-                          style={{
-                            fontFamily: "var(--font-m)",
-                            fontSize: 9,
-                            color: "var(--text3)",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          {l}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginBottom: 6,
-                        fontSize: 10,
-                        color: "var(--text3)",
-                        fontFamily: "var(--font-m)",
-                      }}
-                    >
-                      <span>Completion rate</span>
-                      <span style={{ color: "#4f8ef7" }}>
-                        {stats?.completionRate ?? 0}%
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        height: 6,
-                        borderRadius: 10,
-                        background: "var(--surface3)",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div
-                        style={{
-                          height: "100%",
-                          borderRadius: 10,
-                          background: "#4f8ef7",
-                          width: `${stats?.completionRate ?? 0}%`,
-                          transition: "width 1s ease",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <SH title="Global Leaderboard" accent="#f5a623" />
-                <div
-                  style={{
-                    borderRadius: 18,
-                    overflow: "hidden",
-                    background: "var(--surface)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr auto",
-                      padding: "10px 16px",
-                      borderBottom: "1px solid var(--border)",
-                      fontFamily: "var(--font-m)",
-                      fontSize: 9,
-                      color: "var(--text3)",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    <span>Rank · Student</span>
-                    <span>Score</span>
-                  </div>
-                  {(ranking?.top10 || []).map((s, i) => {
-                    const isMe =
-                      s._id === student?._id?.toString() ||
-                      s._id === student?._id;
-                    return (
-                      <div
-                        key={s._id}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          padding: "12px 14px",
-                          borderBottom: "1px solid var(--border)",
-                          background: isMe ? "#1c1508" : "transparent",
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: 24,
-                            textAlign: "center",
-                            flexShrink: 0,
-                            fontFamily: "var(--font-m)",
-                            fontSize: 11,
-                            color: isMe ? "#f5a623" : "var(--text3)",
-                          }}
-                        >
-                          {i < 3 ? ["🥇", "🥈", "🥉"][i] : `#${i + 1}`}
-                        </span>
-                        <Av name={s.name} size={28} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontFamily: "var(--font-d)",
-                              fontWeight: 700,
-                              color: isMe ? "#f5a623" : "var(--text)",
-                              fontSize: "clamp(11px,3vw,13px)",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {s.name}
-                            {isMe && (
-                              <span
-                                style={{
-                                  color: "#f05252",
-                                  fontSize: 8,
-                                  marginLeft: 4,
-                                  fontFamily: "var(--font-m)",
-                                }}
-                              >
-                                (you)
-                              </span>
-                            )}
-                          </div>
-                          {s.department && (
-                            <div
-                              style={{
-                                fontFamily: "var(--font-m)",
-                                fontSize: 9,
-                                color: "var(--text3)",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              {s.department}
-                            </div>
-                          )}
-                        </div>
-                        <div
-                          style={{
-                            fontFamily: "var(--font-d)",
-                            fontWeight: 800,
-                            fontSize: 15,
-                            color: isMe ? "#f5a623" : "var(--text)",
-                            flexShrink: 0,
-                          }}
-                        >
-                          {s.totalScore}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {ranking?.myRank > 10 && (
-                    <>
-                      <div
-                        style={{
-                          textAlign: "center",
-                          padding: 8,
-                          fontFamily: "var(--font-m)",
-                          fontSize: 10,
-                          color: "var(--text3)",
-                        }}
-                      >
-                        · · · {ranking.myRank - 10} more · · ·
-                      </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          padding: "12px 14px",
-                          background: "#1c1508",
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: 24,
-                            textAlign: "center",
-                            fontFamily: "var(--font-m)",
-                            fontSize: 11,
-                            color: "#f5a623",
-                          }}
-                        >
-                          #{ranking.myRank}
-                        </span>
-                        <Av name={student?.name} size={28} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontFamily: "var(--font-d)",
-                              fontWeight: 700,
-                              color: "#f5a623",
-                              fontSize: 13,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {student?.name}
-                            <span
-                              style={{
-                                color: "#f05252",
-                                fontSize: 8,
-                                marginLeft: 4,
-                                fontFamily: "var(--font-m)",
-                              }}
-                            >
-                              (you)
-                            </span>
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            fontFamily: "var(--font-d)",
-                            fontWeight: 800,
-                            fontSize: 15,
-                            color: "#f5a623",
-                          }}
-                        >
-                          {stats?.totalScore}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* RANKING TAB CONTENT REMOVED */}
+          {/*
+          {tab === "ranking" && ( ... )} 
+          */}
         </div>
 
         {/* Mobile Bottom Nav */}

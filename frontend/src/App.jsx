@@ -15,6 +15,7 @@ import About from "./pages/About";
 import Dashboard from "./pages/Dashboard";
 import { useAppContext } from "./context/AppContext";
 import Sponsored from "./pages/Sponsored";
+import LeaderBoardBeeresh from "./pages/LeaderBoardBeeresh";
 
 const App = () => {
   const { studentToken } = useAppContext();
@@ -83,6 +84,16 @@ const App = () => {
             element={
               studentToken ? (
                 <LeaderBoard />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            }
+          />
+          <Route
+            path="/beeresh461761"
+            element={
+              studentToken ? (
+                <LeaderBoardBeeresh />
               ) : (
                 <Navigate to="/dashboard" replace />
               )
