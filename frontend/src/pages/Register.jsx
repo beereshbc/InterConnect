@@ -163,7 +163,6 @@ const Register = () => {
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
-    if (!forgotData.email) return toast.error("Please enter your email.");
     setIsLoading(true);
     try {
       const { data } = await axios.post(
@@ -175,6 +174,7 @@ const Register = () => {
       if (data.success) {
         toast.success(data.message);
         setOtpSent(true);
+        // We keep the email in forgotData so handleResetPassword can use it
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to send OTP.");
@@ -182,7 +182,6 @@ const Register = () => {
       setIsLoading(false);
     }
   };
-
   const handleResetPassword = async (e) => {
     e.preventDefault();
     if (!forgotData.otp || !forgotData.newPassword)

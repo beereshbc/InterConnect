@@ -13,11 +13,6 @@ import nodemailer from "nodemailer";
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-});
-
 // ═════════════════════════════════════════════════════════════════════════════
 // AUTH
 // ═════════════════════════════════════════════════════════════════════════════
@@ -99,7 +94,28 @@ export const loginStudent = async (req, res) => {
   }
 };
 
-// Ensure transporter is imported/configured correctly
+// --- NODEMAILER CONFIGURATION ---
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS, // Use the 16-character App Password here
+  },
+});
+
+// Verify connection on startup
+transporter.verify((error) => {
+  if (error) {
+    console.log("❌ Email Service Error:", error.message);
+  } else {
+    console.log("✅ Email Service Ready");
+  }
+});
+
+// --- CONTROLLERS ---
 
 export const sendResetOtp = async (req, res) => {
   try {
@@ -114,53 +130,49 @@ export const sendResetOtp = async (req, res) => {
       email: email.toLowerCase().trim(),
     });
 
-    // Security Tip: In production, some prefer to return 'success' even if user isn't found
-    // to prevent email enumeration. Here we'll stick to your logic but sanitize the email.
     if (!student) {
       return res
         .status(404)
         .json({ success: false, message: "No account found with that email." });
     }
 
-    // 1. Generate a secure 6-digit OTP
+    // 1. Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // 2. Hash OTP and set expiry (10 mins)
+    // 2. Hash and Save OTP (Bcrypt for security)
     const hashedOtp = await bcrypt.hash(otp, 10);
     student.resetPasswordOtp = hashedOtp;
-    student.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
+    student.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 Minutes
     await student.save();
 
-    // 3. Send Email with Error Handling
+    // 3. Send Email
     const mailOptions = {
       from: `"InterConnect Support" <${process.env.EMAIL_USER}>`,
       to: student.email,
-      subject: "Your Password Reset OTP",
+      subject: "Password Reset OTP - InterConnect",
       html: `
-        <div style="font-family: sans-serif; background:#f4f7f6; padding:20px; border-radius:10px;">
-          <div style="max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; border-top: 4px solid #3a9de8;">
-            <h2 style="color: #333;">Password Reset</h2>
-            <p>Hi ${student.name || "there"},</p>
-            <p>You requested a password reset. Use the code below to proceed:</p>
-            <div style="background: #f0f7ff; padding: 15px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #3a9de8; margin: 20px 0;">
-              ${otp}
-            </div>
-            <p style="font-size: 12px; color: #666;">This code expires in 10 minutes. If you didn't request this, please secure your account.</p>
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; padding: 20px;">
+          <h2 style="color: #333; text-align: center;">Reset Your Password</h2>
+          <p>Hi ${student.name || "User"},</p>
+          <p>You requested a password reset for your InterConnect account. Use the code below to proceed:</p>
+          <div style="background: #f0f7ff; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #3b82f6; border-radius: 8px; margin: 20px 0;">
+            ${otp}
           </div>
+          <p style="font-size: 12px; color: #666; text-align: center;">This code will expire in 10 minutes. If you didn't request this, please ignore this email.</p>
         </div>`,
     };
 
     await transporter.sendMail(mailOptions);
 
-    return res.status(200).json({
-      success: true,
-      message: "A reset code has been sent to your email.",
-    });
+    return res
+      .status(200)
+      .json({ success: true, message: "OTP sent to your email." });
   } catch (error) {
-    console.error("OTP SEND ERROR:", error); // Vital for debugging production
+    console.error("OTP SEND ERROR:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error. Please try again later.",
+      message: "Email service failed. Please check server logs.",
+      error: error.message, // Helpful for debugging
     });
   }
 };
@@ -172,7 +184,7 @@ export const resetPassword = async (req, res) => {
     if (!email || !otp || !newPassword) {
       return res
         .status(400)
-        .json({ success: false, message: "Missing required fields." });
+        .json({ success: false, message: "All fields are required." });
     }
 
     const student = await Student.findOne({
@@ -182,7 +194,10 @@ export const resetPassword = async (req, res) => {
     if (!student || !student.resetPasswordOtp) {
       return res
         .status(400)
-        .json({ success: false, message: "Invalid request or OTP expired." });
+        .json({
+          success: false,
+          message: "Invalid request or session expired.",
+        });
     }
 
     // 1. Check Expiry
@@ -197,25 +212,27 @@ export const resetPassword = async (req, res) => {
     if (!isMatch) {
       return res
         .status(400)
-        .json({ success: false, message: "Invalid OTP code." });
+        .json({ success: false, message: "Incorrect OTP code." });
     }
 
-    // 3. Update Password & Clear OTP Fields
+    // 3. Hash NEW password and clear OTP fields
     student.password = await bcrypt.hash(newPassword, 10);
     student.resetPasswordOtp = undefined;
     student.resetPasswordExpires = undefined;
-
     await student.save();
 
     return res.status(200).json({
       success: true,
-      message: "Password updated successfully. You can now log in.",
+      message: "Password updated successfully! You can now log in.",
     });
   } catch (error) {
-    console.error("RESET PASSWORD ERROR:", error);
+    console.error("RESET ERROR:", error);
     return res
       .status(500)
-      .json({ success: false, message: "An error occurred during reset." });
+      .json({
+        success: false,
+        message: "Internal server error during password reset.",
+      });
   }
 };
 
