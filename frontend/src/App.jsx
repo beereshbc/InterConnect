@@ -16,6 +16,8 @@ import Dashboard from "./pages/Dashboard";
 import { useAppContext } from "./context/AppContext";
 import Sponsored from "./pages/Sponsored";
 import LeaderBoardBeeresh from "./pages/LeaderBoardBeeresh";
+import Certificate from "./pages/Certificate";
+import Winner from "./pages/Winner";
 
 const App = () => {
   const { studentToken } = useAppContext();
@@ -89,6 +91,24 @@ const App = () => {
               )
             }
           />
+          <Route
+            path="/crft"
+            element={
+              studentToken ? (
+                <Certificate />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/winner"
+            element={
+              studentToken ? <Winner /> : <Navigate to="/dashboard" replace />
+            }
+          />
+
           <Route
             path="/beeresh461761"
             element={

@@ -192,12 +192,10 @@ export const resetPassword = async (req, res) => {
     });
 
     if (!student || !student.resetPasswordOtp) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Invalid request or session expired.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid request or session expired.",
+      });
     }
 
     // 1. Check Expiry
@@ -227,12 +225,10 @@ export const resetPassword = async (req, res) => {
     });
   } catch (error) {
     console.error("RESET ERROR:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Internal server error during password reset.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error during password reset.",
+    });
   }
 };
 
@@ -934,5 +930,61 @@ export const getPublishedNotifications = async (req, res) => {
     res.json({ success: true, count: notifications.length, notifications });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// CERTIFICATE  —  GET /api/student/certificate?email=...
+// Public route — no auth required so students can access via email search
+// ═════════════════════════════════════════════════════════════════════════════
+export const getCertificateData = async (req, res) => {
+  try {
+    const student = await Student.findById(req.studentId)
+      .populate("projects", "projectID problem")
+      .select(
+        "name email totalScore totalTasksCompleted projects projectWiseContribution",
+      )
+      .lean();
+
+    if (!student) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found." });
+    }
+
+    /* ── Rank: how many students scored strictly higher? ─────────────────── */
+    const rank =
+      (await Student.countDocuments({
+        totalScore: { $gt: student.totalScore },
+      })) + 1;
+
+    /* ── Total participants (for "One of N students") ─────────────────────── */
+    const totalParticipants = await Student.countDocuments();
+
+    /* ── Certificate type ─────────────────────────────────────────────────── */
+    const certificateType =
+      student.totalScore > 0 ? "contributor" : "participant";
+
+    /* ── Project count the student contributed to ─────────────────────────── */
+    const projectCount = student.projects?.length ?? 0;
+
+    return res.status(200).json({
+      success: true,
+      certificateType,
+      data: {
+        name: student.name,
+        email: student.email,
+        totalScore: student.totalScore,
+        totalTasksCompleted: student.totalTasksCompleted,
+        projectCount,
+        rank,
+        totalParticipants,
+      },
+    });
+  } catch (error) {
+    console.error("getCertificateData error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error." });
   }
 };

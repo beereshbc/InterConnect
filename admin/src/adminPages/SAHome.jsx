@@ -49,6 +49,13 @@ const SAHome = () => {
       path: "/super-admin/students",
       accent: "#4ade80",
     },
+    {
+      icon: "★",
+      title: "Winner's Circle",
+      sub: "Winners announcement & recognition",
+      path: "/super-admin/winners",
+      accent: "#4ade80",
+    },
   ];
 
   return (

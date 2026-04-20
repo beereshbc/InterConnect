@@ -14,6 +14,7 @@ import ProblemManagement from "./adminPages/ProblemManagement";
 import AdminManagement from "./adminPages/AdminManagement";
 import StudentManagement from "./adminPages/StudentManagement";
 import SANotification from "./adminPages/SANotification";
+import Winners from "./adminPages/Winner";
 
 const RequireSA = ({ children }) => {
   const saToken = localStorage.getItem("saToken");
@@ -142,6 +143,14 @@ const App = () => {
             element={
               <RequireSA>
                 <AdminManagement />
+              </RequireSA>
+            }
+          />
+          <Route
+            path="/super-admin/winners"
+            element={
+              <RequireSA>
+                <Winners />
               </RequireSA>
             }
           />
