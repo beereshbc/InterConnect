@@ -955,22 +955,27 @@ export const getSADashboard = async (req, res) => {
 
     const recentProblems = await Problem.find()
       .sort({ createdAt: -1 })
-      .limit(15) // Enough limit for the scrolling list
+      .limit(15)
       .select(
         "problemID title category theme is_published ownerName organization createdAt",
       );
 
-    // ─── EMAILS TO COMPLETELY IGNORE ───
+    // ─── EMAILS TO COMPLETELY HIDE FROM DASHBOARD ───
     const excludedEmails = ["bcbeereshkumar@gmail.com", "yy6996843@gmail.com"];
 
-    // Fetch the specific Admin Object IDs for these emails so we can filter logs
+    // ─── POINT DEDUCTIONS (MANUAL ADJUSTMENTS) ───
+    // Key: Admin Email, Value: Points to SUBTRACT
+    const pointDeductions = {
+      "maqsoodmd.ac.in@gmail.com": 250, // Subtracts 50 points from their total
+      "another-user@gmail.com": 20,
+    };
+
     const excludedAdmins = await Admin.find({
       email: { $in: excludedEmails },
     }).select("_id");
     const excludedAdminIds = excludedAdmins.map((admin) => admin._id);
 
-    // ─── GLOBAL ADMIN LEADERBOARD (Dynamic Real-time Aggregation) ───
-    // 1. Aggregate ALL-TIME points & tasks closed for every admin
+    // 1. Aggregate ALL-TIME points
     const allTimeLogStats = await Log.aggregate([
       { $match: { task_status: "completed" } },
       {
@@ -982,13 +987,12 @@ export const getSADashboard = async (req, res) => {
       },
     ]);
 
-    // Convert to a quick lookup map
     const adminStatsMap = {};
     allTimeLogStats.forEach((stat) => {
       if (stat._id) adminStatsMap[stat._id.toString()] = stat;
     });
 
-    // 2. Fetch valid admins (Excluding super-admins and the specific emails)
+    // 2. Fetch valid admins
     let topAdmins = await Admin.find({
       role: { $ne: "super-admin" },
       isBlocked: false,
@@ -997,17 +1001,22 @@ export const getSADashboard = async (req, res) => {
       .select("name email college department branch role")
       .lean();
 
-    // 3. Inject the real-time calculated stats and sort them
+    // 3. Inject stats, APPLY DEDUCTIONS, and Sort
     topAdmins = topAdmins
       .map((admin) => {
         const stats = adminStatsMap[admin._id.toString()] || {
           totalPointsAwarded: 0,
           totalTasksClosed: 0,
         };
+
+        // Calculate final points after manual deduction
+        const deduction = pointDeductions[admin.email] || 0;
+        const finalPoints = Math.max(0, stats.totalPointsAwarded - deduction);
+
         return {
           ...admin,
-          totalPoints: stats.totalPointsAwarded,
-          totalTaskCreated: stats.totalTasksClosed, // Mapping to the frontend prop name
+          totalPoints: finalPoints,
+          totalTaskCreated: stats.totalTasksClosed,
         };
       })
       .sort(
@@ -1016,16 +1025,14 @@ export const getSADashboard = async (req, res) => {
           b.totalTaskCreated - a.totalTaskCreated,
       );
 
-    // ─── DAILY HIGHLIGHTS AGGREGATION ───
+    // ─── DAILY HIGHLIGHTS ───
     const now = new Date();
-    // Midnight of the current day
     const startOfDay = new Date(
       now.getFullYear(),
       now.getMonth(),
       now.getDate(),
     );
 
-    // 1. Top Project of the Day
     const topProjectAgg = await Log.aggregate([
       { $match: { task_status: "completed", closedAt: { $gte: startOfDay } } },
       {
@@ -1057,13 +1064,12 @@ export const getSADashboard = async (req, res) => {
       }
     }
 
-    // 2. Top Coordinator of the Day (Ignoring excluded admin IDs)
     const topCoordAgg = await Log.aggregate([
       {
         $match: {
           task_status: "completed",
           closedAt: { $gte: startOfDay },
-          task_coordinator_id: { $nin: excludedAdminIds }, // Ignore the specific emails
+          task_coordinator_id: { $nin: excludedAdminIds },
         },
       },
       {
@@ -1093,6 +1099,12 @@ export const getSADashboard = async (req, res) => {
       }
     }
 
+    // Adjust total points distributed stat to reflect deductions
+    const actualTotalPoints = topAdmins.reduce(
+      (acc, curr) => acc + curr.totalPoints,
+      0,
+    );
+
     res.json({
       success: true,
       stats: {
@@ -1121,14 +1133,11 @@ export const getSADashboard = async (req, res) => {
           completed: completedLogs,
           pending: totalLogs - completedLogs,
         },
-        totalPointsDistributed: ptAgg[0]?.total || 0,
+        totalPointsDistributed: actualTotalPoints,
       },
       recentProblems,
       topAdmins,
-      dailyHighlights: {
-        topProject,
-        topCoordinator,
-      },
+      dailyHighlights: { topProject, topCoordinator },
     });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
