@@ -15,6 +15,7 @@ import AdminManagement from "./adminPages/AdminManagement";
 import StudentManagement from "./adminPages/StudentManagement";
 import SANotification from "./adminPages/SANotification";
 import Winners from "./adminPages/Winner";
+import AdminLeaderboard from "./pages/AdminLeaderboard";
 
 const RequireSA = ({ children }) => {
   const saToken = localStorage.getItem("saToken");
@@ -127,6 +128,14 @@ const App = () => {
             element={
               <RequireSA>
                 <SADashboard />
+              </RequireSA>
+            }
+          />
+          <Route
+            path="/super-admin/leaderboard"
+            element={
+              <RequireSA>
+                <AdminLeaderboard />
               </RequireSA>
             }
           />

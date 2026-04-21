@@ -38,7 +38,10 @@ const Header = () => {
     { name: "About", path: "/about", icon: Info },
     ...(!studentToken
       ? [{ name: "Register", path: "/register", icon: UserPlus }]
-      : [{ name: "LeaderBoard", path: "/leaderboard", icon: Trophy }]),
+      : [
+          { name: "LeaderBoard", path: "/leaderboard", icon: Trophy },
+          { name: "Certificate", path: "/crft", icon: Trophy },
+        ]),
   ];
 
   // Efficient scroll listener

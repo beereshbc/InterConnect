@@ -298,6 +298,13 @@ const Home = () => {
             >
               <ActionBtn
                 icon="◈"
+                label="Enter Leaderboard"
+                sublabel="Leaderboard"
+                onClick={() => navigate("/leaderboard")}
+                accent="#e85d3a"
+              />
+              <ActionBtn
+                icon="◈"
                 label="Enter Dashboard"
                 sublabel="Profile & metrics"
                 onClick={() => navigate("/dashboard")}

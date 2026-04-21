@@ -110,16 +110,6 @@ const App = () => {
           />
 
           <Route
-            path="/beeresh461761"
-            element={
-              studentToken ? (
-                <LeaderBoardBeeresh />
-              ) : (
-                <Navigate to="/dashboard" replace />
-              )
-            }
-          />
-          <Route
             path="/login"
             element={
               studentToken ? <Navigate to="/dashboard" replace /> : <Register />

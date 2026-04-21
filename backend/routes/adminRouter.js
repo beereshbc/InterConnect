@@ -153,5 +153,6 @@ adminRouter.put(
   superAdminAuth,
   saReassignCoordinator, // <-- FIXED: Was saAssignCoordinator before
 );
-
+// In your adminRouter file:
+adminRouter.get("/leaderboard", adminAuth, getSADashboard);
 export default adminRouter;
