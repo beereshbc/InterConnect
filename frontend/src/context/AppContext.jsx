@@ -14,7 +14,7 @@ export const AppProvider = ({ children }) => {
 
   // Initialize state from localStorage (Runs once on load)
   const [studentToken, setStudentToken] = useState(
-    localStorage.getItem("clientToken") || "",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2U0OTI1MjdmMTU5NjU0MWRhZjYyYiIsImlhdCI6MTc4MzUwOTk1OSwiZXhwIjoxNzg2MTAxOTU5fQ.BZp7amVb9VE8eB2UpVwwwaHf54Sjay4a-mjGQi8CyiY",
   );
 
   // Update Axios headers and LocalStorage whenever the token state changes
